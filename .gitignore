@@ -1,0 +1,53 @@
+# =========================
+# macOS
+# =========================
+*.DS_Store
+
+# =========================
+# IntelliJ / Android Studio
+# =========================
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# =========================
+# Gradle
+# =========================
+.gradle/
+build/
+*/build/
+*/*/build/
+gradle-app.setting
+!gradle/wrapper/gradle-wrapper.jar
+
+# =========================
+# Android
+# =========================
+# Local SDK path (NEVER COMMIT THIS)
+local.properties
+
+# Android Profiler & Native
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Keystore files (Keep your signing keys local)
+*.jks
+*.keystore
+
+# =========================
+# iOS / Xcode
+# =========================
+# Xcode user-specific settings
+xcuserdata/
+*.xcscmblueprint
+*.xccheckout
+DerivedData/
+
+# CocoaPods (if you ever add them later)
+Pods/
+
+# Kotlin meta
+.kotlin/
