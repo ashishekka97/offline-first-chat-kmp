@@ -59,6 +59,13 @@ sealed interface DatabaseError : AppError {
 }
 
 /**
+ * Common Preference errors.
+ */
+sealed interface PreferenceError : AppError {
+    data class Unknown(val throwable: Throwable) : PreferenceError
+}
+
+/**
  * Common IO errors.
  */
 sealed interface IOError : AppError {

@@ -17,6 +17,7 @@ import me.ashishekka.echo.shared.data.file.LocalAssetManager
 import me.ashishekka.echo.shared.di.DispatcherProvider
 import me.ashishekka.echo.shared.domain.AssetError
 import me.ashishekka.echo.shared.domain.DatabaseError
+import me.ashishekka.echo.shared.domain.PreferenceError
 import me.ashishekka.echo.shared.domain.Result
 import okio.FileSystem
 import okio.Source
@@ -161,9 +162,10 @@ class BackupRestorationEngineTest {
     class FakePreferenceStorage : PreferenceStorage {
         var completed = false
         override val isRestoreCompleted: Flow<Boolean> = MutableStateFlow(completed)
-        override suspend fun setRestoreCompleted(completed: Boolean) {
+        override suspend fun setRestoreCompleted(completed: Boolean): Result<Unit, PreferenceError> {
             this.completed = completed
             (isRestoreCompleted as MutableStateFlow).value = completed
+            return Result.Success(Unit)
         }
     }
 }

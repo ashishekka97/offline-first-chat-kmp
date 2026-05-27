@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
+import me.ashishekka.echo.shared.domain.Result
 import okio.Path.Companion.toPath
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -38,10 +39,12 @@ class PreferenceStorageTest {
 
     @Test
     fun testSetRestoreCompleted() = testScope.runTest {
-        preferenceStorage.setRestoreCompleted(true)
+        val result1 = preferenceStorage.setRestoreCompleted(true)
+        assertTrue(result1 is Result.Success)
         assertTrue(preferenceStorage.isRestoreCompleted.first())
         
-        preferenceStorage.setRestoreCompleted(false)
+        val result2 = preferenceStorage.setRestoreCompleted(false)
+        assertTrue(result2 is Result.Success)
         assertFalse(preferenceStorage.isRestoreCompleted.first())
     }
 }

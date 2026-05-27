@@ -97,7 +97,10 @@ class DefaultBackupRestorationEngine(
             }
 
             // 9. Mark as completed
-            preferenceStorage.setRestoreCompleted(true)
+            val prefResult = preferenceStorage.setRestoreCompleted(true)
+            if (prefResult is Result.Failure) {
+                return@withContext RestorationResult.Failure("Failed to mark restoration as completed: ${prefResult.error}")
+            }
             RestorationResult.Success
         } catch (e: Exception) {
             RestorationResult.Failure("Restoration failed due to unexpected error: ${e.message}", e)

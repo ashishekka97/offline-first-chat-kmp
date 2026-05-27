@@ -8,6 +8,8 @@ import androidx.datastore.preferences.core.emptyPreferences
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
+import me.ashishekka.echo.shared.domain.PreferenceError
+import me.ashishekka.echo.shared.domain.Result
 import okio.IOException
 
 /**
@@ -18,7 +20,7 @@ interface PreferenceStorage {
     val isRestoreCompleted: Flow<Boolean>
 
     /** Updates the initial data restoration status. */
-    suspend fun setRestoreCompleted(completed: Boolean)
+    suspend fun setRestoreCompleted(completed: Boolean): Result<Unit, PreferenceError>
 }
 
 /**
@@ -40,9 +42,14 @@ class DataStorePreferenceStorage(
             preferences[IS_RESTORE_COMPLETED] ?: false
         }
 
-    override suspend fun setRestoreCompleted(completed: Boolean) {
-        dataStore.edit { preferences ->
-            preferences[IS_RESTORE_COMPLETED] = completed
+    override suspend fun setRestoreCompleted(completed: Boolean): Result<Unit, PreferenceError> {
+        return try {
+            dataStore.edit { preferences ->
+                preferences[IS_RESTORE_COMPLETED] = completed
+            }
+            Result.Success(Unit)
+        } catch (e: Exception) {
+            Result.Failure(PreferenceError.Unknown(e))
         }
     }
 
