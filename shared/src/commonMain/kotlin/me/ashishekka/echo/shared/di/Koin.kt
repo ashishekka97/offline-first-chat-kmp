@@ -21,11 +21,14 @@ import me.ashishekka.echo.shared.domain.repository.ParticipantRepository
 import me.ashishekka.echo.shared.domain.service.AgentService
 import me.ashishekka.echo.shared.domain.service.DefaultAgentService
 import me.ashishekka.echo.shared.domain.usecase.DeleteChatUseCase
+import me.ashishekka.echo.shared.domain.usecase.GetPagedChatsUseCase
 import me.ashishekka.echo.shared.domain.usecase.SendMessageUseCase
 import me.ashishekka.echo.shared.domain.usecase.StartChatUseCase
+import me.ashishekka.echo.shared.screens.home.HomeViewModel
 import org.koin.core.context.startKoin
 import org.koin.core.logger.Level
 import org.koin.core.module.Module
+import org.koin.core.module.dsl.factoryOf
 import org.koin.dsl.KoinAppDeclaration
 import org.koin.dsl.module
 
@@ -61,13 +64,14 @@ val dataModule = module {
     single<ParticipantRepository> { OfflineFirstParticipantRepository(get()) }
 
     // Use Cases
+    factory { GetPagedChatsUseCase(get()) }
     factory { StartChatUseCase(get(), get()) }
     factory { SendMessageUseCase(get(), get()) }
     factory { DeleteChatUseCase(get(), get(), get()) }
 }
 
 val viewModelModule = module {
-    // We will inject ChatViewModel here later
+    factoryOf(::HomeViewModel)
 }
 
 fun initKoin(appDeclaration: KoinAppDeclaration = {}) {
