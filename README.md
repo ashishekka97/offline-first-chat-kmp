@@ -1,5 +1,8 @@
 # Echo (KMP)
 
+> [!IMPORTANT]
+> **AI Agent Instructions**: If you are an AI agent working on this repository, you **must** read and follow the [AGENTS.md](./AGENTS.md) operating manual before taking any action.
+
 An offline-first Kotlin Multiplatform chat application.
 
 ## Architecture
