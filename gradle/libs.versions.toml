@@ -44,7 +44,11 @@ androidx-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-
 # Added for Room & SQLite
 androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
 androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
+androidx-room-paging = { group = "androidx.room", name = "room-paging", version.ref = "room" }
 androidx-sqlite-bundled = { group = "androidx.sqlite", name = "sqlite-bundled", version.ref = "sqlite" }
+
+# Added for Paging
+androidx-paging-common = { group = "androidx.paging", name = "paging-common", version = "3.3.5" }
 
 # Added for DataStore
 androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
