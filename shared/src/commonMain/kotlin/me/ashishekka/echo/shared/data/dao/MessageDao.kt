@@ -1,5 +1,6 @@
 package me.ashishekka.echo.shared.data.dao
 
+import androidx.paging.PagingSource
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
@@ -15,12 +16,12 @@ import me.ashishekka.echo.shared.data.entity.MessageWithSender
 @Dao
 interface MessageDao {
     /**
-     * Returns a [Flow] of all messages for a specific [chatId], ordered by timestamp.
+     * Returns a [PagingSource] of all messages for a specific [chatId], ordered by timestamp.
      * Each [MessageWithSender] includes the message details and the sender's profile.
      */
     @Transaction
     @Query("SELECT * FROM messages WHERE chatId = :chatId ORDER BY timestamp ASC")
-    fun getMessagesForChat(chatId: String): Flow<List<MessageWithSender>>
+    fun getMessagesForChat(chatId: String): PagingSource<Int, MessageWithSender>
 
     /**
      * Inserts a new message or replaces an existing one.

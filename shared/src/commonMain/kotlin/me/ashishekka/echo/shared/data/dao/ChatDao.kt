@@ -1,5 +1,6 @@
 package me.ashishekka.echo.shared.data.dao
 
+import androidx.paging.PagingSource
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
@@ -18,12 +19,12 @@ import me.ashishekka.echo.shared.data.entity.ChatWithParticipants
 @Dao
 interface ChatDao {
     /**
-     * Returns a [Flow] of all chats, ordered by the most recent message timestamp.
+     * Returns a [PagingSource] of all chats, ordered by the most recent message timestamp.
      * Each [ChatWithParticipants] includes the chat details and all its participants.
      */
     @Transaction
     @Query("SELECT * FROM chats ORDER BY lastMessageTimestamp DESC")
-    fun getAllChats(): Flow<List<ChatWithParticipants>>
+    fun getAllChats(): PagingSource<Int, ChatWithParticipants>
 
     /**
      * Returns a [Flow] of a single chat by its [id].
@@ -43,6 +44,23 @@ interface ChatDao {
      */
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertChatParticipantCrossRef(crossRef: ChatParticipantCrossRef)
+
+    /**
+     * Updates the last message details for a chat.
+     */
+    @Query("UPDATE chats SET lastMessage = :message, lastMessageTimestamp = :timestamp, updatedAt = :timestamp WHERE id = :chatId")
+    suspend fun updateLastMessage(chatId: String, message: String, timestamp: Long)
+
+    /**
+     * Atomic transaction to create a chat with its participants.
+     */
+    @Transaction
+    suspend fun insertChatWithParticipants(chat: ChatEntity, participantIds: List<String>) {
+        insertChat(chat)
+        participantIds.forEach { id ->
+            insertChatParticipantCrossRef(ChatParticipantCrossRef(chat.id, id))
+        }
+    }
 
     /**
      * Updates an existing chat.

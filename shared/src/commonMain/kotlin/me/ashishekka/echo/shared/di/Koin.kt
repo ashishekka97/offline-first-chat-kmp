@@ -12,6 +12,10 @@ import me.ashishekka.echo.shared.data.backup.DefaultSeedDataRepository
 import me.ashishekka.echo.shared.data.backup.MediaRestorationService
 import me.ashishekka.echo.shared.data.backup.SeedDataRepository
 import me.ashishekka.echo.shared.data.createDatabase
+import me.ashishekka.echo.shared.data.repository.OfflineFirstChatRepository
+import me.ashishekka.echo.shared.data.repository.OfflineFirstMessageRepository
+import me.ashishekka.echo.shared.domain.repository.ChatRepository
+import me.ashishekka.echo.shared.domain.repository.MessageRepository
 import org.koin.core.context.startKoin
 import org.koin.core.logger.Level
 import org.koin.core.module.Module
@@ -41,6 +45,9 @@ val dataModule = module {
     single<SeedDataRepository> { DefaultSeedDataRepository(get()) }
     single<MediaRestorationService> { DefaultMediaRestorationService(get(), get(), get()) }
     single<BackupRestorationEngine> { DefaultBackupRestorationEngine(get(), get(), get(), get(), get(), get()) }
+
+    single<ChatRepository> { OfflineFirstChatRepository(get()) }
+    single<MessageRepository> { OfflineFirstMessageRepository(get()) }
 }
 
 val viewModelModule = module {

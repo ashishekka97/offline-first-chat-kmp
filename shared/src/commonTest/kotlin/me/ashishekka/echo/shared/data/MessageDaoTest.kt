@@ -1,8 +1,10 @@
 package me.ashishekka.echo.shared.data
 
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
+import me.ashishekka.echo.shared.data.dao.ChatDao
+import me.ashishekka.echo.shared.data.dao.MessageDao
+import me.ashishekka.echo.shared.data.dao.ParticipantDao
 import me.ashishekka.echo.shared.data.entity.*
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -13,9 +15,9 @@ import kotlin.test.assertEquals
 class MessageDaoTest {
 
     private lateinit var db: AppDatabase
-    private lateinit var chatDao: me.ashishekka.echo.shared.data.dao.ChatDao
-    private lateinit var participantDao: me.ashishekka.echo.shared.data.dao.ParticipantDao
-    private lateinit var messageDao: me.ashishekka.echo.shared.data.dao.MessageDao
+    private lateinit var chatDao: ChatDao
+    private lateinit var participantDao: ParticipantDao
+    private lateinit var messageDao: MessageDao
 
     @BeforeTest
     fun setup() {
@@ -50,7 +52,7 @@ class MessageDaoTest {
         )
         messageDao.insertMessage(message)
         
-        val messages = messageDao.getMessagesForChat("chat_1").first()
+        val messages = messageDao.getMessagesForChat("chat_1").getData()
         assertEquals(1, messages.size)
         assertEquals("Hello World", messages[0].message.message)
         assertEquals("Alice", messages[0].sender.name)
@@ -79,7 +81,7 @@ class MessageDaoTest {
         )
         messageDao.insertMessage(message)
         
-        val messages = messageDao.getMessagesForChat("chat_1").first()
+        val messages = messageDao.getMessagesForChat("chat_1").getData()
         assertEquals(1, messages.size)
         assertEquals(MessageType.FILE, messages[0].message.type)
         assertEquals("path/to/file.jpg", messages[0].message.file?.path)

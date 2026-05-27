@@ -1,8 +1,9 @@
 package me.ashishekka.echo.shared.data
 
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
+import me.ashishekka.echo.shared.data.dao.ChatDao
+import me.ashishekka.echo.shared.data.dao.ParticipantDao
 import me.ashishekka.echo.shared.data.entity.ChatEntity
 import me.ashishekka.echo.shared.data.entity.ParticipantEntity
 import me.ashishekka.echo.shared.data.entity.ChatParticipantCrossRef
@@ -18,8 +19,8 @@ import kotlin.test.assertTrue
 class ChatDaoTest {
 
     private lateinit var db: AppDatabase
-    private lateinit var chatDao: me.ashishekka.echo.shared.data.dao.ChatDao
-    private lateinit var participantDao: me.ashishekka.echo.shared.data.dao.ParticipantDao
+    private lateinit var chatDao: ChatDao
+    private lateinit var participantDao: ParticipantDao
 
     @BeforeTest
     fun setup() {
@@ -47,7 +48,7 @@ class ChatDaoTest {
         )
         chatDao.insertChat(chat)
         
-        val chats = chatDao.getAllChats().first()
+        val chats = chatDao.getAllChats().getData()
         assertEquals(1, chats.size)
         assertEquals("chat_1", chats[0].chat.id)
         assertEquals("Hello", chats[0].chat.lastMessage)
@@ -66,7 +67,7 @@ class ChatDaoTest {
         chatDao.insertChatParticipantCrossRef(ChatParticipantCrossRef("chat_1", "user_1"))
         chatDao.insertChatParticipantCrossRef(ChatParticipantCrossRef("chat_1", "user_2"))
         
-        val chats = chatDao.getAllChats().first()
+        val chats = chatDao.getAllChats().getData()
         assertEquals(1, chats.size)
         assertEquals(2, chats[0].participants.size)
         
@@ -85,13 +86,13 @@ class ChatDaoTest {
         db.messageDao().insertMessage(message)
         
         // Verify message exists
-        assertEquals(1, db.messageDao().getMessagesForChat("chat_1").first().size)
+        assertEquals(1, db.messageDao().getMessagesForChat("chat_1").getData().size)
         
         // Delete chat
         chatDao.deleteChat(chat)
         
         // Verify message is gone (cascaded)
-        assertTrue(db.messageDao().getMessagesForChat("chat_1").first().isEmpty())
+        assertTrue(db.messageDao().getMessagesForChat("chat_1").getData().isEmpty())
     }
 
     @Test
@@ -102,7 +103,7 @@ class ChatDaoTest {
         chatDao.insertChat(chat1)
         chatDao.insertChat(chat2)
         
-        val chats = chatDao.getAllChats().first()
+        val chats = chatDao.getAllChats().getData()
         assertEquals("chat_2", chats[0].chat.id) // Newest first
         assertEquals("chat_1", chats[1].chat.id)
     }

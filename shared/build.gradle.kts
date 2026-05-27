@@ -40,7 +40,11 @@ kotlin {
 
             // Added for Room Database
             implementation(libs.androidx.room.runtime)
+            implementation(libs.androidx.room.paging)
             implementation(libs.androidx.sqlite.bundled)
+
+            // Added for Paging
+            implementation(libs.androidx.paging.common)
 
             // Added for DataStore
             implementation(libs.androidx.datastore.preferences)
