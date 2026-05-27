@@ -39,8 +39,11 @@ class ChatDaoTest {
     fun testInsertAndGetAllChats() = runTest {
         val chat = ChatEntity(
             id = "chat_1",
+            title = "Test Chat",
             lastMessage = "Hello",
-            lastMessageTimestamp = 1000L
+            lastMessageTimestamp = 1000L,
+            createdAt = 1000L,
+            updatedAt = 1000L
         )
         chatDao.insertChat(chat)
         
@@ -52,7 +55,7 @@ class ChatDaoTest {
 
     @Test
     fun testChatWithParticipants() = runTest {
-        val chat = ChatEntity("chat_1", "Hi", 1000L)
+        val chat = ChatEntity("chat_1", "Test Chat", "Hi", 1000L, 1000L, 1000L)
         val p1 = ParticipantEntity("user_1", "Alice", null, false)
         val p2 = ParticipantEntity("user_2", "Bob", null, true)
         
@@ -73,7 +76,7 @@ class ChatDaoTest {
 
     @Test
     fun testDeleteChatCascadesToMessages() = runTest {
-        val chat = ChatEntity("chat_1", "Hi", 1000L)
+        val chat = ChatEntity("chat_1", "Test Chat", "Hi", 1000L, 1000L, 1000L)
         val user = ParticipantEntity("user_1", "Alice", null, false)
         val message = MessageEntity("msg_1", "chat_1", "user_1", "Hello", MessageType.TEXT, null, 1001L)
         
@@ -93,8 +96,8 @@ class ChatDaoTest {
 
     @Test
     fun testChatsAreSortedByTimestamp() = runTest {
-        val chat1 = ChatEntity("chat_1", "Old", 1000L)
-        val chat2 = ChatEntity("chat_2", "New", 2000L)
+        val chat1 = ChatEntity("chat_1", "Old Chat", "Old", 1000L, 1000L, 1000L)
+        val chat2 = ChatEntity("chat_2", "New Chat", "New", 2000L, 2000L, 2000L)
         
         chatDao.insertChat(chat1)
         chatDao.insertChat(chat2)

@@ -33,7 +33,7 @@ class MessageDaoTest {
 
     @Test
     fun testInsertAndGetMessages() = runTest {
-        val chat = ChatEntity("chat_1", null, 1000L)
+        val chat = ChatEntity("chat_1", "Test Chat", null, 1000L, 1000L, 1000L)
         val user = ParticipantEntity("user_1", "Alice", null, false)
         
         chatDao.insertChat(chat)
@@ -58,7 +58,7 @@ class MessageDaoTest {
 
     @Test
     fun testInsertFileMessage() = runTest {
-        val chat = ChatEntity("chat_1", null, 1000L)
+        val chat = ChatEntity("chat_1", "Test Chat", null, 1000L, 1000L, 1000L)
         val user = ParticipantEntity("user_1", "Alice", null, false)
         
         chatDao.insertChat(chat)

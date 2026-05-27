@@ -18,5 +18,6 @@ fun createDatabase(
     return builder
         .setDriver(BundledSQLiteDriver())
         .setQueryCoroutineContext(queryContext)
+        .fallbackToDestructiveMigration(true)
         .build()
 }

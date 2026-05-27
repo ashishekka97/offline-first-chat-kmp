@@ -7,6 +7,7 @@ plugins {
     // Added for Room Database
     alias(libs.plugins.ksp)
     alias(libs.plugins.room)
+    alias(libs.plugins.kotlinxSerialization)
 }
 kotlin {
     androidLibrary {
@@ -44,6 +45,8 @@ kotlin {
             // Added for DataStore
             implementation(libs.androidx.datastore.preferences)
             implementation(libs.okio)
+            implementation(libs.kotlinx.serialization.json)
+            implementation(libs.kotlinx.serialization.json.okio)
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
