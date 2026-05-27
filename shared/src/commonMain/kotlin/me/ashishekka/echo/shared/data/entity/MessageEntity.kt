@@ -1,9 +1,10 @@
 package me.ashishekka.echo.shared.data.entity
 
+import androidx.room.Embedded
 import androidx.room.Entity
-import androidx.room.PrimaryKey
 import androidx.room.ForeignKey
 import androidx.room.Index
+import androidx.room.PrimaryKey
 
 @Entity(
     tableName = "messages",
@@ -21,10 +22,21 @@ data class MessageEntity(
     @PrimaryKey
     val id: String,
     val chatId: String,
-    val senderName: String,
-    val content: String,
-    val timestamp: Long,
-    val isFromUser: Boolean,
-    val type: String, // "text" or "image"
-    val mediaUrl: String?
+    val message: String,
+    val type: String, // "text" or "file"
+    @Embedded(prefix = "file_")
+    val file: FileDetails?,
+    val sender: String, // "user" or "agent"
+    val timestamp: Long
+)
+
+data class FileDetails(
+    val path: String,
+    val fileSize: Long,
+    @Embedded(prefix = "thumbnail_")
+    val thumbnail: ThumbnailDetails?
+)
+
+data class ThumbnailDetails(
+    val path: String
 )
