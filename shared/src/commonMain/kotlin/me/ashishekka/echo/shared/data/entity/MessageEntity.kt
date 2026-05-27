@@ -17,19 +17,28 @@ enum class MessageSender { USER, AGENT }
             parentColumns = ["id"],
             childColumns = ["chatId"],
             onDelete = ForeignKey.CASCADE
+        ),
+        ForeignKey(
+            entity = ParticipantEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["senderId"],
+            onDelete = ForeignKey.CASCADE
         )
     ],
-    indices = [Index(value = ["chatId"])]
+    indices = [
+        Index(value = ["chatId"]),
+        Index(value = ["senderId"])
+    ]
 )
 data class MessageEntity(
     @PrimaryKey
     val id: String,
     val chatId: String,
+    val senderId: String,
     val message: String,
     val type: MessageType,
     @Embedded(prefix = "file_")
     val file: FileDetails?,
-    val sender: MessageSender,
     val timestamp: Long
 )
 

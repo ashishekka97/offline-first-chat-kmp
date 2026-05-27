@@ -7,8 +7,6 @@ import androidx.room.PrimaryKey
 data class ChatEntity(
     @PrimaryKey
     val id: String,
-    val name: String,
     val lastMessage: String?,
-    val lastMessageTimestamp: Long,
-    val profileImageUrl: String?
+    val lastMessageTimestamp: Long
 )
