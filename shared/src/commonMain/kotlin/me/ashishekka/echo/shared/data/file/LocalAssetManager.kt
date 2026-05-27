@@ -47,12 +47,12 @@ interface AssetReader {
  *
  * @property baseDirPath The root directory path for internal storage.
  * @property assetReader The platform-specific reader for bundled assets.
- * @property fileSystem The Okio [FileSystem] to use (defaults to SYSTEM).
+ * @property fileSystem The Okio [FileSystem] to use.
  */
 class DefaultLocalAssetManager(
     private val baseDirPath: String,
     private val assetReader: AssetReader,
-    private val fileSystem: FileSystem = FileSystem.SYSTEM
+    private val fileSystem: FileSystem
 ) : LocalAssetManager {
 
     private val basePath: Path = baseDirPath.toPath()

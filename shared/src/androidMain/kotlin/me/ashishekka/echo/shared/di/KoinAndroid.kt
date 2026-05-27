@@ -13,6 +13,9 @@ import me.ashishekka.echo.shared.data.file.AndroidAssetReader
 import me.ashishekka.echo.shared.data.file.AssetReader
 import me.ashishekka.echo.shared.data.file.DefaultLocalAssetManager
 import me.ashishekka.echo.shared.data.file.LocalAssetManager
+import me.ashishekka.echo.shared.data.media.AndroidMediaProcessor
+import me.ashishekka.echo.shared.data.media.MediaProcessor
+import okio.FileSystem
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.Module
 import org.koin.dsl.module
@@ -41,7 +44,10 @@ actual fun getPlatformDataModule(): Module = module {
     single<LocalAssetManager> {
         DefaultLocalAssetManager(
             baseDirPath = androidContext().filesDir.absolutePath,
-            assetReader = get()
+            assetReader = get(),
+            fileSystem = FileSystem.SYSTEM
         )
     }
+
+    single<MediaProcessor> { AndroidMediaProcessor(get()) }
 }

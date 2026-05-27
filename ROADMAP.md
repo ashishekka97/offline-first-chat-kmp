@@ -11,7 +11,7 @@ This roadmap outlines the implementation phases and technical tasks for the Echo
 **Goal:** Implement preferences, file management, and image processing utilities.
 *   [x] **Data Layer: Preferences DataStore**: Set up KMP DataStore for tracking application state (e.g., initial restore status).
 *   [x] **Shared: Local Asset Manager**: Implement basic file I/O for internal app storage using Okio.
-*   [ ] **Shared: Media Processor**: Implement image downsizing and thumbnail generation logic for offline performance.
+*   [x] **Shared: Media Processor**: Implement image downsizing and thumbnail generation logic for offline performance.
 
 ## Phase 3: Backup & Restore
 **Goal:** Implement the zero-network initial data restoration flow.
