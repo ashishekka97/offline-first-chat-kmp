@@ -16,7 +16,15 @@ data class ChatWithParticipants(
         )
     )
     val participants: List<ParticipantEntity>
-)
+) {
+    /**
+     * Helper to get the "other" participant (the agent or another user).
+     * For 1-on-1 chats, this returns the participant that is not the current user.
+     */
+    fun getOtherParticipant(currentUserId: String): ParticipantEntity? {
+        return participants.find { it.id != currentUserId }
+    }
+}
 
 data class MessageWithSender(
     @Embedded val message: MessageEntity,
@@ -25,4 +33,11 @@ data class MessageWithSender(
         entityColumn = "id"
     )
     val sender: ParticipantEntity
-)
+) {
+    /**
+     * Helper to check if the message was sent by the current user.
+     */
+    fun isFromUser(currentUserId: String): Boolean {
+        return message.senderId == currentUserId
+    }
+}

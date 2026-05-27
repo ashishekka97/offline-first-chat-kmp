@@ -27,9 +27,6 @@ interface ChatDao {
     suspend fun insertChat(chat: ChatEntity)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertParticipant(participant: ParticipantEntity)
-
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertChatParticipantCrossRef(crossRef: ChatParticipantCrossRef)
 
     @Update
