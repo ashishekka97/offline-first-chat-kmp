@@ -37,6 +37,7 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             implementation(libs.koin.core)
+            implementation(libs.androidx.lifecycle.viewmodel)
 
             // Added for Room Database
             implementation(libs.androidx.room.runtime)
