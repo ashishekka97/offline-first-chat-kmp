@@ -1,5 +1,7 @@
 package me.ashishekka.echo.shared.data.file
 
+import me.ashishekka.echo.shared.domain.AssetError
+import me.ashishekka.echo.shared.domain.Result
 import okio.FileSystem
 import okio.Path
 import okio.Path.Companion.toPath
@@ -10,38 +12,38 @@ import okio.openZip
  * Interface for managing local application assets and internal storage files.
  */
 interface LocalAssetManager {
-    fun readText(fileName: String): String?
-    fun writeText(fileName: String, content: String)
-    fun readBytes(fileName: String): ByteArray?
-    fun writeBytes(fileName: String, bytes: ByteArray)
-    fun deleteFile(fileName: String): Boolean
+    fun readText(fileName: String): Result<String, AssetError>
+    fun writeText(fileName: String, content: String): Result<Unit, AssetError>
+    fun readBytes(fileName: String): Result<ByteArray, AssetError>
+    fun writeBytes(fileName: String, bytes: ByteArray): Result<Unit, AssetError>
+    fun deleteFile(fileName: String): Result<Unit, AssetError>
     fun getAbsolutePath(fileName: String): String
     fun exists(fileName: String): Boolean
-    fun readBundledAsset(fileName: String): String?
-    fun readBundledAssetBytes(fileName: String): ByteArray?
-    
+    fun readBundledAsset(fileName: String): Result<String, AssetError>
+    fun readBundledAssetBytes(fileName: String): Result<ByteArray, AssetError>
+
     /** Returns a [Source] for a bundled asset, suitable for memory-efficient streaming. */
-    fun bundledAssetSource(fileName: String): Source?
+    fun bundledAssetSource(fileName: String): Result<Source, AssetError>
 
     /** Copies a bundled asset to the local application storage. */
-    suspend fun copyBundledAssetToLocal(fileName: String): Boolean
+    suspend fun copyBundledAssetToLocal(fileName: String): Result<Unit, AssetError>
 
     /** Returns an Okio [FileSystem] for a ZIP archive stored locally. */
-    fun getZipFileSystem(fileName: String): FileSystem?
+    fun getZipFileSystem(fileName: String): Result<FileSystem, AssetError>
 
     /** Returns a [Source] for a file in local application storage. */
-    fun source(fileName: String): Source?
+    fun source(fileName: String): Result<Source, AssetError>
 }
 
 /**
  * Platform-agnostic interface for reading bundled application assets.
  */
 interface AssetReader {
-    fun readAsset(fileName: String): String?
-    fun readAssetBytes(fileName: String): ByteArray?
-    
+    fun readAsset(fileName: String): Result<String, AssetError>
+    fun readAssetBytes(fileName: String): Result<ByteArray, AssetError>
+
     /** Returns a [Source] for a bundled asset. */
-    fun readAssetSource(fileName: String): Source?
+    fun readAssetSource(fileName: String): Result<Source, AssetError>
 }
 
 class DefaultLocalAssetManager(
@@ -58,41 +60,63 @@ class DefaultLocalAssetManager(
         }
     }
 
-    override fun readText(fileName: String): String? {
+    override fun readText(fileName: String): Result<String, AssetError> {
         val filePath = basePath.resolve(fileName)
-        return if (fileSystem.exists(filePath)) {
-            fileSystem.read(filePath) { readUtf8() }
-        } else {
-            null
+        return try {
+            if (fileSystem.exists(filePath)) {
+                Result.Success(fileSystem.read(filePath) { readUtf8() })
+            } else {
+                Result.Failure(AssetError.NotFound)
+            }
+        } catch (e: Exception) {
+            Result.Failure(AssetError.Unknown(e))
         }
     }
 
-    override fun writeText(fileName: String, content: String) {
+    override fun writeText(fileName: String, content: String): Result<Unit, AssetError> {
         val filePath = basePath.resolve(fileName)
-        fileSystem.write(filePath) { writeUtf8(content) }
-    }
-
-    override fun readBytes(fileName: String): ByteArray? {
-        val filePath = basePath.resolve(fileName)
-        return if (fileSystem.exists(filePath)) {
-            fileSystem.read(filePath) { readByteArray() }
-        } else {
-            null
+        return try {
+            fileSystem.write(filePath) { writeUtf8(content) }
+            Result.Success(Unit)
+        } catch (e: Exception) {
+            Result.Failure(AssetError.WriteFailure(e.message ?: "Unknown error"))
         }
     }
 
-    override fun writeBytes(fileName: String, bytes: ByteArray) {
+    override fun readBytes(fileName: String): Result<ByteArray, AssetError> {
         val filePath = basePath.resolve(fileName)
-        fileSystem.write(filePath) { write(bytes) }
+        return try {
+            if (fileSystem.exists(filePath)) {
+                Result.Success(fileSystem.read(filePath) { readByteArray() })
+            } else {
+                Result.Failure(AssetError.NotFound)
+            }
+        } catch (e: Exception) {
+            Result.Failure(AssetError.Unknown(e))
+        }
     }
 
-    override fun deleteFile(fileName: String): Boolean {
+    override fun writeBytes(fileName: String, bytes: ByteArray): Result<Unit, AssetError> {
         val filePath = basePath.resolve(fileName)
-        return if (fileSystem.exists(filePath)) {
-            fileSystem.delete(filePath)
-            true
-        } else {
-            false
+        return try {
+            fileSystem.write(filePath) { write(bytes) }
+            Result.Success(Unit)
+        } catch (e: Exception) {
+            Result.Failure(AssetError.WriteFailure(e.message ?: "Unknown error"))
+        }
+    }
+
+    override fun deleteFile(fileName: String): Result<Unit, AssetError> {
+        val filePath = basePath.resolve(fileName)
+        return try {
+            if (fileSystem.exists(filePath)) {
+                fileSystem.delete(filePath)
+                Result.Success(Unit)
+            } else {
+                Result.Failure(AssetError.NotFound)
+            }
+        } catch (e: Exception) {
+            Result.Failure(AssetError.Unknown(e))
         }
     }
 
@@ -104,48 +128,61 @@ class DefaultLocalAssetManager(
         return fileSystem.exists(basePath.resolve(fileName))
     }
 
-    override fun readBundledAsset(fileName: String): String? {
+    override fun readBundledAsset(fileName: String): Result<String, AssetError> {
         return assetReader.readAsset(fileName)
     }
 
-    override fun readBundledAssetBytes(fileName: String): ByteArray? {
+    override fun readBundledAssetBytes(fileName: String): Result<ByteArray, AssetError> {
         return assetReader.readAssetBytes(fileName)
     }
 
-    override fun bundledAssetSource(fileName: String): Source? {
+    override fun bundledAssetSource(fileName: String): Result<Source, AssetError> {
         return assetReader.readAssetSource(fileName)
     }
 
-    override suspend fun copyBundledAssetToLocal(fileName: String): Boolean {
-        val source = bundledAssetSource(fileName) ?: return false
-        val destPath = basePath.resolve(fileName)
-        return try {
-            fileSystem.write(destPath) {
-                writeAll(source)
+    override suspend fun copyBundledAssetToLocal(fileName: String): Result<Unit, AssetError> {
+        return when (val sourceResult = bundledAssetSource(fileName)) {
+            is Result.Failure -> sourceResult
+            is Result.Success -> {
+                val source = sourceResult.data
+                val destPath = basePath.resolve(fileName)
+                try {
+                    fileSystem.write(destPath) {
+                        writeAll(source)
+                    }
+                    Result.Success(Unit)
+                } catch (e: Exception) {
+                    Result.Failure(AssetError.WriteFailure(e.message ?: "Unknown error"))
+                } finally {
+                    source.close()
+                }
             }
-            true
+        }
+    }
+
+    override fun getZipFileSystem(fileName: String): Result<FileSystem, AssetError> {
+        val filePath = basePath.resolve(fileName)
+        return try {
+            if (fileSystem.exists(filePath)) {
+                Result.Success(fileSystem.openZip(filePath))
+            } else {
+                Result.Failure(AssetError.NotFound)
+            }
         } catch (e: Exception) {
-            false
-        } finally {
-            source.close()
+            Result.Failure(AssetError.Unknown(e))
         }
     }
 
-    override fun getZipFileSystem(fileName: String): FileSystem? {
+    override fun source(fileName: String): Result<Source, AssetError> {
         val filePath = basePath.resolve(fileName)
-        return if (fileSystem.exists(filePath)) {
-            fileSystem.openZip(filePath)
-        } else {
-            null
-        }
-    }
-
-    override fun source(fileName: String): Source? {
-        val filePath = basePath.resolve(fileName)
-        return if (fileSystem.exists(filePath)) {
-            fileSystem.source(filePath)
-        } else {
-            null
+        return try {
+            if (fileSystem.exists(filePath)) {
+                Result.Success(fileSystem.source(filePath))
+            } else {
+                Result.Failure(AssetError.NotFound)
+            }
+        } catch (e: Exception) {
+            Result.Failure(AssetError.Unknown(e))
         }
     }
 }

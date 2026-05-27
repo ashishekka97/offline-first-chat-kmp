@@ -10,6 +10,9 @@ import me.ashishekka.echo.shared.data.entity.MessageType
 import me.ashishekka.echo.shared.data.file.LocalAssetManager
 import me.ashishekka.echo.shared.data.media.MediaProcessor
 import me.ashishekka.echo.shared.di.DispatcherProvider
+import me.ashishekka.echo.shared.domain.AssetError
+import me.ashishekka.echo.shared.domain.MediaError
+import me.ashishekka.echo.shared.domain.Result
 import okio.FileSystem
 import okio.Path.Companion.toPath
 import okio.Source
@@ -86,23 +89,35 @@ class MediaRestorationServiceTest {
 
     class FakeLocalAssetManager : LocalAssetManager {
         val storedFiles = mutableMapOf<String, ByteArray>()
-        override fun readText(fileName: String): String? = null
-        override fun writeText(fileName: String, content: String) {}
-        override fun readBytes(fileName: String): ByteArray? = storedFiles[fileName]
-        override fun writeBytes(fileName: String, bytes: ByteArray) { storedFiles[fileName] = bytes }
-        override fun deleteFile(fileName: String): Boolean = false
+        override fun readText(fileName: String): Result<String, AssetError> = Result.Failure(AssetError.NotFound)
+        override fun writeText(fileName: String, content: String): Result<Unit, AssetError> {
+            storedFiles[fileName] = content.encodeToByteArray()
+            return Result.Success(Unit)
+        }
+        override fun readBytes(fileName: String): Result<ByteArray, AssetError> {
+            val bytes = storedFiles[fileName]
+            return if (bytes != null) Result.Success(bytes) else Result.Failure(AssetError.NotFound)
+        }
+        override fun writeBytes(fileName: String, bytes: ByteArray): Result<Unit, AssetError> {
+            storedFiles[fileName] = bytes
+            return Result.Success(Unit)
+        }
+        override fun deleteFile(fileName: String): Result<Unit, AssetError> {
+            storedFiles.remove(fileName)
+            return Result.Success(Unit)
+        }
         override fun getAbsolutePath(fileName: String): String = "/local/$fileName"
         override fun exists(fileName: String): Boolean = storedFiles.containsKey(fileName)
-        override fun readBundledAsset(fileName: String): String? = null
-        override fun readBundledAssetBytes(fileName: String): ByteArray? = null
-        override fun bundledAssetSource(fileName: String): Source? = null
-        override suspend fun copyBundledAssetToLocal(fileName: String): Boolean = false
-        override fun getZipFileSystem(fileName: String): FileSystem? = null
-        override fun source(fileName: String): Source? = null
+        override fun readBundledAsset(fileName: String): Result<String, AssetError> = Result.Failure(AssetError.NotFound)
+        override fun readBundledAssetBytes(fileName: String): Result<ByteArray, AssetError> = Result.Failure(AssetError.NotFound)
+        override fun bundledAssetSource(fileName: String): Result<Source, AssetError> = Result.Failure(AssetError.NotFound)
+        override suspend fun copyBundledAssetToLocal(fileName: String): Result<Unit, AssetError> = Result.Failure(AssetError.NotFound)
+        override fun getZipFileSystem(fileName: String): Result<FileSystem, AssetError> = Result.Failure(AssetError.NotFound)
+        override fun source(fileName: String): Result<Source, AssetError> = Result.Failure(AssetError.NotFound)
     }
 
     class FakeMediaProcessor : MediaProcessor {
-        override suspend fun downsizeImage(imageData: ByteArray, maxWidth: Int, maxHeight: Int, quality: Int): ByteArray? = imageData
-        override suspend fun generateThumbnail(imageData: ByteArray, maxDimension: Int, quality: Int): ByteArray? = byteArrayOf(0)
+        override suspend fun downsizeImage(imageData: ByteArray, maxWidth: Int, maxHeight: Int, quality: Int): Result<ByteArray, MediaError> = Result.Success(imageData)
+        override suspend fun generateThumbnail(imageData: ByteArray, maxDimension: Int, quality: Int): Result<ByteArray, MediaError> = Result.Success(byteArrayOf(0))
     }
 }

@@ -5,10 +5,9 @@ import me.ashishekka.echo.shared.data.entity.MessageEntity
 import me.ashishekka.echo.shared.data.file.LocalAssetManager
 import me.ashishekka.echo.shared.data.media.MediaProcessor
 import me.ashishekka.echo.shared.di.DispatcherProvider
+import me.ashishekka.echo.shared.domain.Result
 import okio.FileSystem
 import okio.Path.Companion.toPath
-import okio.buffer
-import okio.use
 
 /**
  * Service responsible for extracting media assets from the backup ZIP and generating thumbnails.
@@ -52,15 +51,22 @@ class DefaultMediaRestorationService(
 
                 // 2. Write main file to local storage
                 val localFileName = "file_${message.id}_${bundledAssetName}"
-                localAssetManager.writeBytes(localFileName, fileBytes)
+                val writeResult = localAssetManager.writeBytes(localFileName, fileBytes)
+                if (writeResult is Result.Failure) return@map message
+                
                 val localFilePath = localAssetManager.getAbsolutePath(localFileName)
 
                 // 3. Generate thumbnail
-                val thumbBytes = mediaProcessor.generateThumbnail(fileBytes)
-                val thumbPath = if (thumbBytes != null) {
+                val thumbResult = mediaProcessor.generateThumbnail(fileBytes)
+                val thumbPath = if (thumbResult is Result.Success) {
+                    val thumbBytes = thumbResult.data
                     val thumbFileName = "thumb_${message.id}_${bundledAssetName}"
-                    localAssetManager.writeBytes(thumbFileName, thumbBytes)
-                    localAssetManager.getAbsolutePath(thumbFileName)
+                    val thumbWriteResult = localAssetManager.writeBytes(thumbFileName, thumbBytes)
+                    if (thumbWriteResult is Result.Success) {
+                        localAssetManager.getAbsolutePath(thumbFileName)
+                    } else {
+                        ""
+                    }
                 } else {
                     ""
                 }

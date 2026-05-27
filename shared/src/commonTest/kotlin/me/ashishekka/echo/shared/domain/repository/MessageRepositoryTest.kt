@@ -8,6 +8,7 @@ import me.ashishekka.echo.shared.data.entity.ChatEntity
 import me.ashishekka.echo.shared.data.entity.ParticipantEntity
 import me.ashishekka.echo.shared.data.repository.OfflineFirstMessageRepository
 import me.ashishekka.echo.shared.domain.Constants
+import me.ashishekka.echo.shared.domain.Result
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -45,9 +46,12 @@ class MessageRepositoryTest {
         db.participantDao().insertParticipant(agent)
         
         // Send from User
-        repository.sendMessage("msg_1", "chat_1", user.id, "Hello from me")
+        val result1 = repository.sendMessage("msg_1", "chat_1", user.id, "Hello from me")
+        assertTrue(result1 is Result.Success)
+
         // Send from Agent
-        repository.sendMessage("msg_2", "chat_1", agent.id, "Hello from AI")
+        val result2 = repository.sendMessage("msg_2", "chat_1", agent.id, "Hello from AI")
+        assertTrue(result2 is Result.Success)
         
         val messages = messageDao.getMessagesForChat("chat_1").getData()
         assertEquals(2, messages.size)

@@ -9,6 +9,7 @@ import kotlinx.cinterop.useContents
 import kotlinx.cinterop.usePinned
 import kotlinx.coroutines.test.runTest
 import me.ashishekka.echo.shared.di.DefaultDispatcherProvider
+import me.ashishekka.echo.shared.domain.Result
 import platform.CoreGraphics.CGRectMake
 import platform.CoreGraphics.CGSizeMake
 import platform.Foundation.NSData
@@ -21,7 +22,6 @@ import platform.UIKit.UIImageJPEGRepresentation
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
-import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalForeignApi::class)
@@ -38,10 +38,11 @@ class IosMediaProcessorTest {
         // 2. Downsize to 1024x1024
         val maxWidth = 1024
         val maxHeight = 1024
-        val downsizedBytes = processor.downsizeImage(originalBytes, maxWidth, maxHeight)
+        val result = processor.downsizeImage(originalBytes, maxWidth, maxHeight)
 
         // 3. Verify
-        assertNotNull(downsizedBytes)
+        assertTrue(result is Result.Success)
+        val downsizedBytes = result.data
         val downsizedImage = downsizedBytes.toUIImage()
         assertNotNull(downsizedImage)
         
@@ -60,9 +61,10 @@ class IosMediaProcessorTest {
         val originalBytes = createDummyImageBytes(originalWidth, originalHeight)
 
         val maxDimension = 256
-        val thumbBytes = processor.generateThumbnail(originalBytes, maxDimension)
+        val result = processor.generateThumbnail(originalBytes, maxDimension)
 
-        assertNotNull(thumbBytes)
+        assertTrue(result is Result.Success)
+        val thumbBytes = result.data
         val thumbImage = thumbBytes.toUIImage()
         assertNotNull(thumbImage)
 
@@ -83,9 +85,10 @@ class IosMediaProcessorTest {
 
         val maxWidth = 1024
         val maxHeight = 1024
-        val processedBytes = processor.downsizeImage(originalBytes, maxWidth, maxHeight)
+        val result = processor.downsizeImage(originalBytes, maxWidth, maxHeight)
 
-        assertNotNull(processedBytes)
+        assertTrue(result is Result.Success)
+        val processedBytes = result.data
         val processedImage = processedBytes.toUIImage()
         assertNotNull(processedImage)
         
@@ -100,7 +103,7 @@ class IosMediaProcessorTest {
     fun testInvalidImageData() = runTest {
         val invalidBytes = byteArrayOf(1, 2, 3, 4, 5)
         val result = processor.downsizeImage(invalidBytes)
-        assertNull(result)
+        assertTrue(result is Result.Failure)
     }
 
     private fun createDummyImageBytes(width: Double, height: Double): ByteArray {

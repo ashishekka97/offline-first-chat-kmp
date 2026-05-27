@@ -2,6 +2,8 @@ package me.ashishekka.echo.shared.domain.repository
 
 import androidx.paging.PagingData
 import kotlinx.coroutines.flow.Flow
+import me.ashishekka.echo.shared.domain.DatabaseError
+import me.ashishekka.echo.shared.domain.Result
 import me.ashishekka.echo.shared.domain.model.Chat
 
 /**
@@ -21,15 +23,15 @@ interface ChatRepository {
     /**
      * Creates a new chat with the given [title] and [participantIds].
      */
-    suspend fun createChat(id: String, title: String, participantIds: List<String>)
+    suspend fun createChat(id: String, title: String, participantIds: List<String>): Result<Unit, DatabaseError>
 
     /**
      * Updates the last message details for a chat.
      */
-    suspend fun updateLastMessage(chatId: String, message: String, timestamp: Long)
+    suspend fun updateLastMessage(chatId: String, message: String, timestamp: Long): Result<Unit, DatabaseError>
 
     /**
      * Deletes a chat and all its messages.
      */
-    suspend fun deleteChat(chatId: String)
+    suspend fun deleteChat(chatId: String): Result<Unit, DatabaseError>
 }

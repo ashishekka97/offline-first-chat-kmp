@@ -1,5 +1,8 @@
 package me.ashishekka.echo.shared.data.media
 
+import me.ashishekka.echo.shared.domain.MediaError
+import me.ashishekka.echo.shared.domain.Result
+
 /**
  * Interface for processing media files, specifically images for downsizing and thumbnail generation.
  */
@@ -11,14 +14,14 @@ interface MediaProcessor {
      * @param maxWidth The maximum width of the resulting image.
      * @param maxHeight The maximum height of the resulting image.
      * @param quality The compression quality (0-100).
-     * @return The bytes of the downsized image, or null if processing fails.
+     * @return A [Result] containing the bytes of the downsized image or a [MediaError].
      */
     suspend fun downsizeImage(
         imageData: ByteArray,
         maxWidth: Int = 1024,
         maxHeight: Int = 1024,
         quality: Int = 80
-    ): ByteArray?
+    ): Result<ByteArray, MediaError>
 
     /**
      * Generates a thumbnail for an image.
@@ -26,11 +29,11 @@ interface MediaProcessor {
      * @param imageData The raw bytes of the image.
      * @param maxDimension The maximum width or height of the resulting thumbnail.
      * @param quality The compression quality (0-100).
-     * @return The bytes of the thumbnail, or null if processing fails.
+     * @return A [Result] containing the bytes of the thumbnail or a [MediaError].
      */
     suspend fun generateThumbnail(
         imageData: ByteArray,
         maxDimension: Int = 256,
         quality: Int = 60
-    ): ByteArray?
+    ): Result<ByteArray, MediaError>
 }

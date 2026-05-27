@@ -10,9 +10,10 @@ import kotlinx.coroutines.flow.map
 import kotlinx.datetime.Clock
 import me.ashishekka.echo.shared.data.dao.ChatDao
 import me.ashishekka.echo.shared.data.entity.ChatEntity
-import me.ashishekka.echo.shared.data.entity.ChatParticipantCrossRef
 import me.ashishekka.echo.shared.data.mapper.toDomain
 import me.ashishekka.echo.shared.domain.Constants
+import me.ashishekka.echo.shared.domain.DatabaseError
+import me.ashishekka.echo.shared.domain.Result
 import me.ashishekka.echo.shared.domain.model.Chat
 import me.ashishekka.echo.shared.domain.repository.ChatRepository
 
@@ -36,27 +37,44 @@ class OfflineFirstChatRepository(
         return chatDao.getChatById(id).map { it?.toDomain(Constants.CURRENT_USER_ID) }
     }
 
-    override suspend fun createChat(id: String, title: String, participantIds: List<String>) {
-        val now = Clock.System.now().toEpochMilliseconds()
-        val chatEntity = ChatEntity(
-            id = id,
-            title = title,
-            lastMessage = null,
-            lastMessageTimestamp = now,
-            createdAt = now,
-            updatedAt = now
-        )
-        chatDao.insertChatWithParticipants(chatEntity, participantIds)
+    override suspend fun createChat(id: String, title: String, participantIds: List<String>): Result<Unit, DatabaseError> {
+        return try {
+            val now = Clock.System.now().toEpochMilliseconds()
+            val chatEntity = ChatEntity(
+                id = id,
+                title = title,
+                lastMessage = null,
+                lastMessageTimestamp = now,
+                createdAt = now,
+                updatedAt = now
+            )
+            chatDao.insertChatWithParticipants(chatEntity, participantIds)
+            Result.Success(Unit)
+        } catch (e: Exception) {
+            Result.Failure(DatabaseError.Unknown(e))
+        }
     }
 
-    override suspend fun updateLastMessage(chatId: String, message: String, timestamp: Long) {
-        chatDao.updateLastMessage(chatId, message, timestamp)
+    override suspend fun updateLastMessage(chatId: String, message: String, timestamp: Long): Result<Unit, DatabaseError> {
+        return try {
+            chatDao.updateLastMessage(chatId, message, timestamp)
+            Result.Success(Unit)
+        } catch (e: Exception) {
+            Result.Failure(DatabaseError.Unknown(e))
+        }
     }
 
-    override suspend fun deleteChat(chatId: String) {
-        // ChatDao uses CASCADE for messages, so deleting the chat deletes its messages too.
-        val chatWithParticipants = chatDao.getChatById(chatId).firstOrNull()
-        chatWithParticipants?.chat?.let { chatDao.deleteChat(it) }
+    override suspend fun deleteChat(chatId: String): Result<Unit, DatabaseError> {
+        return try {
+            // ChatDao uses CASCADE for messages, so deleting the chat deletes its messages too.
+            val chatWithParticipants = chatDao.getChatById(chatId).firstOrNull()
+            chatWithParticipants?.chat?.let { 
+                chatDao.deleteChat(it)
+                Result.Success(Unit)
+            } ?: Result.Failure(DatabaseError.NotFound)
+        } catch (e: Exception) {
+            Result.Failure(DatabaseError.Unknown(e))
+        }
     }
 }
 

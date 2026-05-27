@@ -1,14 +1,12 @@
 package me.ashishekka.echo.shared.data.backup
 
+import me.ashishekka.echo.shared.domain.Result
 import okio.Path.Companion.toPath
 import okio.fakefilesystem.FakeFileSystem
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
-import kotlin.test.assertNull
 import kotlin.test.assertTrue
-import kotlin.test.assertFalse
 
 class BackupParserTest {
 
@@ -66,9 +64,10 @@ class BackupParserTest {
 
     @Test
     fun testParseAndValidateValidSeedData() {
-        val data = parser.parseSeedData(fileSystem, "data.json")
-        assertNotNull(data)
-        assertTrue(parser.validateSeedData(data, fileSystem))
+        val result = parser.parseSeedData(fileSystem, "data.json")
+        assertTrue(result is Result.Success)
+        val data = result.data
+        assertTrue(parser.validateSeedData(data, fileSystem) is Result.Success)
         assertEquals("u1", data.participants[0].id)
     }
 
@@ -79,7 +78,7 @@ class BackupParserTest {
             chats = listOf(ChatDto("c1", "Topic", listOf("u1", "a1"), null, 0, 0, 0)),
             messages = emptyMap()
         )
-        assertFalse(parser.validateSeedData(invalidData, fileSystem))
+        assertTrue(parser.validateSeedData(invalidData, fileSystem) is Result.Failure)
     }
 
     @Test
@@ -89,7 +88,7 @@ class BackupParserTest {
             chats = listOf(ChatDto("c1", "Topic", listOf("u1"), null, 0, 0, 0)),
             messages = mapOf("unknown_chat" to listOf(MessageDto("m1", "Hi", "text", "u1", 0)))
         )
-        assertFalse(parser.validateSeedData(invalidData, fileSystem))
+        assertTrue(parser.validateSeedData(invalidData, fileSystem) is Result.Failure)
     }
 
     @Test
@@ -97,7 +96,7 @@ class BackupParserTest {
         // Delete the dummy asset to simulate missing file
         fileSystem.delete("test.jpg".toPath())
 
-        val data = parser.parseSeedData(fileSystem, "data.json")
-        assertNull(data, "Should return null if physical asset is missing during internal validation")
+        val result = parser.parseSeedData(fileSystem, "data.json")
+        assertTrue(result is Result.Failure, "Should return failure if physical asset is missing during internal validation")
     }
 }

@@ -21,8 +21,8 @@ This roadmap outlines the implementation phases and technical tasks for the Echo
 ## Phase 3.5: Architectural Hardening
 **Goal:** Formalize the data layer and improve system resilience.
 *   [x] **Hardening: Chat & Message Repositories**: Abstract DAOs behind Repositories to act as a Single Source of Truth and handle Entity-to-Domain mapping.
-*   [ ] **Hardening: Structured Error Handling**: Replace nullable/boolean returns in I/O and Media services with Sealed Result types for better error propagation.
-*   [ ] **Hardening: Atomic DAO Operations**: Audit and wrap complex multi-table operations in `@Transaction` blocks.
+*   [x] **Hardening: Structured Error Handling**: Replace nullable/boolean returns in I/O and Media services with Sealed Result types for better error propagation.
+*   [x] **Hardening: Atomic DAO Operations**: Audit and wrap complex multi-table operations in `@Transaction` blocks.
 
 ## Phase 4: AI & Domain Logic
 **Goal:** Implement the reactive simulation engine and shared presentation layer.

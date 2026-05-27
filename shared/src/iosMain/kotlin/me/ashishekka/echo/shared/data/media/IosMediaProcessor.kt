@@ -9,6 +9,8 @@ import kotlinx.cinterop.useContents
 import kotlinx.cinterop.usePinned
 import kotlinx.coroutines.withContext
 import me.ashishekka.echo.shared.di.DispatcherProvider
+import me.ashishekka.echo.shared.domain.MediaError
+import me.ashishekka.echo.shared.domain.Result
 import platform.CoreGraphics.CGRectMake
 import platform.CoreGraphics.CGSizeMake
 import platform.Foundation.NSData
@@ -30,9 +32,9 @@ class IosMediaProcessor(
         maxWidth: Int,
         maxHeight: Int,
         quality: Int
-    ): ByteArray? = withContext(dispatcherProvider.default) {
+    ): Result<ByteArray, MediaError> = withContext(dispatcherProvider.default) {
         try {
-            val uiImage = imageData.toUIImage() ?: return@withContext null
+            val uiImage = imageData.toUIImage() ?: return@withContext Result.Failure(MediaError.InvalidData)
             
             val currentWidth = uiImage.size.useContents { width }
             val currentHeight = uiImage.size.useContents { height }
@@ -58,11 +60,18 @@ class IosMediaProcessor(
                 uiImage
             }
 
-            scaledImage?.let {
-                UIImageJPEGRepresentation(it, quality.toDouble() / 100.0)?.toByteArray()
+            if (scaledImage != null) {
+                val data = UIImageJPEGRepresentation(scaledImage, quality.toDouble() / 100.0)
+                if (data != null) {
+                    Result.Success(data.toByteArray())
+                } else {
+                    Result.Failure(MediaError.ProcessingFailed)
+                }
+            } else {
+                Result.Failure(MediaError.ProcessingFailed)
             }
         } catch (e: Exception) {
-            null
+            Result.Failure(MediaError.Unknown(e))
         }
     }
 
@@ -70,7 +79,7 @@ class IosMediaProcessor(
         imageData: ByteArray,
         maxDimension: Int,
         quality: Int
-    ): ByteArray? = downsizeImage(imageData, maxDimension, maxDimension, quality)
+    ): Result<ByteArray, MediaError> = downsizeImage(imageData, maxDimension, maxDimension, quality)
 
     @OptIn(ExperimentalForeignApi::class, BetaInteropApi::class)
     private fun ByteArray.toNSData(): NSData = usePinned {

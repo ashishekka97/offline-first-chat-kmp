@@ -6,9 +6,7 @@ import kotlinx.datetime.Clock
 import me.ashishekka.echo.shared.data.PreferenceStorage
 import me.ashishekka.echo.shared.data.file.LocalAssetManager
 import me.ashishekka.echo.shared.di.DispatcherProvider
-import okio.FileSystem
-import okio.Path.Companion.toPath
-import okio.use
+import me.ashishekka.echo.shared.domain.Result
 
 /**
  * Result of the backup restoration process.
@@ -52,20 +50,28 @@ class DefaultBackupRestorationEngine(
 
         try {
             // 2. Hardening: Clear any existing partial data before starting
-            seedDataRepository.clearExistingData()
+            val clearResult = seedDataRepository.clearExistingData()
+            if (clearResult is Result.Failure) {
+                return@withContext RestorationResult.Failure("Failed to clear existing data: ${clearResult.error}")
+            }
 
             // 3. Copy ZIP from assets to local storage
-            if (!localAssetManager.copyBundledAssetToLocal(zipFileName)) {
-                return@withContext RestorationResult.Failure("Failed to copy bundled asset: $zipFileName")
+            val copyResult = localAssetManager.copyBundledAssetToLocal(zipFileName)
+            if (copyResult is Result.Failure) {
+                return@withContext RestorationResult.Failure("Failed to copy bundled asset: $zipFileName, error: ${copyResult.error}")
             }
 
             // 4. Mount ZIP FileSystem
-            val zipFs = localAssetManager.getZipFileSystem(zipFileName) 
-                ?: return@withContext RestorationResult.Failure("Failed to open ZIP filesystem: $zipFileName")
+            val zipFs = when (val zipFsResult = localAssetManager.getZipFileSystem(zipFileName)) {
+                is Result.Failure -> return@withContext RestorationResult.Failure("Failed to open ZIP filesystem: $zipFileName, error: ${zipFsResult.error}")
+                is Result.Success -> zipFsResult.data
+            }
             
             // 5. Parse Seed Data
-            val seedDataDto = backupParser.parseSeedData(zipFs) 
-                ?: return@withContext RestorationResult.Failure("Failed to parse or validate seed data from ZIP")
+            val seedDataDto = when (val parseResult = backupParser.parseSeedData(zipFs)) {
+                is Result.Failure -> return@withContext RestorationResult.Failure("Failed to parse or validate seed data: ${parseResult.error}")
+                is Result.Success -> parseResult.data
+            }
 
             // 6. Map DTOs to Entities (using relative timestamps)
             val baseTime = clock.now().toEpochMilliseconds()
@@ -82,15 +88,21 @@ class DefaultBackupRestorationEngine(
             val processedMessages = mediaRestorationService.processMedia(allMessages, zipFs)
 
             // 8. Persist to Database
-            seedDataRepository.saveSeedData(
+            val saveResult = seedDataRepository.saveSeedData(
                 participants = participants,
                 chats = chats,
                 chatCrossRefs = crossRefs,
                 messages = processedMessages
             )
+            if (saveResult is Result.Failure) {
+                return@withContext RestorationResult.Failure("Failed to save seed data: ${saveResult.error}")
+            }
 
             // 9. Mark as completed
-            preferenceStorage.setRestoreCompleted(true)
+            val prefResult = preferenceStorage.setRestoreCompleted(true)
+            if (prefResult is Result.Failure) {
+                return@withContext RestorationResult.Failure("Failed to mark restoration as completed: ${prefResult.error}")
+            }
             RestorationResult.Success
         } catch (e: Exception) {
             RestorationResult.Failure("Restoration failed due to unexpected error: ${e.message}", e)
