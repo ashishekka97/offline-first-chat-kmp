@@ -41,6 +41,10 @@ kotlin {
             // Added for Room Database
             implementation(libs.androidx.room.runtime)
             implementation(libs.androidx.sqlite.bundled)
+
+            // Added for DataStore
+            implementation(libs.androidx.datastore.preferences)
+            implementation(libs.okio)
         }
         androidMain.dependencies {
             implementation(libs.koin.android)
@@ -53,7 +57,9 @@ room {
     schemaDirectory("$projectDir/schemas")
 }
 
-// Added for Room KSP compiler
+// Added for Room KSP compiler (target-specific to avoid common metadata issues)
 dependencies {
-    ksp(libs.androidx.room.compiler)
+    add("kspAndroid", libs.androidx.room.compiler)
+    add("kspIosArm64", libs.androidx.room.compiler)
+    add("kspIosSimulatorArm64", libs.androidx.room.compiler)
 }
