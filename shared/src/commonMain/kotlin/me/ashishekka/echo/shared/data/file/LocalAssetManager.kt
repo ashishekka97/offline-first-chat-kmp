@@ -4,6 +4,7 @@ import okio.FileSystem
 import okio.Path
 import okio.Path.Companion.toPath
 import okio.Source
+import okio.openZip
 
 /**
  * Interface for managing local application assets and internal storage files.
@@ -21,6 +22,15 @@ interface LocalAssetManager {
     
     /** Returns a [Source] for a bundled asset, suitable for memory-efficient streaming. */
     fun bundledAssetSource(fileName: String): Source?
+
+    /** Copies a bundled asset to the local application storage. */
+    suspend fun copyBundledAssetToLocal(fileName: String): Boolean
+
+    /** Returns an Okio [FileSystem] for a ZIP archive stored locally. */
+    fun getZipFileSystem(fileName: String): FileSystem?
+
+    /** Returns a [Source] for a file in local application storage. */
+    fun source(fileName: String): Source?
 }
 
 /**
@@ -104,5 +114,38 @@ class DefaultLocalAssetManager(
 
     override fun bundledAssetSource(fileName: String): Source? {
         return assetReader.readAssetSource(fileName)
+    }
+
+    override suspend fun copyBundledAssetToLocal(fileName: String): Boolean {
+        val source = bundledAssetSource(fileName) ?: return false
+        val destPath = basePath.resolve(fileName)
+        return try {
+            fileSystem.write(destPath) {
+                writeAll(source)
+            }
+            true
+        } catch (e: Exception) {
+            false
+        } finally {
+            source.close()
+        }
+    }
+
+    override fun getZipFileSystem(fileName: String): FileSystem? {
+        val filePath = basePath.resolve(fileName)
+        return if (fileSystem.exists(filePath)) {
+            fileSystem.openZip(filePath)
+        } else {
+            null
+        }
+    }
+
+    override fun source(fileName: String): Source? {
+        val filePath = basePath.resolve(fileName)
+        return if (fileSystem.exists(filePath)) {
+            fileSystem.source(filePath)
+        } else {
+            null
+        }
     }
 }

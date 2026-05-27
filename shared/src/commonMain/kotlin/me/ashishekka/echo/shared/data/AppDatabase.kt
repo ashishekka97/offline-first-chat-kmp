@@ -8,6 +8,7 @@ import androidx.room.TypeConverters
 import me.ashishekka.echo.shared.data.dao.ChatDao
 import me.ashishekka.echo.shared.data.dao.MessageDao
 import me.ashishekka.echo.shared.data.dao.ParticipantDao
+import me.ashishekka.echo.shared.data.dao.RestorationDao
 import me.ashishekka.echo.shared.data.entity.ChatEntity
 import me.ashishekka.echo.shared.data.entity.ChatParticipantCrossRef
 import me.ashishekka.echo.shared.data.entity.MessageEntity
@@ -40,6 +41,9 @@ abstract class AppDatabase : RoomDatabase() {
 
     /** Provides access to participant-related database operations. */
     abstract fun participantDao(): ParticipantDao
+
+    /** Provides access to specialized restoration operations. */
+    abstract fun restorationDao(): RestorationDao
 }
 
 /**

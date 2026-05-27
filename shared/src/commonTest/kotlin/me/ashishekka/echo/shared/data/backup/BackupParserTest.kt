@@ -1,10 +1,6 @@
 package me.ashishekka.echo.shared.data.backup
 
-import me.ashishekka.echo.shared.data.file.AssetReader
-import me.ashishekka.echo.shared.data.file.DefaultLocalAssetManager
-import me.ashishekka.echo.shared.data.file.LocalAssetManager
-import okio.Buffer
-import okio.Source
+import okio.Path.Companion.toPath
 import okio.fakefilesystem.FakeFileSystem
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -17,8 +13,6 @@ import kotlin.test.assertFalse
 class BackupParserTest {
 
     private lateinit var fileSystem: FakeFileSystem
-    private lateinit var assetReader: AssetReader
-    private lateinit var manager: LocalAssetManager
     private lateinit var parser: BackupParser
 
     private val validJson = """
@@ -58,27 +52,23 @@ class BackupParserTest {
     @BeforeTest
     fun setup() {
         fileSystem = FakeFileSystem()
-        assetReader = object : AssetReader {
-            override fun readAsset(fileName: String): String? = null // Should use source
-            override fun readAssetBytes(fileName: String): ByteArray? = null
-
-            override fun readAssetSource(fileName: String): Source? {
-                return when (fileName) {
-                    "seed_data.json" -> Buffer().writeUtf8(validJson)
-                    "test.jpg" -> Buffer().write(byteArrayOf(0))
-                    else -> null
-                }
-            }
+        parser = DefaultBackupParser()
+        
+        // Write the valid JSON to the fake file system
+        fileSystem.write("data.json".toPath()) {
+            writeUtf8(validJson)
         }
-        manager = DefaultLocalAssetManager("/data", assetReader, fileSystem)
-        parser = DefaultBackupParser(manager)
+        // Write the dummy asset to the fake file system
+        fileSystem.write("test.jpg".toPath()) {
+            write(byteArrayOf(0))
+        }
     }
 
     @Test
     fun testParseAndValidateValidSeedData() {
-        val data = parser.parseSeedData("seed_data.json")
+        val data = parser.parseSeedData(fileSystem, "data.json")
         assertNotNull(data)
-        assertTrue(parser.validateSeedData(data))
+        assertTrue(parser.validateSeedData(data, fileSystem))
         assertEquals("u1", data.participants[0].id)
     }
 
@@ -89,7 +79,7 @@ class BackupParserTest {
             chats = listOf(ChatDto("c1", "Topic", listOf("u1", "a1"), null, 0, 0, 0)),
             messages = emptyMap()
         )
-        assertFalse(parser.validateSeedData(invalidData))
+        assertFalse(parser.validateSeedData(invalidData, fileSystem))
     }
 
     @Test
@@ -99,22 +89,15 @@ class BackupParserTest {
             chats = listOf(ChatDto("c1", "Topic", listOf("u1"), null, 0, 0, 0)),
             messages = mapOf("unknown_chat" to listOf(MessageDto("m1", "Hi", "text", "u1", 0)))
         )
-        assertFalse(parser.validateSeedData(invalidData))
+        assertFalse(parser.validateSeedData(invalidData, fileSystem))
     }
 
     @Test
     fun testValidationFailsWithMissingPhysicalAsset() {
-        assetReader = object : AssetReader {
-            override fun readAsset(fileName: String): String? = null
-            override fun readAssetBytes(fileName: String): ByteArray? = null
-            override fun readAssetSource(fileName: String): Source? {
-                return if (fileName == "seed_data.json") Buffer().writeUtf8(validJson) else null
-            }
-        }
-        manager = DefaultLocalAssetManager("/data", assetReader, fileSystem)
-        parser = DefaultBackupParser(manager)
+        // Delete the dummy asset to simulate missing file
+        fileSystem.delete("test.jpg".toPath())
 
-        val data = parser.parseSeedData("seed_data.json")
-        assertNull(data, "Should return null if physical asset is missing")
+        val data = parser.parseSeedData(fileSystem, "data.json")
+        assertNull(data, "Should return null if physical asset is missing during internal validation")
     }
 }

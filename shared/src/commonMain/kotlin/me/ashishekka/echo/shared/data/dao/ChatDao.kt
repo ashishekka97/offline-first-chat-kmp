@@ -55,4 +55,16 @@ interface ChatDao {
      */
     @Delete
     suspend fun deleteChat(chat: ChatEntity)
+
+    /**
+     * Deletes all chats from the database.
+     */
+    @Query("DELETE FROM chats")
+    suspend fun deleteAllChats()
+
+    /**
+     * Returns a list of all chat IDs.
+     */
+    @Query("SELECT id FROM chats")
+    suspend fun getAllChatIds(): List<String>
 }
