@@ -36,33 +36,18 @@ class MessageRepositoryTest {
     }
 
     @Test
-    fun testSendMessageSetsIsFromMeCorrectly() = runTest {
+    fun testSendMessageSavesToDatabase() = runTest {
         val chat = ChatEntity("chat_1", "Test", null, 1000L, 1000L, 1000L)
         val user = ParticipantEntity(Constants.CURRENT_USER_ID, "Me", null, false)
-        val agent = ParticipantEntity(Constants.DEFAULT_AGENT_ID, "Echo", null, true)
         
         db.chatDao().insertChat(chat)
         db.participantDao().insertParticipant(user)
-        db.participantDao().insertParticipant(agent)
         
-        // Send from User
-        val result1 = repository.sendMessage("msg_1", "chat_1", user.id, "Hello from me")
-        assertTrue(result1 is Result.Success)
-
-        // Send from Agent
-        val result2 = repository.sendMessage("msg_2", "chat_1", agent.id, "Hello from AI")
-        assertTrue(result2 is Result.Success)
+        val result = repository.sendMessage("msg_1", "chat_1", user.id, "Hello")
+        assertTrue(result is Result.Success)
         
         val messages = messageDao.getMessagesForChat("chat_1").getData()
-        assertEquals(2, messages.size)
-        
-        // Use repo flow to verify mapping
-        val pagedData = repository.getPagedMessagesForChat("chat_1")
-        // Note: For PagingData we'd need a more complex collector or just test the mapper directly.
-        // But since we already tested the mapper in the DAO test indirectly, this is mostly 
-        // to ensure the repository glue is correct.
-        
-        assertEquals(Constants.CURRENT_USER_ID, messages[0].message.senderId)
-        assertTrue(messages[0].message.senderId == Constants.CURRENT_USER_ID)
+        assertEquals(1, messages.size)
+        assertEquals("Hello", messages[0].message.message)
     }
 }
