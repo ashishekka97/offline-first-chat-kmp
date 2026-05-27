@@ -4,6 +4,10 @@ import androidx.room.Embedded
 import androidx.room.Junction
 import androidx.room.Relation
 
+/**
+ * A data class representing a chat conversation along with its participants.
+ * This uses Room's @Relation to automatically fetch joined data.
+ */
 data class ChatWithParticipants(
     @Embedded val chat: ChatEntity,
     @Relation(
@@ -26,6 +30,9 @@ data class ChatWithParticipants(
     }
 }
 
+/**
+ * A data class representing a message along with its sender's profile details.
+ */
 data class MessageWithSender(
     @Embedded val message: MessageEntity,
     @Relation(
