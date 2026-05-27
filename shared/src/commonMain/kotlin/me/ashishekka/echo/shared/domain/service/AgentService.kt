@@ -131,7 +131,8 @@ class DefaultAgentService(
         private val IMAGE_REPLIES = listOf(
             "Check this out!" to "seed_flight_screenshot.jpg",
             "I found these options for you." to "seed_flight_options.jpg",
-            "Take a look at this data." to "seed_flight_screenshot.jpg"
+            "Take a look at this data." to "seed_flight_screenshot.jpg",
+            "Here is a random inspiration for you." to "https://picsum.photos/seed/echo_${Random.nextInt(1000)}/400/300"
         )
     }
 }
