@@ -4,6 +4,12 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 
+/**
+ * A cross-reference table that links [ChatEntity] and [ParticipantEntity] in a many-to-many relationship.
+ *
+ * @property chatId The ID of the chat.
+ * @property participantId The ID of the participant in that chat.
+ */
 @Entity(
     tableName = "chat_participants",
     primaryKeys = ["chatId", "participantId"],
