@@ -27,7 +27,7 @@ import me.ashishekka.echo.shared.data.entity.ParticipantEntity
         ParticipantEntity::class,
         ChatParticipantCrossRef::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = true
 )
 @ConstructedBy(AppDatabaseConstructor::class)

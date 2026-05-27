@@ -31,7 +31,7 @@ class ChatRepositoryTest {
         db = createDatabase(builder, kotlinx.coroutines.Dispatchers.Unconfined)
         chatDao = db.chatDao()
         participantDao = db.participantDao()
-        repository = OfflineFirstChatRepository(chatDao)
+        repository = OfflineFirstChatRepository(chatDao, db.messageDao())
     }
 
     @AfterTest

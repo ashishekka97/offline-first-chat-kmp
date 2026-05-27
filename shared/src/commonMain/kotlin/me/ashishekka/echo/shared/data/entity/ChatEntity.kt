@@ -1,6 +1,7 @@
 package me.ashishekka.echo.shared.data.entity
 
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
 /**
@@ -13,7 +14,12 @@ import androidx.room.PrimaryKey
  * @property createdAt The timestamp when the chat was created.
  * @property updatedAt The timestamp when the chat was last updated.
  */
-@Entity(tableName = "chats")
+@Entity(
+    tableName = "chats",
+    indices = [
+        Index(value = ["lastMessageTimestamp"])
+    ]
+)
 data class ChatEntity(
     @PrimaryKey
     val id: String,

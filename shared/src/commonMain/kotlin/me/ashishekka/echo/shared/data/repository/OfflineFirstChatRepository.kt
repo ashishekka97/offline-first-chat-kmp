@@ -9,7 +9,9 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.Clock
 import me.ashishekka.echo.shared.data.dao.ChatDao
+import me.ashishekka.echo.shared.data.dao.MessageDao
 import me.ashishekka.echo.shared.data.entity.ChatEntity
+import me.ashishekka.echo.shared.data.entity.MessageEntity
 import me.ashishekka.echo.shared.data.mapper.toDomain
 import me.ashishekka.echo.shared.domain.Constants
 import me.ashishekka.echo.shared.domain.DatabaseError
@@ -21,7 +23,8 @@ import me.ashishekka.echo.shared.domain.repository.ChatRepository
  * Offline-first implementation of [ChatRepository].
  */
 class OfflineFirstChatRepository(
-    private val chatDao: ChatDao
+    private val chatDao: ChatDao,
+    private val messageDao: MessageDao
 ) : ChatRepository {
 
     override fun getPagedChats(): Flow<PagingData<Chat>> {
@@ -55,6 +58,42 @@ class OfflineFirstChatRepository(
         }
     }
 
+    override suspend fun createChatWithMessage(
+        chatId: String,
+        title: String,
+        participantIds: List<String>,
+        messageId: String,
+        message: String,
+        senderId: String,
+        type: me.ashishekka.echo.shared.data.entity.MessageType,
+        file: me.ashishekka.echo.shared.data.entity.FileDetails?,
+        timestamp: Long
+    ): Result<Unit, DatabaseError> {
+        return try {
+            val chatEntity = ChatEntity(
+                id = chatId,
+                title = title,
+                lastMessage = null,
+                lastMessageTimestamp = timestamp,
+                createdAt = timestamp,
+                updatedAt = timestamp
+            )
+            val messageEntity = MessageEntity(
+                id = messageId,
+                chatId = chatId,
+                senderId = senderId,
+                message = message,
+                type = type,
+                file = file,
+                timestamp = timestamp
+            )
+            chatDao.insertChatWithMessage(chatEntity, participantIds, messageEntity, messageDao)
+            Result.Success(Unit)
+        } catch (e: Exception) {
+            Result.Failure(DatabaseError.Unknown(e))
+        }
+    }
+
     override suspend fun updateLastMessage(chatId: String, message: String, timestamp: Long): Result<Unit, DatabaseError> {
         return try {
             chatDao.updateLastMessage(chatId, message, timestamp)
@@ -77,4 +116,3 @@ class OfflineFirstChatRepository(
         }
     }
 }
-

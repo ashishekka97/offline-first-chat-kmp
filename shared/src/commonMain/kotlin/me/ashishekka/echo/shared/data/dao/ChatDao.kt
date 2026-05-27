@@ -63,6 +63,20 @@ interface ChatDao {
     }
 
     /**
+     * Atomic transaction to create a chat, its participants, and its first message.
+     */
+    @Transaction
+    suspend fun insertChatWithMessage(
+        chat: ChatEntity,
+        participantIds: List<String>,
+        message: me.ashishekka.echo.shared.data.entity.MessageEntity,
+        messageDao: me.ashishekka.echo.shared.data.dao.MessageDao
+    ) {
+        insertChatWithParticipants(chat, participantIds)
+        messageDao.insertMessageAndUpdateChat(message)
+    }
+
+    /**
      * Updates an existing chat.
      */
     @Update
