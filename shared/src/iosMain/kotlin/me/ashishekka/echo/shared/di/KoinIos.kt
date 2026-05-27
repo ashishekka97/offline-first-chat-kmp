@@ -10,6 +10,10 @@ import me.ashishekka.echo.shared.data.AppDatabaseConstructor
 import me.ashishekka.echo.shared.data.DATA_STORE_FILE_NAME
 import me.ashishekka.echo.shared.data.DatabaseConstants
 import me.ashishekka.echo.shared.data.createDataStore
+import me.ashishekka.echo.shared.data.file.AssetReader
+import me.ashishekka.echo.shared.data.file.DefaultLocalAssetManager
+import me.ashishekka.echo.shared.data.file.IosAssetReader
+import me.ashishekka.echo.shared.data.file.LocalAssetManager
 import org.koin.core.module.Module
 import org.koin.dsl.module
 import platform.Foundation.NSDocumentDirectory
@@ -46,6 +50,22 @@ actual fun getPlatformDataModule(): Module = module {
         createDataStore(
             coroutineScope = CoroutineScope(dispatcherProvider.io + SupervisorJob()),
             producePath = { path }
+        )
+    }
+
+    single<AssetReader> { IosAssetReader() }
+
+    single<LocalAssetManager> {
+        val documentDirectory = NSFileManager.defaultManager.URLForDirectory(
+            directory = NSDocumentDirectory,
+            inDomain = NSUserDomainMask,
+            appropriateForURL = null,
+            create = true,
+            error = null
+        )
+        DefaultLocalAssetManager(
+            baseDirPath = documentDirectory?.path ?: "",
+            assetReader = get()
         )
     }
 }

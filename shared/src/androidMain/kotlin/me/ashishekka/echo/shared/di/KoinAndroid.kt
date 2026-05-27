@@ -9,6 +9,10 @@ import me.ashishekka.echo.shared.data.AppDatabase
 import me.ashishekka.echo.shared.data.DATA_STORE_FILE_NAME
 import me.ashishekka.echo.shared.data.DatabaseConstants
 import me.ashishekka.echo.shared.data.createDataStore
+import me.ashishekka.echo.shared.data.file.AndroidAssetReader
+import me.ashishekka.echo.shared.data.file.AssetReader
+import me.ashishekka.echo.shared.data.file.DefaultLocalAssetManager
+import me.ashishekka.echo.shared.data.file.LocalAssetManager
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.Module
 import org.koin.dsl.module
@@ -29,6 +33,15 @@ actual fun getPlatformDataModule(): Module = module {
         createDataStore(
             coroutineScope = CoroutineScope(dispatcherProvider.io + SupervisorJob()),
             producePath = { appContext.preferencesDataStoreFile(DATA_STORE_FILE_NAME).absolutePath }
+        )
+    }
+
+    single<AssetReader> { AndroidAssetReader(androidContext()) }
+
+    single<LocalAssetManager> {
+        DefaultLocalAssetManager(
+            baseDirPath = androidContext().filesDir.absolutePath,
+            assetReader = get()
         )
     }
 }

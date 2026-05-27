@@ -8,7 +8,6 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.room)
 }
-
 kotlin {
     androidLibrary {
         namespace = "me.ashishekka.echo.shared"
@@ -46,6 +45,11 @@ kotlin {
             implementation(libs.androidx.datastore.preferences)
             implementation(libs.okio)
         }
+        commonTest.dependencies {
+            implementation(kotlin("test"))
+            implementation(libs.okio.fakefilesystem)
+            implementation(libs.kotlinx.coroutines.test)
+        }
         androidMain.dependencies {
             implementation(libs.koin.android)
         }
@@ -63,3 +67,4 @@ dependencies {
     add("kspIosArm64", libs.androidx.room.compiler)
     add("kspIosSimulatorArm64", libs.androidx.room.compiler)
 }
+
