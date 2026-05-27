@@ -4,7 +4,7 @@ This roadmap outlines the implementation phases and technical tasks for the Echo
 
 ## Phase 1: Persistence Layer
 **Goal:** Establish the core offline-first database structure.
-*   [ ] **Data Layer: Entities & DAOs**: Define `ChatEntity`, `MessageEntity`, and reactive DAOs for real-time updates.
+*   [x] **Data Layer: Entities & DAOs**: Define `ChatEntity`, `MessageEntity`, and reactive DAOs for real-time updates.
 *   [ ] **Data Layer: Platform DB Setup**: Implement `AppDatabase` and platform-specific Room builders for Android and iOS.
 
 ## Phase 2: Infrastructure & Media
