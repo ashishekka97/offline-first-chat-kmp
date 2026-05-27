@@ -53,6 +53,18 @@ class LocalAssetManagerTest {
     }
 
     @Test
+    fun testWriteAndReadBytes() {
+        val fileName = "image.bin"
+        val content = byteArrayOf(0, 1, 2, 3, 4, 5)
+        
+        manager.writeBytes(fileName, content)
+        
+        assertTrue(manager.exists(fileName))
+        val result = manager.readBytes(fileName)
+        assertTrue(content.contentEquals(result!!))
+    }
+
+    @Test
     fun testReadBundledAsset() {
         assertEquals("{\"key\": \"value\"}", manager.readBundledAsset("test.json"))
         assertNull(manager.readBundledAsset("unknown.json"))

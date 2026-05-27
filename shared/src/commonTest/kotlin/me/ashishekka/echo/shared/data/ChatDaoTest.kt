@@ -6,6 +6,8 @@ import kotlinx.coroutines.test.runTest
 import me.ashishekka.echo.shared.data.entity.ChatEntity
 import me.ashishekka.echo.shared.data.entity.ParticipantEntity
 import me.ashishekka.echo.shared.data.entity.ChatParticipantCrossRef
+import me.ashishekka.echo.shared.data.entity.MessageEntity
+import me.ashishekka.echo.shared.data.entity.MessageType
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -70,12 +72,35 @@ class ChatDaoTest {
     }
 
     @Test
-    fun testDeleteChat() = runTest {
+    fun testDeleteChatCascadesToMessages() = runTest {
         val chat = ChatEntity("chat_1", "Hi", 1000L)
+        val user = ParticipantEntity("user_1", "Alice", null, false)
+        val message = MessageEntity("msg_1", "chat_1", "user_1", "Hello", MessageType.TEXT, null, 1001L)
+        
         chatDao.insertChat(chat)
+        db.participantDao().insertParticipant(user)
+        db.messageDao().insertMessage(message)
+        
+        // Verify message exists
+        assertEquals(1, db.messageDao().getMessagesForChat("chat_1").first().size)
+        
+        // Delete chat
         chatDao.deleteChat(chat)
         
+        // Verify message is gone (cascaded)
+        assertTrue(db.messageDao().getMessagesForChat("chat_1").first().isEmpty())
+    }
+
+    @Test
+    fun testChatsAreSortedByTimestamp() = runTest {
+        val chat1 = ChatEntity("chat_1", "Old", 1000L)
+        val chat2 = ChatEntity("chat_2", "New", 2000L)
+        
+        chatDao.insertChat(chat1)
+        chatDao.insertChat(chat2)
+        
         val chats = chatDao.getAllChats().first()
-        assertTrue(chats.isEmpty())
+        assertEquals("chat_2", chats[0].chat.id) // Newest first
+        assertEquals("chat_1", chats[1].chat.id)
     }
 }
