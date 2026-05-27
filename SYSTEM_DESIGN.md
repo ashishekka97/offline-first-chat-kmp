@@ -36,7 +36,8 @@ The project follows a strict separation of concerns, heavily favoring shared cod
 ## 3. Component Design
 
 ### 3.1 Data Layer (Room & DataStore)
-*   **Room Entities:** `ChatEntity`, `MessageEntity`.
+*   **Room Entities:** `ChatEntity`, `MessageEntity`, `ParticipantEntity`, `ChatParticipantCrossRef`.
+*   **Relations:** `ChatWithParticipants`, `MessageWithSender`.
 *   **DataStore:** Tracks application metadata (e.g., `isRestoreCompleted`).
 
 ### 3.2 Infrastructure
@@ -105,6 +106,7 @@ graph TD
             DS[Preferences DataStore]
             G[Chat DAO]
             H[Message DAO]
+            P[Participant DAO]
         end
         
         C -- StateFlow --> A
@@ -117,16 +119,20 @@ graph TD
         
         D -- Read/Write --> G
         D -- Read/Write --> H
+        D -- Read/Write --> P
         RS -- Write --> G
         RS -- Write --> H
+        RS -- Write --> P
         RS -- Use --> I1
         RS -- Use --> I2
         
         G -- Flow --> C
         H -- Flow --> C
+        P -- Flow --> C
         
         G -- SQL --> F
         H -- SQL --> F
+        P -- SQL --> F
     end
 ```
 
