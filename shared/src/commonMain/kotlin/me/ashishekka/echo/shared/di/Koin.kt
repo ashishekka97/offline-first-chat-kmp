@@ -1,6 +1,8 @@
 package me.ashishekka.echo.shared.di
 
 import me.ashishekka.echo.shared.data.AppDatabase
+import me.ashishekka.echo.shared.data.DataStorePreferenceStorage
+import me.ashishekka.echo.shared.data.PreferenceStorage
 import me.ashishekka.echo.shared.data.createDatabase
 import org.koin.core.context.startKoin
 import org.koin.core.logger.Level
@@ -24,6 +26,8 @@ val dataModule = module {
     single { get<AppDatabase>().chatDao() }
     single { get<AppDatabase>().messageDao() }
     single { get<AppDatabase>().participantDao() }
+
+    single<PreferenceStorage> { DataStorePreferenceStorage(get()) }
 }
 
 val viewModelModule = module {

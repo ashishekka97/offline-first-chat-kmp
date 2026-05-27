@@ -47,4 +47,6 @@ abstract class AppDatabase : RoomDatabase() {
  * on non-Android platforms (like iOS).
  */
 @Suppress("NO_ACTUAL_FOR_EXPECT")
-expect object AppDatabaseConstructor : RoomDatabaseConstructor<AppDatabase>
+expect object AppDatabaseConstructor : RoomDatabaseConstructor<AppDatabase> {
+    override fun initialize(): AppDatabase
+}
