@@ -5,6 +5,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.Clock
 import me.ashishekka.echo.shared.data.entity.FileDetails
 import me.ashishekka.echo.shared.data.entity.MessageType
+import me.ashishekka.echo.shared.domain.DatabaseError
+import me.ashishekka.echo.shared.domain.Result
 import me.ashishekka.echo.shared.domain.model.Message
 
 /**
@@ -27,10 +29,10 @@ interface MessageRepository {
         type: MessageType = MessageType.TEXT,
         file: FileDetails? = null,
         timestamp: Long = Clock.System.now().toEpochMilliseconds()
-    )
+    ): Result<Unit, DatabaseError>
 
     /**
      * Deletes all messages for a specific [chatId].
      */
-    suspend fun deleteMessagesForChat(chatId: String)
+    suspend fun deleteMessagesForChat(chatId: String): Result<Unit, DatabaseError>
 }

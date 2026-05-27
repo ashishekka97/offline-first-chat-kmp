@@ -10,10 +10,12 @@ import me.ashishekka.echo.shared.data.entity.ChatEntity
 import me.ashishekka.echo.shared.data.entity.ParticipantEntity
 import me.ashishekka.echo.shared.data.repository.OfflineFirstChatRepository
 import me.ashishekka.echo.shared.domain.Constants
+import me.ashishekka.echo.shared.domain.Result
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ChatRepositoryTest {
@@ -56,7 +58,8 @@ class ChatRepositoryTest {
         
         participantDao.insertParticipant(user)
         participantDao.insertParticipant(agent)
-        repository.createChat("chat_1", "Group Title", listOf(user.id, agent.id))
+        val createResult = repository.createChat("chat_1", "Group Title", listOf(user.id, agent.id))
+        assertTrue(createResult is Result.Success)
         
         // The title should be resolved to the agent's name because it's 1-on-1
         val result = repository.getChatById("chat_1").first()
@@ -74,7 +77,8 @@ class ChatRepositoryTest {
         participantDao.insertParticipant(p1)
         participantDao.insertParticipant(p2)
         participantDao.insertParticipant(p3)
-        repository.createChat("chat_1", "Team Alpha", listOf(p1.id, p2.id, p3.id))
+        val createResult = repository.createChat("chat_1", "Team Alpha", listOf(p1.id, p2.id, p3.id))
+        assertTrue(createResult is Result.Success)
         
         // The title should remain "Team Alpha"
         val result = repository.getChatById("chat_1").first()

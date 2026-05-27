@@ -13,6 +13,11 @@ sealed interface Result<out T, out E : AppError> {
         is Failure -> Failure(error)
     }
 
+    fun <R, RE : AppError> flatMap(transform: (T) -> Result<R, RE>): Result<R, AppError> = when (this) {
+        is Success -> transform(data)
+        is Failure -> Failure(error)
+    }
+
     fun getOrNull(): T? = when (this) {
         is Success -> data
         is Failure -> null
@@ -24,10 +29,34 @@ sealed interface Result<out T, out E : AppError> {
     }
 }
 
+inline fun <T, E : AppError> Result<T, E>.onSuccess(action: (T) -> Unit): Result<T, E> {
+    if (this is Result.Success) action(data)
+    return this
+}
+
+inline fun <T, E : AppError> Result<T, E>.onFailure(action: (E) -> Unit): Result<T, E> {
+    if (this is Result.Failure) action(error)
+    return this
+}
+
+fun <T, E : AppError> Result<T, E>.getOrElse(onFailure: (E) -> T): T = when (this) {
+    is Result.Success -> data
+    is Result.Failure -> onFailure(error)
+}
+
 /**
  * Base interface for all application errors.
  */
 interface AppError
+
+/**
+ * Common Database errors.
+ */
+sealed interface DatabaseError : AppError {
+    data object NotFound : DatabaseError
+    data object ConstraintViolation : DatabaseError
+    data class Unknown(val throwable: Throwable) : DatabaseError
+}
 
 /**
  * Common IO errors.

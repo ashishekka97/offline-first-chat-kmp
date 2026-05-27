@@ -16,6 +16,7 @@ import me.ashishekka.echo.shared.data.entity.ParticipantEntity
 import me.ashishekka.echo.shared.data.file.LocalAssetManager
 import me.ashishekka.echo.shared.di.DispatcherProvider
 import me.ashishekka.echo.shared.domain.AssetError
+import me.ashishekka.echo.shared.domain.DatabaseError
 import me.ashishekka.echo.shared.domain.Result
 import okio.FileSystem
 import okio.Source
@@ -125,12 +126,14 @@ class BackupRestorationEngineTest {
             chats: List<ChatEntity>,
             chatCrossRefs: List<ChatParticipantCrossRef>,
             messages: List<MessageEntity>
-        ) {
+        ): Result<Unit, DatabaseError> {
             saveCalled = true
+            return Result.Success(Unit)
         }
 
-        override suspend fun clearExistingData() {
+        override suspend fun clearExistingData(): Result<Unit, DatabaseError> {
             clearCalled = true
+            return Result.Success(Unit)
         }
     }
 

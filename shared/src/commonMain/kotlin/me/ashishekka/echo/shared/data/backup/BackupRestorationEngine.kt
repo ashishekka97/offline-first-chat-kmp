@@ -50,7 +50,10 @@ class DefaultBackupRestorationEngine(
 
         try {
             // 2. Hardening: Clear any existing partial data before starting
-            seedDataRepository.clearExistingData()
+            val clearResult = seedDataRepository.clearExistingData()
+            if (clearResult is Result.Failure) {
+                return@withContext RestorationResult.Failure("Failed to clear existing data: ${clearResult.error}")
+            }
 
             // 3. Copy ZIP from assets to local storage
             val copyResult = localAssetManager.copyBundledAssetToLocal(zipFileName)
@@ -83,12 +86,15 @@ class DefaultBackupRestorationEngine(
             val processedMessages = mediaRestorationService.processMedia(allMessages, zipFs)
 
             // 8. Persist to Database
-            seedDataRepository.saveSeedData(
+            val saveResult = seedDataRepository.saveSeedData(
                 participants = participants,
                 chats = chats,
                 chatCrossRefs = crossRefs,
                 messages = processedMessages
             )
+            if (saveResult is Result.Failure) {
+                return@withContext RestorationResult.Failure("Failed to save seed data: ${saveResult.error}")
+            }
 
             // 9. Mark as completed
             preferenceStorage.setRestoreCompleted(true)

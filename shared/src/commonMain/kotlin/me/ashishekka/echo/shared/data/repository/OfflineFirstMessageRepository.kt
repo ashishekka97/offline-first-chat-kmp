@@ -12,6 +12,8 @@ import me.ashishekka.echo.shared.data.entity.MessageEntity
 import me.ashishekka.echo.shared.data.entity.MessageType
 import me.ashishekka.echo.shared.data.mapper.toDomain
 import me.ashishekka.echo.shared.domain.Constants
+import me.ashishekka.echo.shared.domain.DatabaseError
+import me.ashishekka.echo.shared.domain.Result
 import me.ashishekka.echo.shared.domain.model.Message
 import me.ashishekka.echo.shared.domain.repository.MessageRepository
 
@@ -39,20 +41,30 @@ class OfflineFirstMessageRepository(
         type: MessageType,
         file: FileDetails?,
         timestamp: Long
-    ) {
-        val messageEntity = MessageEntity(
-            id = id,
-            chatId = chatId,
-            senderId = senderId,
-            message = message,
-            type = type,
-            file = file,
-            timestamp = timestamp
-        )
-        messageDao.insertMessage(messageEntity)
+    ): Result<Unit, DatabaseError> {
+        return try {
+            val messageEntity = MessageEntity(
+                id = id,
+                chatId = chatId,
+                senderId = senderId,
+                message = message,
+                type = type,
+                file = file,
+                timestamp = timestamp
+            )
+            messageDao.insertMessage(messageEntity)
+            Result.Success(Unit)
+        } catch (e: Exception) {
+            Result.Failure(DatabaseError.Unknown(e))
+        }
     }
 
-    override suspend fun deleteMessagesForChat(chatId: String) {
-        messageDao.deleteMessagesForChat(chatId)
+    override suspend fun deleteMessagesForChat(chatId: String): Result<Unit, DatabaseError> {
+        return try {
+            messageDao.deleteMessagesForChat(chatId)
+            Result.Success(Unit)
+        } catch (e: Exception) {
+            Result.Failure(DatabaseError.Unknown(e))
+        }
     }
 }
