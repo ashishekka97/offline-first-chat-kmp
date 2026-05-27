@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import kotlinx.coroutines.test.runTest
 import me.ashishekka.echo.shared.di.DefaultDispatcherProvider
+import me.ashishekka.echo.shared.domain.Result
 import org.junit.Test
 import java.io.ByteArrayOutputStream
 import kotlin.test.assertNotNull
@@ -26,10 +27,11 @@ class AndroidMediaProcessorTest {
         // 2. Downsize to 1024x1024
         val maxWidth = 1024
         val maxHeight = 1024
-        val downsizedBytes = processor.downsizeImage(originalBytes, maxWidth, maxHeight)
+        val result = processor.downsizeImage(originalBytes, maxWidth, maxHeight)
 
         // 3. Verify
-        assertNotNull(downsizedBytes)
+        assertTrue(result is Result.Success)
+        val downsizedBytes = result.data
         val downsizedBitmap = BitmapFactory.decodeByteArray(downsizedBytes, 0, downsizedBytes.size)
         assertNotNull(downsizedBitmap)
         
@@ -49,9 +51,10 @@ class AndroidMediaProcessorTest {
         val originalBytes = stream.toByteArray()
 
         val maxDimension = 256
-        val thumbBytes = processor.generateThumbnail(originalBytes, maxDimension)
+        val result = processor.generateThumbnail(originalBytes, maxDimension)
 
-        assertNotNull(thumbBytes)
+        assertTrue(result is Result.Success)
+        val thumbBytes = result.data
         val thumbBitmap = BitmapFactory.decodeByteArray(thumbBytes, 0, thumbBytes.size)
         assertNotNull(thumbBitmap)
 
@@ -73,9 +76,10 @@ class AndroidMediaProcessorTest {
 
         val maxWidth = 1024
         val maxHeight = 1024
-        val processedBytes = processor.downsizeImage(originalBytes, maxWidth, maxHeight)
+        val result = processor.downsizeImage(originalBytes, maxWidth, maxHeight)
 
-        assertNotNull(processedBytes)
+        assertTrue(result is Result.Success)
+        val processedBytes = result.data
         val processedBitmap = BitmapFactory.decodeByteArray(processedBytes, 0, processedBytes.size)
         assertEquals(originalWidth, processedBitmap.width)
         assertEquals(originalHeight, processedBitmap.height)
@@ -92,9 +96,10 @@ class AndroidMediaProcessorTest {
         val originalBytes = stream.toByteArray()
 
         val maxDimension = 500
-        val processedBytes = processor.downsizeImage(originalBytes, maxDimension, maxDimension)
+        val result = processor.downsizeImage(originalBytes, maxDimension, maxDimension)
 
-        assertNotNull(processedBytes)
+        assertTrue(result is Result.Success)
+        val processedBytes = result.data
         val processedBitmap = BitmapFactory.decodeByteArray(processedBytes, 0, processedBytes.size)
         
         // Should be scaled down to 500 width, and height should follow aspect ratio (500 / 20 = 25)
@@ -106,7 +111,7 @@ class AndroidMediaProcessorTest {
     fun testInvalidImageData() = runTest {
         val invalidBytes = byteArrayOf(1, 2, 3, 4, 5)
         val result = processor.downsizeImage(invalidBytes)
-        kotlin.test.assertNull(result)
+        assertTrue(result is Result.Failure)
     }
 
     private fun assertEquals(expected: Int, actual: Int) {

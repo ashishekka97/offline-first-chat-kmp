@@ -1,6 +1,8 @@
 package me.ashishekka.echo.shared.data.file
 
 import android.content.Context
+import me.ashishekka.echo.shared.domain.AssetError
+import me.ashishekka.echo.shared.domain.Result
 import okio.Source
 import okio.source
 
@@ -8,27 +10,30 @@ import okio.source
  * Android-specific implementation of [AssetReader] using the [android.content.res.AssetManager].
  */
 class AndroidAssetReader(private val context: Context) : AssetReader {
-    override fun readAsset(fileName: String): String? {
+    override fun readAsset(fileName: String): Result<String, AssetError> {
         return try {
-            context.assets.open(fileName).bufferedReader().use { it.readText() }
+            val content = context.assets.open(fileName).bufferedReader().use { it.readText() }
+            Result.Success(content)
         } catch (e: Exception) {
-            null
+            Result.Failure(AssetError.Unknown(e))
         }
     }
 
-    override fun readAssetBytes(fileName: String): ByteArray? {
+    override fun readAssetBytes(fileName: String): Result<ByteArray, AssetError> {
         return try {
-            context.assets.open(fileName).use { it.readBytes() }
+            val bytes = context.assets.open(fileName).use { it.readBytes() }
+            Result.Success(bytes)
         } catch (e: Exception) {
-            null
+            Result.Failure(AssetError.Unknown(e))
         }
     }
 
-    override fun readAssetSource(fileName: String): Source? {
+    override fun readAssetSource(fileName: String): Result<Source, AssetError> {
         return try {
-            context.assets.open(fileName).source()
+            val source = context.assets.open(fileName).source()
+            Result.Success(source)
         } catch (e: Exception) {
-            null
+            Result.Failure(AssetError.Unknown(e))
         }
     }
 }

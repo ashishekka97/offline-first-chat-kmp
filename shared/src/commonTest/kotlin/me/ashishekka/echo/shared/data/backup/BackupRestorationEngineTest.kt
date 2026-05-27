@@ -15,6 +15,8 @@ import me.ashishekka.echo.shared.data.entity.MessageEntity
 import me.ashishekka.echo.shared.data.entity.ParticipantEntity
 import me.ashishekka.echo.shared.data.file.LocalAssetManager
 import me.ashishekka.echo.shared.di.DispatcherProvider
+import me.ashishekka.echo.shared.domain.AssetError
+import me.ashishekka.echo.shared.domain.Result
 import okio.FileSystem
 import okio.Source
 import okio.fakefilesystem.FakeFileSystem
@@ -135,22 +137,22 @@ class BackupRestorationEngineTest {
     class FakeLocalAssetManager : LocalAssetManager {
         var copyCalled = false
         var shouldFailCopy = false
-        override fun readText(fileName: String): String? = null
-        override fun writeText(fileName: String, content: String) {}
-        override fun readBytes(fileName: String): ByteArray? = null
-        override fun writeBytes(fileName: String, bytes: ByteArray) {}
-        override fun deleteFile(fileName: String): Boolean = false
+        override fun readText(fileName: String): Result<String, AssetError> = Result.Failure(AssetError.NotFound)
+        override fun writeText(fileName: String, content: String): Result<Unit, AssetError> = Result.Success(Unit)
+        override fun readBytes(fileName: String): Result<ByteArray, AssetError> = Result.Failure(AssetError.NotFound)
+        override fun writeBytes(fileName: String, bytes: ByteArray): Result<Unit, AssetError> = Result.Success(Unit)
+        override fun deleteFile(fileName: String): Result<Unit, AssetError> = Result.Success(Unit)
         override fun getAbsolutePath(fileName: String): String = ""
         override fun exists(fileName: String): Boolean = false
-        override fun readBundledAsset(fileName: String): String? = null
-        override fun readBundledAssetBytes(fileName: String): ByteArray? = null
-        override fun bundledAssetSource(fileName: String): Source? = null
-        override suspend fun copyBundledAssetToLocal(fileName: String): Boolean {
+        override fun readBundledAsset(fileName: String): Result<String, AssetError> = Result.Failure(AssetError.NotFound)
+        override fun readBundledAssetBytes(fileName: String): Result<ByteArray, AssetError> = Result.Failure(AssetError.NotFound)
+        override fun bundledAssetSource(fileName: String): Result<Source, AssetError> = Result.Failure(AssetError.NotFound)
+        override suspend fun copyBundledAssetToLocal(fileName: String): Result<Unit, AssetError> {
             copyCalled = true
-            return !shouldFailCopy
+            return if (shouldFailCopy) Result.Failure(AssetError.Unknown(Exception())) else Result.Success(Unit)
         }
-        override fun getZipFileSystem(fileName: String): FileSystem? = FakeFileSystem()
-        override fun source(fileName: String): Source? = null
+        override fun getZipFileSystem(fileName: String): Result<FileSystem, AssetError> = Result.Success(FakeFileSystem())
+        override fun source(fileName: String): Result<Source, AssetError> = Result.Failure(AssetError.NotFound)
     }
 
     class FakePreferenceStorage : PreferenceStorage {

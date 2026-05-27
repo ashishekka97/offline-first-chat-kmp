@@ -6,9 +6,7 @@ import kotlinx.datetime.Clock
 import me.ashishekka.echo.shared.data.PreferenceStorage
 import me.ashishekka.echo.shared.data.file.LocalAssetManager
 import me.ashishekka.echo.shared.di.DispatcherProvider
-import okio.FileSystem
-import okio.Path.Companion.toPath
-import okio.use
+import me.ashishekka.echo.shared.domain.Result
 
 /**
  * Result of the backup restoration process.
@@ -55,13 +53,16 @@ class DefaultBackupRestorationEngine(
             seedDataRepository.clearExistingData()
 
             // 3. Copy ZIP from assets to local storage
-            if (!localAssetManager.copyBundledAssetToLocal(zipFileName)) {
-                return@withContext RestorationResult.Failure("Failed to copy bundled asset: $zipFileName")
+            val copyResult = localAssetManager.copyBundledAssetToLocal(zipFileName)
+            if (copyResult is Result.Failure) {
+                return@withContext RestorationResult.Failure("Failed to copy bundled asset: $zipFileName, error: ${copyResult.error}")
             }
 
             // 4. Mount ZIP FileSystem
-            val zipFs = localAssetManager.getZipFileSystem(zipFileName) 
-                ?: return@withContext RestorationResult.Failure("Failed to open ZIP filesystem: $zipFileName")
+            val zipFs = when (val zipFsResult = localAssetManager.getZipFileSystem(zipFileName)) {
+                is Result.Failure -> return@withContext RestorationResult.Failure("Failed to open ZIP filesystem: $zipFileName, error: ${zipFsResult.error}")
+                is Result.Success -> zipFsResult.data
+            }
             
             // 5. Parse Seed Data
             val seedDataDto = backupParser.parseSeedData(zipFs) 

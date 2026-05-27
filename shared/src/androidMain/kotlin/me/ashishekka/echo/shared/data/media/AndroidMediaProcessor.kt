@@ -4,6 +4,8 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import kotlinx.coroutines.withContext
 import me.ashishekka.echo.shared.di.DispatcherProvider
+import me.ashishekka.echo.shared.domain.MediaError
+import me.ashishekka.echo.shared.domain.Result
 import java.io.ByteArrayOutputStream
 
 class AndroidMediaProcessor(
@@ -15,18 +17,22 @@ class AndroidMediaProcessor(
         maxWidth: Int,
         maxHeight: Int,
         quality: Int
-    ): ByteArray? = withContext(dispatcherProvider.default) {
+    ): Result<ByteArray, MediaError> = withContext(dispatcherProvider.default) {
         try {
             val options = BitmapFactory.Options().apply {
                 inJustDecodeBounds = true
             }
             BitmapFactory.decodeByteArray(imageData, 0, imageData.size, options)
 
+            if (options.outWidth <= 0 || options.outHeight <= 0) {
+                return@withContext Result.Failure(MediaError.InvalidData)
+            }
+
             options.inSampleSize = calculateInSampleSize(options, maxWidth, maxHeight)
             options.inJustDecodeBounds = false
 
             val decodedBitmap = BitmapFactory.decodeByteArray(imageData, 0, imageData.size, options)
-                ?: return@withContext null
+                ?: return@withContext Result.Failure(MediaError.ProcessingFailed)
 
             val scaledBitmap = if (decodedBitmap.width > maxWidth || decodedBitmap.height > maxHeight) {
                 val ratio = Math.min(
@@ -41,16 +47,20 @@ class AndroidMediaProcessor(
             }
 
             val outputStream = ByteArrayOutputStream()
-            scaledBitmap.compress(Bitmap.CompressFormat.JPEG, quality, outputStream)
+            val success = scaledBitmap.compress(Bitmap.CompressFormat.JPEG, quality, outputStream)
             
             if (scaledBitmap != decodedBitmap) {
                 scaledBitmap.recycle()
             }
             decodedBitmap.recycle()
 
-            outputStream.toByteArray()
+            if (success) {
+                Result.Success(outputStream.toByteArray())
+            } else {
+                Result.Failure(MediaError.ProcessingFailed)
+            }
         } catch (e: Exception) {
-            null
+            Result.Failure(MediaError.Unknown(e))
         }
     }
 
@@ -58,7 +68,7 @@ class AndroidMediaProcessor(
         imageData: ByteArray,
         maxDimension: Int,
         quality: Int
-    ): ByteArray? = downsizeImage(imageData, maxDimension, maxDimension, quality)
+    ): Result<ByteArray, MediaError> = downsizeImage(imageData, maxDimension, maxDimension, quality)
 
     private fun calculateInSampleSize(options: BitmapFactory.Options, reqWidth: Int, reqHeight: Int): Int {
         val (height: Int, width: Int) = options.outHeight to options.outWidth

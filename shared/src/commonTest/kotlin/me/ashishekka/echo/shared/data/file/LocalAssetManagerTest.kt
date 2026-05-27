@@ -1,6 +1,8 @@
 package me.ashishekka.echo.shared.data.file
 
 import kotlinx.coroutines.test.runTest
+import me.ashishekka.echo.shared.domain.AssetError
+import me.ashishekka.echo.shared.domain.Result
 import okio.Buffer
 import okio.Source
 import okio.buffer
@@ -9,7 +11,6 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
-import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class LocalAssetManagerTest {
@@ -23,16 +24,16 @@ class LocalAssetManagerTest {
     fun setup() {
         fileSystem = FakeFileSystem()
         assetReader = object : AssetReader {
-            override fun readAsset(fileName: String): String? {
-                return if (fileName == "test.json") "{\"key\": \"value\"}" else null
+            override fun readAsset(fileName: String): Result<String, AssetError> {
+                return if (fileName == "test.json") Result.Success("{\"key\": \"value\"}") else Result.Failure(AssetError.NotFound)
             }
 
-            override fun readAssetBytes(fileName: String): ByteArray? {
-                return if (fileName == "test.bin") byteArrayOf(1, 2, 3) else null
+            override fun readAssetBytes(fileName: String): Result<ByteArray, AssetError> {
+                return if (fileName == "test.bin") Result.Success(byteArrayOf(1, 2, 3)) else Result.Failure(AssetError.NotFound)
             }
 
-            override fun readAssetSource(fileName: String): Source? {
-                return if (fileName == "test.bin") Buffer().write(byteArrayOf(1, 2, 3)) else null
+            override fun readAssetSource(fileName: String): Result<Source, AssetError> {
+                return if (fileName == "test.bin") Result.Success(Buffer().write(byteArrayOf(1, 2, 3))) else Result.Failure(AssetError.NotFound)
             }
         }
         manager = DefaultLocalAssetManager(baseDirPath, assetReader, fileSystem)
@@ -46,12 +47,12 @@ class LocalAssetManagerTest {
         manager.writeText(fileName, content)
         
         assertTrue(manager.exists(fileName))
-        assertEquals(content, manager.readText(fileName))
+        assertEquals(content, manager.readText(fileName).getOrNull())
     }
 
     @Test
     fun testReadNonExistentFile() {
-        assertNull(manager.readText("nonexistent.txt"))
+        assertTrue(manager.readText("nonexistent.txt") is Result.Failure)
     }
 
     @Test
@@ -60,7 +61,7 @@ class LocalAssetManagerTest {
         manager.writeText(fileName, "content")
         
         assertTrue(manager.exists(fileName))
-        assertTrue(manager.deleteFile(fileName))
+        assertTrue(manager.deleteFile(fileName) is Result.Success)
         assertFalse(manager.exists(fileName))
     }
 
@@ -72,38 +73,38 @@ class LocalAssetManagerTest {
         manager.writeBytes(fileName, content)
         
         assertTrue(manager.exists(fileName))
-        val result = manager.readBytes(fileName)
+        val result = manager.readBytes(fileName).getOrNull()
         assertTrue(content.contentEquals(result!!))
     }
 
     @Test
     fun testReadBundledAsset() {
-        assertEquals("{\"key\": \"value\"}", manager.readBundledAsset("test.json"))
-        assertNull(manager.readBundledAsset("unknown.json"))
+        assertEquals("{\"key\": \"value\"}", manager.readBundledAsset("test.json").getOrNull())
+        assertTrue(manager.readBundledAsset("unknown.json") is Result.Failure)
     }
 
     @Test
     fun testReadBundledAssetBytes() {
-        val result = manager.readBundledAssetBytes("test.bin")
+        val result = manager.readBundledAssetBytes("test.bin").getOrNull()
         assertTrue(byteArrayOf(1, 2, 3).contentEquals(result!!))
-        assertNull(manager.readBundledAssetBytes("unknown.bin"))
+        assertTrue(manager.readBundledAssetBytes("unknown.bin") is Result.Failure)
     }
 
     @Test
     fun testBundledAssetSource() {
-        val source = manager.bundledAssetSource("test.bin")
-        assertNotNull(source)
-        val result = source!!.buffer().readByteArray()
-        assertTrue(byteArrayOf(1, 2, 3).contentEquals(result))
-        assertNull(manager.bundledAssetSource("unknown.bin"))
+        val result = manager.bundledAssetSource("test.bin")
+        assertTrue(result is Result.Success)
+        val bytes = result.data.buffer().readByteArray()
+        assertTrue(byteArrayOf(1, 2, 3).contentEquals(bytes))
+        assertTrue(manager.bundledAssetSource("unknown.bin") is Result.Failure)
     }
 
     @Test
     fun testCopyBundledAssetToLocal() = runTest {
         val fileName = "test.bin"
-        assertTrue(manager.copyBundledAssetToLocal(fileName))
+        assertTrue(manager.copyBundledAssetToLocal(fileName) is Result.Success)
         assertTrue(manager.exists(fileName))
-        val result = manager.readBytes(fileName)
+        val result = manager.readBytes(fileName).getOrNull()
         assertTrue(byteArrayOf(1, 2, 3).contentEquals(result!!))
     }
 
@@ -113,13 +114,13 @@ class LocalAssetManagerTest {
         val content = byteArrayOf(4, 5, 6)
         manager.writeBytes(fileName, content)
         
-        val source = manager.source(fileName)
-        assertNotNull(source)
-        val result = source!!.buffer().readByteArray()
-        assertTrue(content.contentEquals(result))
+        val result = manager.source(fileName)
+        assertTrue(result is Result.Success)
+        val bytes = result.data.buffer().readByteArray()
+        assertTrue(content.contentEquals(bytes))
     }
 
-    private fun assertNotNull(actual: Any?) {
-        assertTrue(actual != null, "Expected not null")
+    private fun <T, E : me.ashishekka.echo.shared.domain.AppError> assertSuccess(result: Result<T, E>) {
+        assertTrue(result is Result.Success, "Expected Success but was $result")
     }
 }
