@@ -4,7 +4,13 @@ import me.ashishekka.echo.shared.data.AppDatabase
 import me.ashishekka.echo.shared.data.DataStorePreferenceStorage
 import me.ashishekka.echo.shared.data.PreferenceStorage
 import me.ashishekka.echo.shared.data.backup.BackupParser
+import me.ashishekka.echo.shared.data.backup.BackupRestorationEngine
 import me.ashishekka.echo.shared.data.backup.DefaultBackupParser
+import me.ashishekka.echo.shared.data.backup.DefaultBackupRestorationEngine
+import me.ashishekka.echo.shared.data.backup.DefaultMediaRestorationService
+import me.ashishekka.echo.shared.data.backup.DefaultSeedDataRepository
+import me.ashishekka.echo.shared.data.backup.MediaRestorationService
+import me.ashishekka.echo.shared.data.backup.SeedDataRepository
 import me.ashishekka.echo.shared.data.createDatabase
 import org.koin.core.context.startKoin
 import org.koin.core.logger.Level
@@ -28,9 +34,13 @@ val dataModule = module {
     single { get<AppDatabase>().chatDao() }
     single { get<AppDatabase>().messageDao() }
     single { get<AppDatabase>().participantDao() }
+    single { get<AppDatabase>().restorationDao() }
 
     single<PreferenceStorage> { DataStorePreferenceStorage(get()) }
-    single<BackupParser> { DefaultBackupParser(get()) }
+    single<BackupParser> { DefaultBackupParser() }
+    single<SeedDataRepository> { DefaultSeedDataRepository(get()) }
+    single<MediaRestorationService> { DefaultMediaRestorationService(get(), get(), get()) }
+    single<BackupRestorationEngine> { DefaultBackupRestorationEngine(get(), get(), get(), get(), get(), get()) }
 }
 
 val viewModelModule = module {

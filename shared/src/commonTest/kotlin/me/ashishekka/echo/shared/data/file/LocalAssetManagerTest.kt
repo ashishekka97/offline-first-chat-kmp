@@ -1,5 +1,6 @@
 package me.ashishekka.echo.shared.data.file
 
+import kotlinx.coroutines.test.runTest
 import okio.Buffer
 import okio.Source
 import okio.buffer
@@ -95,6 +96,27 @@ class LocalAssetManagerTest {
         val result = source!!.buffer().readByteArray()
         assertTrue(byteArrayOf(1, 2, 3).contentEquals(result))
         assertNull(manager.bundledAssetSource("unknown.bin"))
+    }
+
+    @Test
+    fun testCopyBundledAssetToLocal() = runTest {
+        val fileName = "test.bin"
+        assertTrue(manager.copyBundledAssetToLocal(fileName))
+        assertTrue(manager.exists(fileName))
+        val result = manager.readBytes(fileName)
+        assertTrue(byteArrayOf(1, 2, 3).contentEquals(result!!))
+    }
+
+    @Test
+    fun testSource() {
+        val fileName = "local.bin"
+        val content = byteArrayOf(4, 5, 6)
+        manager.writeBytes(fileName, content)
+        
+        val source = manager.source(fileName)
+        assertNotNull(source)
+        val result = source!!.buffer().readByteArray()
+        assertTrue(content.contentEquals(result))
     }
 
     private fun assertNotNull(actual: Any?) {

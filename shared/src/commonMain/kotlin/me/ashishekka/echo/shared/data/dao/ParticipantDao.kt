@@ -28,4 +28,10 @@ interface ParticipantDao {
      */
     @Query("SELECT * FROM participants")
     suspend fun getAllParticipants(): List<ParticipantEntity>
+
+    /**
+     * Deletes all participants from the database.
+     */
+    @Query("DELETE FROM participants")
+    suspend fun deleteAllParticipants()
 }

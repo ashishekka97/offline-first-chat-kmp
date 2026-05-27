@@ -16,7 +16,13 @@ This roadmap outlines the implementation phases and technical tasks for the Echo
 ## Phase 3: Backup & Restore
 **Goal:** Implement the zero-network initial data restoration flow.
 *   [x] **Backup: Logic & Parsing**: Implement JSON parsing and resource validation for the initial data backup.
-*   [ ] **Backup: Restoration Engine**: Coordinate the Asset Manager, Media Processor, and Repository to restore seed data and generate thumbnails.
+*   [x] **Backup: Restoration Engine**: Coordinate the Asset Manager, Media Processor, and Repository to restore seed data and generate thumbnails.
+
+## Phase 3.5: Architectural Hardening
+**Goal:** Formalize the data layer and improve system resilience.
+*   [ ] **Hardening: Chat & Message Repositories**: Abstract DAOs behind Repositories to act as a Single Source of Truth and handle Entity-to-Domain mapping.
+*   [ ] **Hardening: Structured Error Handling**: Replace nullable/boolean returns in I/O and Media services with Sealed Result types for better error propagation.
+*   [ ] **Hardening: Atomic DAO Operations**: Audit and wrap complex multi-table operations in `@Transaction` blocks.
 
 ## Phase 4: AI & Domain Logic
 **Goal:** Implement the reactive simulation engine and shared presentation layer.

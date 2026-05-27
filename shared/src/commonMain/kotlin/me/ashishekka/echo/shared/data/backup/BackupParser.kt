@@ -3,7 +3,8 @@ package me.ashishekka.echo.shared.data.backup
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.okio.decodeFromBufferedSource
-import me.ashishekka.echo.shared.data.file.LocalAssetManager
+import okio.FileSystem
+import okio.Path.Companion.toPath
 import okio.buffer
 import okio.use
 
@@ -12,22 +13,21 @@ import okio.use
  */
 interface BackupParser {
     /**
-     * Reads and parses the seed data from the specified [fileName].
+     * Reads and parses the seed data from the specified [jsonFileName] within the [fileSystem].
      * Uses memory-efficient streaming.
      */
-    fun parseSeedData(fileName: String): SeedDataDto?
+    fun parseSeedData(fileSystem: FileSystem, jsonFileName: String = "data.json"): SeedDataDto?
 
     /**
-     * Validates the integrity of the [SeedDataDto].
+     * Validates the integrity of the [SeedDataDto] and ensures referenced media exists in [fileSystem].
      */
-    fun validateSeedData(data: SeedDataDto): Boolean
+    fun validateSeedData(data: SeedDataDto, fileSystem: FileSystem): Boolean
 }
 
 /**
- * Default implementation of [BackupParser] using [LocalAssetManager] and kotlinx-serialization-okio.
+ * Default implementation of [BackupParser] using kotlinx-serialization-okio.
  */
 class DefaultBackupParser(
-    private val localAssetManager: LocalAssetManager,
     private val json: Json = Json { 
         ignoreUnknownKeys = true
         coerceInputValues = true
@@ -36,20 +36,19 @@ class DefaultBackupParser(
 ) : BackupParser {
     
     @OptIn(ExperimentalSerializationApi::class)
-    override fun parseSeedData(fileName: String): SeedDataDto? {
-        val source = localAssetManager.bundledAssetSource(fileName) ?: return null
+    override fun parseSeedData(fileSystem: FileSystem, jsonFileName: String): SeedDataDto? {
         return try {
-            source.buffer().use { bufferedSource ->
+            fileSystem.source(jsonFileName.toPath()).buffer().use { bufferedSource ->
                 // Use true streaming decoding from BufferedSource
                 val data = json.decodeFromBufferedSource<SeedDataDto>(bufferedSource)
-                if (validateSeedData(data)) data else null
+                if (validateSeedData(data, fileSystem)) data else null
             }
         } catch (e: Exception) {
             null
         }
     }
 
-    override fun validateSeedData(data: SeedDataDto): Boolean {
+    override fun validateSeedData(data: SeedDataDto, fileSystem: FileSystem): Boolean {
         val participantIds = data.participants.map { it.id }.toSet()
 
         // 1. Validate that all participants in chats exist
@@ -66,11 +65,11 @@ class DefaultBackupParser(
         val chatIds = data.chats.map { it.id }.toSet()
         val messageKeysValid = data.messages.keys.all { it in chatIds }
 
-        // 4. Physical Asset Validation: Ensure all bundled files actually exist
+        // 4. Physical Asset Validation: Ensure all bundled files actually exist in the provided FileSystem
         val filesValid = data.messages.values.flatten().all { message ->
             val file = message.file ?: return@all true
-            val mainFileExists = file.bundledAssetName?.let { localAssetManager.bundledAssetSource(it) != null } ?: true
-            val thumbExists = file.thumbnail?.bundledAssetName?.let { localAssetManager.bundledAssetSource(it) != null } ?: true
+            val mainFileExists = file.bundledAssetName?.let { fileSystem.exists(it.toPath()) } ?: true
+            val thumbExists = file.thumbnail?.bundledAssetName?.let { fileSystem.exists(it.toPath()) } ?: true
             mainFileExists && thumbExists
         }
 

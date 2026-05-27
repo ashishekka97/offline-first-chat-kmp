@@ -57,7 +57,7 @@ class BackupMappersTest {
         assertNotNull(entity.file)
         assertEquals("local.jpg", entity.file.path)
         assertNotNull(entity.file.thumbnail)
-        assertEquals("thumb.jpg", entity.file.thumbnail!!.path)
+        assertEquals("thumb.jpg", entity.file.thumbnail.path)
     }
 
     @Test
