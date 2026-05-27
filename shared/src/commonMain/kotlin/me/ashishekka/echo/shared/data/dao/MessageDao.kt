@@ -30,6 +30,30 @@ interface MessageDao {
     suspend fun insertMessage(message: MessageEntity)
 
     /**
+     * Updates the last message details for a chat.
+     */
+    @Query("UPDATE chats SET lastMessage = :message, lastMessageTimestamp = :timestamp, updatedAt = :timestamp WHERE id = :chatId")
+    suspend fun updateChatLastMessage(chatId: String, message: String, timestamp: Long)
+
+    /**
+     * Atomic transaction to insert a message and update the corresponding chat's last message.
+     */
+    @Transaction
+    suspend fun insertMessageAndUpdateChat(message: MessageEntity) {
+        insertMessage(message)
+        val previewMessage = if (message.type == me.ashishekka.echo.shared.data.entity.MessageType.FILE && message.message.isBlank()) {
+            "Photo"
+        } else {
+            message.message
+        }
+        updateChatLastMessage(
+            chatId = message.chatId,
+            message = previewMessage,
+            timestamp = message.timestamp
+        )
+    }
+
+    /**
      * Deletes all messages for a specific [chatId].
      */
     @Query("DELETE FROM messages WHERE chatId = :chatId")

@@ -66,6 +66,16 @@ sealed interface PreferenceError : AppError {
 }
 
 /**
+ * Common Backup errors.
+ */
+sealed interface BackupError : AppError {
+    data object FileOpenFailure : BackupError
+    data class InvalidJson(val throwable: Throwable) : BackupError
+    data object IntegrityCheckFailed : BackupError
+    data class Unknown(val throwable: Throwable) : BackupError
+}
+
+/**
  * Common IO errors.
  */
 sealed interface IOError : AppError {

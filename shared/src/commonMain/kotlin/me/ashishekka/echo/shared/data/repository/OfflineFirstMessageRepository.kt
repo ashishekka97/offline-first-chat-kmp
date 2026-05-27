@@ -52,7 +52,7 @@ class OfflineFirstMessageRepository(
                 file = file,
                 timestamp = timestamp
             )
-            messageDao.insertMessage(messageEntity)
+            messageDao.insertMessageAndUpdateChat(messageEntity)
             Result.Success(Unit)
         } catch (e: Exception) {
             Result.Failure(DatabaseError.Unknown(e))

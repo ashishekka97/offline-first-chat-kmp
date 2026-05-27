@@ -16,6 +16,7 @@ import me.ashishekka.echo.shared.data.entity.ParticipantEntity
 import me.ashishekka.echo.shared.data.file.LocalAssetManager
 import me.ashishekka.echo.shared.di.DispatcherProvider
 import me.ashishekka.echo.shared.domain.AssetError
+import me.ashishekka.echo.shared.domain.BackupError
 import me.ashishekka.echo.shared.domain.DatabaseError
 import me.ashishekka.echo.shared.domain.PreferenceError
 import me.ashishekka.echo.shared.domain.Result
@@ -104,11 +105,11 @@ class BackupRestorationEngineTest {
 
     class FakeBackupParser : BackupParser {
         var parseCalled = false
-        override fun parseSeedData(fileSystem: FileSystem, jsonFileName: String): SeedDataDto? {
+        override fun parseSeedData(fileSystem: FileSystem, jsonFileName: String): Result<SeedDataDto, BackupError> {
             parseCalled = true
-            return SeedDataDto(emptyList(), emptyList(), emptyMap())
+            return Result.Success(SeedDataDto(emptyList(), emptyList(), emptyMap()))
         }
-        override fun validateSeedData(data: SeedDataDto, fileSystem: FileSystem): Boolean = true
+        override fun validateSeedData(data: SeedDataDto, fileSystem: FileSystem): Result<Unit, BackupError> = Result.Success(Unit)
     }
 
     class FakeMediaRestorationService : MediaRestorationService {

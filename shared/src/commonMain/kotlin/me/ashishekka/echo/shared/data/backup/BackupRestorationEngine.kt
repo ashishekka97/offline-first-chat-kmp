@@ -68,8 +68,10 @@ class DefaultBackupRestorationEngine(
             }
             
             // 5. Parse Seed Data
-            val seedDataDto = backupParser.parseSeedData(zipFs) 
-                ?: return@withContext RestorationResult.Failure("Failed to parse or validate seed data from ZIP")
+            val seedDataDto = when (val parseResult = backupParser.parseSeedData(zipFs)) {
+                is Result.Failure -> return@withContext RestorationResult.Failure("Failed to parse or validate seed data: ${parseResult.error}")
+                is Result.Success -> parseResult.data
+            }
 
             // 6. Map DTOs to Entities (using relative timestamps)
             val baseTime = clock.now().toEpochMilliseconds()
