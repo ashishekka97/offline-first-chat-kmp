@@ -6,6 +6,9 @@ import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 
+enum class MessageType { TEXT, FILE }
+enum class MessageSender { USER, AGENT }
+
 @Entity(
     tableName = "messages",
     foreignKeys = [
@@ -23,10 +26,10 @@ data class MessageEntity(
     val id: String,
     val chatId: String,
     val message: String,
-    val type: String, // "text" or "file"
+    val type: MessageType,
     @Embedded(prefix = "file_")
     val file: FileDetails?,
-    val sender: String, // "user" or "agent"
+    val sender: MessageSender,
     val timestamp: Long
 )
 
