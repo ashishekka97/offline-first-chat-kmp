@@ -16,7 +16,7 @@ Every task from the `ROADMAP.md` must follow this atomic state machine:
 
 ### 3.1 RESEARCH & ACQUISITION
 *   Identify the next available task in `ROADMAP.md`.
-*   Mark the task as `[IN_PROGRESS]` in the file before starting.
+*   Mark the task with an `[IN_PROGRESS]` label (e.g., `- [ ] [IN_PROGRESS] **Task Name**`) in the file before starting.
 *   Locate the specific files in the codebase (targeted 2-4 files per task).
 
 ### 3.2 PLANNING
@@ -34,7 +34,7 @@ Every task from the `ROADMAP.md` must follow this atomic state machine:
     *   Android build: `./gradlew :androidApp:assembleDebug`
 
 ### 3.5 COMPLETION & SYNC
-*   Update `ROADMAP.md` by marking the task as `[COMPLETED]`.
+*   Update `ROADMAP.md` by marking the task as completed using the `[x]` syntax.
 *   Commit changes using Conventional Commits (e.g., `feat(data): implement ChatDao`).
 
 ## 4. Technical Mandates
