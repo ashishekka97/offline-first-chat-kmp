@@ -71,7 +71,15 @@ The project follows a strict separation of concerns, heavily favoring shared cod
 4.  **Agent Simulation:** After 1-2s delay, Agent generates reply.
 5.  **Agent Persistence:** Agent reply saved to Room -> Room triggers UI update.
 
-### 4.2 "Initial Restore" Workflow
+### 4.2 "New Chat" Workflow (AI-Centric)
+1.  **Intent**: User triggers "New Chat" (Gemini/ChatGPT style).
+2.  **Navigation**: Platform UI navigates to a blank `ChatDetail` screen with a temporary session ID.
+3.  **Initialization**: Upon the first user message:
+    *   `ChatDetailViewModel` calls `ChatRepository.createChat` using the message preview as the title.
+    *   The message is saved atomically within the same transaction.
+4.  **Simulation**: Standard AI simulation logic triggers.
+
+### 4.3 "Initial Restore" Workflow
 1.  **App Launch:** Platform Splash Screen checks DataStore.
 2.  **Restore Engine:** If `isRestoreCompleted` is false, reads bundled JSON and copies/processes bundled images.
 3.  **Completion:** Updates DataStore and routes user to the Home Screen.

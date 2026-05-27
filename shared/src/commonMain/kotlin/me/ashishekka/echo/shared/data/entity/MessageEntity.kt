@@ -38,7 +38,8 @@ enum class MessageSender { USER, AGENT }
     ],
     indices = [
         Index(value = ["chatId"]),
-        Index(value = ["senderId"])
+        Index(value = ["senderId"]),
+        Index(value = ["timestamp"])
     ]
 )
 data class MessageEntity(

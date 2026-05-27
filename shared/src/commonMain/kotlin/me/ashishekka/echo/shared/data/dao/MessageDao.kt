@@ -24,6 +24,12 @@ interface MessageDao {
     fun getMessagesForChat(chatId: String): PagingSource<Int, MessageWithSender>
 
     /**
+     * Returns a list of all messages for a specific [chatId].
+     */
+    @Query("SELECT * FROM messages WHERE chatId = :chatId")
+    suspend fun getMessagesByChatId(chatId: String): List<MessageEntity>
+
+    /**
      * Inserts a new message or replaces an existing one.
      */
     @Insert(onConflict = OnConflictStrategy.REPLACE)

@@ -26,10 +26,12 @@ This roadmap outlines the implementation phases and technical tasks for the Echo
 
 ## Phase 4: AI & Domain Logic
 **Goal:** Implement the reactive simulation engine and shared presentation layer.
-*   [ ] **Domain: AI Simulation Engine**: Implement randomized response selection and simulated "thinking" delay logic.
-*   [ ] **Domain: Agent Lifecycle & Debouncing**: Implement message counting and input debouncing to manage simulation triggers.
+*   [x] **Domain: AI Simulation Engine**: Implement randomized response selection and simulated "thinking" delay logic.
+*   [x] **Domain: Agent Lifecycle & Debouncing**: Implement message counting and input debouncing to manage simulation triggers.
+
 *   [ ] **Presentation: Home ViewModel**: Implement the shared view model for chat list management and swipe-to-delete logic.
-*   [ ] **Presentation: Chat Detail ViewModel**: Implement the shared view model for message history and auto-scroll triggers.
+*   [ ] **Presentation: Chat Detail ViewModel**: Implement the shared view model for message history, auto-scroll triggers, and "New Chat" initialization (creating chat on first message).
+*   [ ] **Presentation: New Chat Intent**: Define the navigation and state handling for starting fresh conversations with the AI agent.
 
 ## Phase 5: Android Platform (Compose)
 **Goal:** Build the Android user interface using Jetpack Compose.

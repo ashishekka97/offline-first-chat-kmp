@@ -26,6 +26,21 @@ interface ChatRepository {
     suspend fun createChat(id: String, title: String, participantIds: List<String>): Result<Unit, DatabaseError>
 
     /**
+     * Creates a new chat along with its first message atomically.
+     */
+    suspend fun createChatWithMessage(
+        chatId: String,
+        title: String,
+        participantIds: List<String>,
+        messageId: String,
+        message: String,
+        senderId: String,
+        type: me.ashishekka.echo.shared.data.entity.MessageType = me.ashishekka.echo.shared.data.entity.MessageType.TEXT,
+        file: me.ashishekka.echo.shared.data.entity.FileDetails? = null,
+        timestamp: Long = kotlinx.datetime.Clock.System.now().toEpochMilliseconds()
+    ): Result<Unit, DatabaseError>
+
+    /**
      * Updates the last message details for a chat.
      */
     suspend fun updateLastMessage(chatId: String, message: String, timestamp: Long): Result<Unit, DatabaseError>

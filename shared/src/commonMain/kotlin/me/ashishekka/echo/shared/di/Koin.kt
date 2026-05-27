@@ -14,8 +14,15 @@ import me.ashishekka.echo.shared.data.backup.SeedDataRepository
 import me.ashishekka.echo.shared.data.createDatabase
 import me.ashishekka.echo.shared.data.repository.OfflineFirstChatRepository
 import me.ashishekka.echo.shared.data.repository.OfflineFirstMessageRepository
+import me.ashishekka.echo.shared.data.repository.OfflineFirstParticipantRepository
 import me.ashishekka.echo.shared.domain.repository.ChatRepository
 import me.ashishekka.echo.shared.domain.repository.MessageRepository
+import me.ashishekka.echo.shared.domain.repository.ParticipantRepository
+import me.ashishekka.echo.shared.domain.service.AgentService
+import me.ashishekka.echo.shared.domain.service.DefaultAgentService
+import me.ashishekka.echo.shared.domain.usecase.DeleteChatUseCase
+import me.ashishekka.echo.shared.domain.usecase.SendMessageUseCase
+import me.ashishekka.echo.shared.domain.usecase.StartChatUseCase
 import org.koin.core.context.startKoin
 import org.koin.core.logger.Level
 import org.koin.core.module.Module
@@ -46,8 +53,17 @@ val dataModule = module {
     single<MediaRestorationService> { DefaultMediaRestorationService(get(), get(), get()) }
     single<BackupRestorationEngine> { DefaultBackupRestorationEngine(get(), get(), get(), get(), get(), get()) }
 
-    single<ChatRepository> { OfflineFirstChatRepository(get()) }
+    single<AgentService> { DefaultAgentService(get(), get()) }
+
+    single<ChatRepository> { OfflineFirstChatRepository(get(), get()) }
     single<MessageRepository> { OfflineFirstMessageRepository(get()) }
+
+    single<ParticipantRepository> { OfflineFirstParticipantRepository(get()) }
+
+    // Use Cases
+    factory { StartChatUseCase(get(), get()) }
+    factory { SendMessageUseCase(get(), get()) }
+    factory { DeleteChatUseCase(get(), get(), get()) }
 }
 
 val viewModelModule = module {
