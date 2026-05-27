@@ -15,7 +15,7 @@ This roadmap outlines the implementation phases and technical tasks for the Echo
 
 ## Phase 3: Backup & Restore
 **Goal:** Implement the zero-network initial data restoration flow.
-*   [ ] **Backup: Logic & Parsing**: Implement JSON parsing and resource validation for the initial data backup.
+*   [x] **Backup: Logic & Parsing**: Implement JSON parsing and resource validation for the initial data backup.
 *   [ ] **Backup: Restoration Engine**: Coordinate the Asset Manager, Media Processor, and Repository to restore seed data and generate thumbnails.
 
 ## Phase 4: AI & Domain Logic

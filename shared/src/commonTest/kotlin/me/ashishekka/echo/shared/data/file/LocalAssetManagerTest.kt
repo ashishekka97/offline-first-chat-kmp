@@ -1,5 +1,8 @@
 package me.ashishekka.echo.shared.data.file
 
+import okio.Buffer
+import okio.Source
+import okio.buffer
 import okio.fakefilesystem.FakeFileSystem
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -21,6 +24,14 @@ class LocalAssetManagerTest {
         assetReader = object : AssetReader {
             override fun readAsset(fileName: String): String? {
                 return if (fileName == "test.json") "{\"key\": \"value\"}" else null
+            }
+
+            override fun readAssetBytes(fileName: String): ByteArray? {
+                return if (fileName == "test.bin") byteArrayOf(1, 2, 3) else null
+            }
+
+            override fun readAssetSource(fileName: String): Source? {
+                return if (fileName == "test.bin") Buffer().write(byteArrayOf(1, 2, 3)) else null
             }
         }
         manager = DefaultLocalAssetManager(baseDirPath, assetReader, fileSystem)
@@ -68,5 +79,25 @@ class LocalAssetManagerTest {
     fun testReadBundledAsset() {
         assertEquals("{\"key\": \"value\"}", manager.readBundledAsset("test.json"))
         assertNull(manager.readBundledAsset("unknown.json"))
+    }
+
+    @Test
+    fun testReadBundledAssetBytes() {
+        val result = manager.readBundledAssetBytes("test.bin")
+        assertTrue(byteArrayOf(1, 2, 3).contentEquals(result!!))
+        assertNull(manager.readBundledAssetBytes("unknown.bin"))
+    }
+
+    @Test
+    fun testBundledAssetSource() {
+        val source = manager.bundledAssetSource("test.bin")
+        assertNotNull(source)
+        val result = source!!.buffer().readByteArray()
+        assertTrue(byteArrayOf(1, 2, 3).contentEquals(result))
+        assertNull(manager.bundledAssetSource("unknown.bin"))
+    }
+
+    private fun assertNotNull(actual: Any?) {
+        assertTrue(actual != null, "Expected not null")
     }
 }
