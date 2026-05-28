@@ -29,11 +29,6 @@ interface AgentService {
     fun triggerReply(chatId: ChatId)
 
     /**
-     * Updates the user's typing status for the given [chatId].
-     */
-    fun setUserTyping(chatId: ChatId, isTyping: Boolean)
-
-    /**
      * Cancels any active simulations and stops background processing.
      */
     fun cancel()
@@ -53,9 +48,6 @@ class DefaultAgentService(
 
     private val _typingStates = MutableStateFlow<Map<ChatId, Boolean>>(emptyMap())
     override val typingStates: StateFlow<Map<ChatId, Boolean>> = _typingStates.asStateFlow()
-
-    // Tracks if the user is currently typing in a chat
-    private val userTypingStates = MutableStateFlow<Map<ChatId, Boolean>>(emptyMap())
 
     private val triggerFlow = MutableSharedFlow<ChatId>(
         extraBufferCapacity = 64,
@@ -104,10 +96,6 @@ class DefaultAgentService(
         }
     }
 
-    override fun setUserTyping(chatId: ChatId, isTyping: Boolean) {
-        userTypingStates.update { it + (chatId to isTyping) }
-    }
-
     override fun cancel() {
         scope.cancel()
     }
@@ -123,13 +111,6 @@ class DefaultAgentService(
         simulationJobs[chatId] = scope.launch {
             try {
                 yield() 
-                
-                // Requirement: Don't trigger if user rapidly sends OR is still typing
-                // We wait until the user has stopped typing
-                userTypingStates
-                    .map { it[chatId] ?: false }
-                    .filter { !it }
-                    .first()
                 
                 _typingStates.update { it + (chatId to true) }
                 
