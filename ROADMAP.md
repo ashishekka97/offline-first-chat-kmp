@@ -71,8 +71,19 @@ This roadmap outlines the implementation phases and technical tasks for the Echo
 *   [x] **iOS: Fullscreen Image Viewer**: Implement a zoomable fullscreen image view with pinch-to-zoom support.
 *   [x] **iOS: Tappable Title Editing**: Implement title editing via the navigation bar (Bonus).
 
-## Phase 7: Final Polish & Resilience
-**Goal:** Ensure UI robustness and cross-platform validation.
-*   [ ] **UI: Empty States & Error Harness**: Implement global empty state views and fallback UI for media/database errors.
-*   [ ] **Polish: Smart Timestamps & Localization**: Implement localized relative time logic with system 12h/24h support.
+## Phase 7: UI Polish & User Experience
+**Goal:** Elevate the app's visual quality and interaction design.
+*   [ ] **Polish: Fix Startup Flicker**: Stabilize the transition from Splash to Home by refining the initial bootstrap state logic.
+*   [ ] **UI: Smooth Splash Transition**: Add cross-fade animations when transitioning from the Splash screen to the Home screen.
+*   [ ] **UI: Modern "Pill" Draft Input**: Redesign the chat input area to a modern floating pill style with better focus states.
+*   [ ] **UI: Drafts on Home Screen**: Display active message drafts in the chat list with a distinct "Draft" indicator.
+*   [ ] **UI: Full Dark Mode Support**: Implement a unified Dark Mode using semantic design tokens across Android and iOS.
+*   [ ] **UI: Animated Typing (Android)**: Implement a 3-dot pulse animation for the agent's typing state on Android.
+*   [ ] **UI: Haptic Feedback**: Integrate platform-native haptics for message sending, deleting, and errors.
+*   [ ] **Polish: Smart Timestamps 12h/24h**: Update `DateTimeUtils` to respect system-level 12h/24h formatting settings.
+*   [ ] **UI: Error Harness & Toasts**: Display the `error` state from ViewModels using Snackbars (Android) and Alerts (iOS).
+
+## Phase 8: Final Resilience & Documentation
+**Goal:** Ensure stability and finalize project resources.
 *   [ ] **Validation: Offline Persistence & Documentation**: Final verification of offline behavior and update project documentation.
+
