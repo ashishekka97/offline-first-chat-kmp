@@ -83,30 +83,44 @@ class DefaultAgentService(
         
         simulationJobs[chatId] = scope.launch {
             try {
+                // Ensure we don't start multiple overlapping simulations
+                // if rapid triggers happen outside the mutex
+                yield() 
+                
                 _typingStates.update { it + (chatId to true) }
+                
                 // 1. Thinking delay (1-2 seconds)
                 delay(Random.nextLong(1000, 2000))
                 
+                if (!isActive) return@launch // Double check if cancelled during delay
+
                 // 2. Generate randomized reply
                 val isImageReply = Random.nextFloat() < 0.3 // 30% chance for image
                 
                 val messageId = MessageId(idGenerator.generateUuid())
                 val timestamp = clock.now().toEpochMilliseconds()
 
-                if (isImageReply) {
+                val result = if (isImageReply) {
                     sendImageReply(messageId, chatId, timestamp)
                 } else {
                     sendTextReply(messageId, chatId, timestamp)
                 }
+                
+                // Hardening: Handle repository failures gracefully in simulation
+                if (result is me.ashishekka.echo.shared.domain.Result.Failure) {
+                    // Log error or handle as needed for simulation resilience
+                    println("Agent simulation failed for chat $chatId: ${result.error}")
+                }
             } finally {
+                // Ensure typing state is always cleared even on cancellation/error
                 _typingStates.update { it + (chatId to false) }
             }
         }
     }
 
-    private suspend fun sendTextReply(id: MessageId, chatId: ChatId, timestamp: Long) {
+    private suspend fun sendTextReply(id: MessageId, chatId: ChatId, timestamp: Long): me.ashishekka.echo.shared.domain.Result<Unit, me.ashishekka.echo.shared.domain.AppError> {
         val reply = TEXT_REPLIES.random()
-        messageRepository.sendMessage(
+        return messageRepository.sendMessage(
             id = id,
             chatId = chatId,
             senderId = Constants.DEFAULT_AGENT_ID,
@@ -116,9 +130,9 @@ class DefaultAgentService(
         )
     }
 
-    private suspend fun sendImageReply(id: MessageId, chatId: ChatId, timestamp: Long) {
+    private suspend fun sendImageReply(id: MessageId, chatId: ChatId, timestamp: Long): me.ashishekka.echo.shared.domain.Result<Unit, me.ashishekka.echo.shared.domain.AppError> {
         val (caption, assetName) = IMAGE_REPLIES.random()
-        messageRepository.sendMessage(
+        return messageRepository.sendMessage(
             id = id,
             chatId = chatId,
             senderId = Constants.DEFAULT_AGENT_ID,

@@ -7,6 +7,7 @@ import me.ashishekka.echo.shared.domain.model.ChatId
 import me.ashishekka.echo.shared.domain.onSuccess
 import me.ashishekka.echo.shared.domain.repository.ChatRepository
 import me.ashishekka.echo.shared.domain.repository.MessageRepository
+import me.ashishekka.echo.shared.domain.service.AgentService
 
 /**
  * Use case for deleting a chat and all its associated messages and physical files.
@@ -14,7 +15,8 @@ import me.ashishekka.echo.shared.domain.repository.MessageRepository
 class DeleteChatUseCase(
     private val chatRepository: ChatRepository,
     private val messageRepository: MessageRepository,
-    private val localAssetManager: LocalAssetManager
+    private val localAssetManager: LocalAssetManager,
+    private val agentService: AgentService
 ) {
     /**
      * Deletes the chat, its messages, and any local media files associated with those messages.

@@ -12,10 +12,7 @@ import me.ashishekka.echo.shared.domain.model.ChatId
 import me.ashishekka.echo.shared.domain.repository.ChatRepository
 import me.ashishekka.echo.shared.domain.repository.MessageRepository
 import me.ashishekka.echo.shared.domain.repository.ParticipantRepository
-import me.ashishekka.echo.shared.domain.service.AgentService
-import me.ashishekka.echo.shared.domain.service.DefaultAgentService
-import me.ashishekka.echo.shared.domain.service.DefaultIdGenerator
-import me.ashishekka.echo.shared.domain.service.IdGenerator
+import me.ashishekka.echo.shared.domain.service.*
 import me.ashishekka.echo.shared.domain.usecase.*
 import me.ashishekka.echo.shared.screens.chat.ChatDetailViewModel
 import me.ashishekka.echo.shared.screens.home.HomeViewModel
@@ -52,6 +49,7 @@ val infrastructureModule = module {
     single<MediaRestorationService> { DefaultMediaRestorationService(get(), get(), get()) }
     single<BackupRestorationEngine> { DefaultBackupRestorationEngine(get(), get(), get(), get(), get(), get()) }
     single<IdGenerator> { DefaultIdGenerator() }
+    single<MediaService> { DefaultMediaService(get(), get(), get()) }
 }
 
 val domainModule = module {
@@ -65,9 +63,9 @@ val useCaseModule = module {
     factory { GetPagedChatsUseCase(get()) }
     factory { GetPagedMessagesUseCase(get()) }
     factory { GetChatByIdUseCase(get()) }
-    factory { StartChatUseCase(get(), get()) }
-    factory { SendMessageUseCase(get(), get()) }
-    factory { DeleteChatUseCase(get(), get(), get()) }
+    factory { StartChatUseCase(get(), get(), get(), get()) }
+    factory { SendMessageUseCase(get(), get(), get(), get()) }
+    factory { DeleteChatUseCase(get(), get(), get(), get()) }
 }
 
 val viewModelModule = module {
@@ -81,6 +79,8 @@ val viewModelModule = module {
             startChatUseCase = get(),
             agentService = get(),
             participantRepository = get(),
+            chatRepository = get(),
+            preferenceStorage = get(),
             idGenerator = get()
         )
     }
