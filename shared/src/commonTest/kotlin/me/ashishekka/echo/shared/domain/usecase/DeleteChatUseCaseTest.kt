@@ -87,6 +87,7 @@ class DeleteChatUseCaseTest {
         override fun readText(fileName: String): Result<String, AssetError> = Result.Failure(AssetError.NotFound)
         override fun writeText(fileName: String, content: String): Result<Unit, AssetError> = Result.Success(Unit)
         override fun readBytes(fileName: String): Result<ByteArray, AssetError> = Result.Failure(AssetError.NotFound)
+        override fun readUriBytes(uriPath: String): Result<ByteArray, AssetError> = readBytes(uriPath)
         override fun writeBytes(fileName: String, bytes: ByteArray): Result<Unit, AssetError> = Result.Success(Unit)
         override fun deleteFile(fileName: String): Result<Unit, AssetError> {
             deletedFiles.add(fileName)

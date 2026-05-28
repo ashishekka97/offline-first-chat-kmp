@@ -101,6 +101,7 @@ class MediaRestorationServiceTest {
             val bytes = storedFiles[fileName]
             return if (bytes != null) Result.Success(bytes) else Result.Failure(AssetError.NotFound)
         }
+        override fun readUriBytes(uriPath: String): Result<ByteArray, AssetError> = readBytes(uriPath)
         override fun writeBytes(fileName: String, bytes: ByteArray): Result<Unit, AssetError> {
             storedFiles[fileName] = bytes
             return Result.Success(Unit)

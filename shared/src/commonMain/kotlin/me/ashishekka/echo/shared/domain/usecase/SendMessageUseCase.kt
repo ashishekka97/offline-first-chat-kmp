@@ -37,7 +37,7 @@ class SendMessageUseCase(
 
         if (localMediaPath != null) {
             // If it's a local file path (from picker), process it
-            val bytesResult = localAssetManager.readBytes(localMediaPath)
+            val bytesResult = localAssetManager.readUriBytes(localMediaPath)
             if (bytesResult is Result.Success) {
                 val processResult = mediaService.processImage(bytesResult.data, localMediaPath)
                 if (processResult is Result.Success) {

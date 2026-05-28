@@ -39,7 +39,7 @@ class StartChatUseCase(
         var finalFileDetails: FileDetails? = null
 
         if (localMediaPath != null) {
-            val bytesResult = localAssetManager.readBytes(localMediaPath)
+            val bytesResult = localAssetManager.readUriBytes(localMediaPath)
             if (bytesResult is Result.Success) {
                 val processResult = mediaService.processImage(bytesResult.data, localMediaPath)
                 if (processResult is Result.Success) {

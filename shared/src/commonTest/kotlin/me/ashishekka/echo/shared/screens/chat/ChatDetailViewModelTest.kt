@@ -280,6 +280,7 @@ class FakeLocalAssetManager : LocalAssetManager {
     override fun readText(fileName: String): Result<String, AssetError> = Result.Failure(AssetError.NotFound)
     override fun writeText(fileName: String, content: String): Result<Unit, AssetError> = Result.Success(Unit)
     override fun readBytes(fileName: String): Result<ByteArray, AssetError> = Result.Success(ByteArray(0))
+    override fun readUriBytes(uriPath: String): Result<ByteArray, AssetError> = readBytes(uriPath)
     override fun writeBytes(fileName: String, bytes: ByteArray): Result<Unit, AssetError> = Result.Success(Unit)
     override fun deleteFile(fileName: String): Result<Unit, AssetError> = Result.Success(Unit)
     override fun getAbsolutePath(fileName: String): String = fileName
