@@ -29,22 +29,17 @@ struct ChatDetailView: View {
                             }
                         }
                         
-                        Spacer()
-                            .frame(height: 10)
+                        Color.clear
+                            .frame(height: 1)
                             .id("BOTTOM")
                     }
                 }
                 .onChange(of: viewModel.scrollToBottomTrigger) { _ in
-                    withAnimation {
-                        proxy.scrollTo("BOTTOM", anchor: .bottom)
-                    }
+                    scrollToBottom(proxy: proxy)
                 }
                 .onAppear {
                     viewModel.onIntent(intent: ChatDetailIntentOnInitialMessagesLoaded())
-                    // Immediate scroll on appear if messages exist
-                    if !viewModel.messages.isEmpty {
-                        proxy.scrollTo("BOTTOM", anchor: .bottom)
-                    }
+                    scrollToBottom(proxy: proxy, delay: 0.3)
                 }
             }
             
@@ -91,5 +86,13 @@ struct ChatDetailView: View {
         .navigationTitle(viewModel.state?.chat?.title ?? "Chat")
         .navigationBarTitleDisplayMode(.inline)
         .ignoresSafeArea(.keyboard, edges: .bottom) // Ensures content stays visible above keyboard
+    }
+    
+    private func scrollToBottom(proxy: ScrollViewProxy, delay: Double = 0.1) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+            withAnimation(.easeOut(duration: 0.3)) {
+                proxy.scrollTo("BOTTOM", anchor: .bottom)
+            }
+        }
     }
 }
