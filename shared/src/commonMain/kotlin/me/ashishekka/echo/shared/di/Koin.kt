@@ -83,7 +83,9 @@ val viewModelModule = module {
             getChatByIdUseCase = get(),
             getPagedMessagesUseCase = get(),
             sendMessageUseCase = get(),
-            startChatUseCase = get()
+            startChatUseCase = get(),
+            agentService = get(),
+            participantRepository = get()
         )
     }
 }

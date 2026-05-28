@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
@@ -19,8 +20,11 @@ import me.ashishekka.echo.shared.domain.AppError
 import me.ashishekka.echo.shared.domain.Constants
 import me.ashishekka.echo.shared.domain.model.Chat
 import me.ashishekka.echo.shared.domain.model.Message
+import me.ashishekka.echo.shared.domain.model.Participant
 import me.ashishekka.echo.shared.domain.onFailure
 import me.ashishekka.echo.shared.domain.onSuccess
+import me.ashishekka.echo.shared.domain.repository.ParticipantRepository
+import me.ashishekka.echo.shared.domain.service.AgentService
 import me.ashishekka.echo.shared.domain.usecase.GetChatByIdUseCase
 import me.ashishekka.echo.shared.domain.usecase.GetPagedMessagesUseCase
 import me.ashishekka.echo.shared.domain.usecase.SendMessageUseCase
@@ -31,8 +35,10 @@ import me.ashishekka.echo.shared.domain.usecase.StartChatUseCase
  */
 data class ChatDetailState(
     val chat: Chat? = null,
+    val agent: Participant? = null,
     val messages: Flow<PagingData<Message>> = MutableStateFlow(PagingData.empty()),
     val isNewChat: Boolean = false,
+    val isAgentTyping: Boolean = false,
     val error: AppError? = null
 )
 
@@ -40,7 +46,8 @@ data class ChatDetailState(
  * Intents for the Chat Detail screen.
  */
 sealed interface ChatDetailIntent {
-    data class SendMessage(val text: String) : ChatDetailIntent
+    data class SendMessage(val text: String, val localMediaPath: String? = null) : ChatDetailIntent
+    data object OnInitialMessagesLoaded : ChatDetailIntent
     data object ClearError : ChatDetailIntent
 }
 
@@ -59,7 +66,9 @@ class ChatDetailViewModel(
     private val getChatByIdUseCase: GetChatByIdUseCase,
     private val getPagedMessagesUseCase: GetPagedMessagesUseCase,
     private val sendMessageUseCase: SendMessageUseCase,
-    private val startChatUseCase: StartChatUseCase
+    private val startChatUseCase: StartChatUseCase,
+    private val agentService: AgentService,
+    private val participantRepository: ParticipantRepository
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(ChatDetailState())
@@ -70,6 +79,8 @@ class ChatDetailViewModel(
 
     init {
         observeChat()
+        observeTypingState()
+        fetchAgent()
         loadMessages()
     }
 
@@ -84,6 +95,24 @@ class ChatDetailViewModel(
             .launchIn(viewModelScope)
     }
 
+    private fun observeTypingState() {
+        agentService.typingStates
+            .map { it[chatId] ?: false }
+            .onEach { isTyping ->
+                _state.value = _state.value.copy(isAgentTyping = isTyping)
+            }
+            .launchIn(viewModelScope)
+    }
+
+    private fun fetchAgent() {
+        viewModelScope.launch {
+            participantRepository.getParticipantById(Constants.DEFAULT_AGENT_ID)
+                .onSuccess { agent ->
+                    _state.value = _state.value.copy(agent = agent)
+                }
+        }
+    }
+
     private fun loadMessages() {
         _state.value = _state.value.copy(
             messages = getPagedMessagesUseCase(chatId).cachedIn(viewModelScope)
@@ -92,14 +121,15 @@ class ChatDetailViewModel(
 
     fun onIntent(intent: ChatDetailIntent) {
         when (intent) {
-            is ChatDetailIntent.SendMessage -> sendMessage(intent.text)
+            is ChatDetailIntent.SendMessage -> sendMessage(intent.text, intent.localMediaPath)
+            is ChatDetailIntent.OnInitialMessagesLoaded -> scrollToBottom()
             is ChatDetailIntent.ClearError -> clearError()
         }
     }
 
     @OptIn(ExperimentalUuidApi::class)
-    private fun sendMessage(text: String) {
-        if (text.isBlank()) return
+    private fun sendMessage(text: String, localMediaPath: String?) {
+        if (text.isBlank() && localMediaPath == null) return
 
         viewModelScope.launch {
             val result = if (_state.value.isNewChat) {
@@ -110,6 +140,7 @@ class ChatDetailViewModel(
                     messageId = Uuid.random().toString(),
                     message = text,
                     senderId = Constants.CURRENT_USER_ID
+                    // TODO: Pass localMediaPath to StartChatUseCase once it supports files
                 )
             } else {
                 sendMessageUseCase(
@@ -117,16 +148,23 @@ class ChatDetailViewModel(
                     chatId = chatId,
                     senderId = Constants.CURRENT_USER_ID,
                     message = text
+                    // TODO: Pass localMediaPath to SendMessageUseCase once it supports files
                 )
             }
 
             result
                 .onSuccess {
-                    _sideEffect.send(ChatDetailSideEffect.ScrollToBottom)
+                    scrollToBottom()
                 }
                 .onFailure { error ->
                     _state.value = _state.value.copy(error = error)
                 }
+        }
+    }
+
+    private fun scrollToBottom() {
+        viewModelScope.launch {
+            _sideEffect.send(ChatDetailSideEffect.ScrollToBottom)
         }
     }
 

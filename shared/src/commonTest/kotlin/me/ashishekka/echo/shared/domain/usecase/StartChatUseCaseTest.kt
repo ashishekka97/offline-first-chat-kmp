@@ -3,6 +3,8 @@ package me.ashishekka.echo.shared.domain.usecase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
 import me.ashishekka.echo.shared.data.entity.FileDetails
 import me.ashishekka.echo.shared.data.entity.MessageType
@@ -87,6 +89,7 @@ class StartChatUseCaseTest {
     }
 
     class FakeAgentService : AgentService {
+        override val typingStates: StateFlow<Map<String, Boolean>> = MutableStateFlow(emptyMap())
         var triggerCount = 0
         override fun triggerReply(chatId: String) {
             triggerCount++

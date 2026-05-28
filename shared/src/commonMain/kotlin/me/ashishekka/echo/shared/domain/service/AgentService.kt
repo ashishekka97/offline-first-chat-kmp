@@ -11,11 +11,20 @@ import me.ashishekka.echo.shared.di.DispatcherProvider
 import me.ashishekka.echo.shared.domain.Result
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 
 /**
  * Service responsible for simulating AI agent interactions.
  */
 interface AgentService {
+    /**
+     * A reactive map of chatId to its typing status.
+     */
+    val typingStates: StateFlow<Map<String, Boolean>>
+
     /**
      * Triggers a simulated reply for the given [chatId].
      * The service internally handles debouncing and message counting.
@@ -32,6 +41,9 @@ class DefaultAgentService(
     private val scope: CoroutineScope = CoroutineScope(dispatcherProvider.default + SupervisorJob()),
     private val clock: Clock = Clock.System
 ) : AgentService {
+
+    private val _typingStates = MutableStateFlow<Map<String, Boolean>>(emptyMap())
+    override val typingStates: StateFlow<Map<String, Boolean>> = _typingStates.asStateFlow()
 
     // Mutex to guard state mutations for thread safety
     private val mutex = Mutex()
@@ -68,19 +80,24 @@ class DefaultAgentService(
         simulationJobs[chatId]?.cancel()
         
         simulationJobs[chatId] = scope.launch {
-            // 1. Thinking delay (1-2 seconds)
-            delay(Random.nextLong(1000, 2000))
-            
-            // 2. Generate randomized reply
-            val isImageReply = Random.nextFloat() < 0.3 // 30% chance for image
-            
-            val messageId = "agent_msg_${clock.now().toEpochMilliseconds()}"
-            val timestamp = clock.now().toEpochMilliseconds()
+            try {
+                _typingStates.update { it + (chatId to true) }
+                // 1. Thinking delay (1-2 seconds)
+                delay(Random.nextLong(1000, 2000))
+                
+                // 2. Generate randomized reply
+                val isImageReply = Random.nextFloat() < 0.3 // 30% chance for image
+                
+                val messageId = "agent_msg_${clock.now().toEpochMilliseconds()}"
+                val timestamp = clock.now().toEpochMilliseconds()
 
-            if (isImageReply) {
-                sendImageReply(messageId, chatId, timestamp)
-            } else {
-                sendTextReply(messageId, chatId, timestamp)
+                if (isImageReply) {
+                    sendImageReply(messageId, chatId, timestamp)
+                } else {
+                    sendTextReply(messageId, chatId, timestamp)
+                }
+            } finally {
+                _typingStates.update { it + (chatId to false) }
             }
         }
     }

@@ -14,6 +14,8 @@ import kotlin.test.assertEquals
 import androidx.paging.PagingData
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import me.ashishekka.echo.shared.domain.DatabaseError
 import me.ashishekka.echo.shared.domain.model.Message
 
@@ -78,6 +80,7 @@ class SendMessageUseCaseTest {
     }
 
     class FakeAgentService : AgentService {
+        override val typingStates: StateFlow<Map<String, Boolean>> = MutableStateFlow(emptyMap())
         var triggerCount = 0
         override fun triggerReply(chatId: String) {
             triggerCount++
