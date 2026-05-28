@@ -3,6 +3,7 @@ package me.ashishekka.echo.screens
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -34,6 +35,13 @@ import me.ashishekka.echo.ui.theme.toColor
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
+import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.PhotoLibrary
+import androidx.core.content.FileProvider
+import android.net.Uri
+import androidx.compose.ui.platform.LocalContext
+import java.io.File
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatDetailScreen(
@@ -42,16 +50,36 @@ fun ChatDetailScreen(
     modifier: Modifier = Modifier,
     viewModel: ChatDetailViewModel = koinViewModel(parameters = { parametersOf(ChatId(chatId)) })
 ) {
+    val context = LocalContext.current
     val state by viewModel.state.collectAsState()
     val messages = state.messages.collectAsLazyPagingItems()
     val listState = rememberLazyListState()
 
-    val mediaPickerLauncher = rememberLauncherForActivityResult(
+    var showSourcePicker by remember { mutableStateOf(false) }
+    var capturedImageUri by remember { mutableStateOf<Uri?>(null) }
+
+    val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
     ) { uri ->
         if (uri != null) {
             viewModel.onIntent(ChatDetailIntent.SendMessage("", uri.toString()))
         }
+    }
+
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture()
+    ) { success ->
+        if (success && capturedImageUri != null) {
+            viewModel.onIntent(ChatDetailIntent.SendMessage("", capturedImageUri.toString()))
+        }
+    }
+
+    fun getTmpFileUri(): Uri {
+        val tmpFile = File.createTempFile("tmp_image_", ".jpg", context.cacheDir).apply {
+            createNewFile()
+            deleteOnExit()
+        }
+        return FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", tmpFile)
     }
 
     LaunchedEffect(Unit) {
@@ -64,6 +92,22 @@ fun ChatDetailScreen(
                 }
             }
         }
+    }
+
+    if (showSourcePicker) {
+        AttachmentSourceDialog(
+            onDismiss = { showSourcePicker = false },
+            onGalleryClick = {
+                showSourcePicker = false
+                galleryLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+            },
+            onCameraClick = {
+                showSourcePicker = false
+                val uri = getTmpFileUri()
+                capturedImageUri = uri
+                cameraLauncher.launch(uri)
+            }
+        )
     }
 
     Scaffold(
@@ -82,11 +126,7 @@ fun ChatDetailScreen(
                 text = state.currentDraft,
                 onTextChanged = { viewModel.onIntent(ChatDetailIntent.UpdateDraft(it)) },
                 onSendClick = { viewModel.onIntent(ChatDetailIntent.SendMessage(it)) },
-                onAttachClick = {
-                    mediaPickerLauncher.launch(
-                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                    )
-                }
+                onAttachClick = { showSourcePicker = true }
             )
         },
         modifier = modifier
@@ -191,6 +231,35 @@ fun MessageBubble(message: Message) {
             }
         }
     }
+}
+
+@Composable
+fun AttachmentSourceDialog(
+    onDismiss: () -> Unit,
+    onGalleryClick: () -> Unit,
+    onCameraClick: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Choose Source") },
+        text = {
+            Column {
+                ListItem(
+                    headlineContent = { Text("Gallery") },
+                    leadingContent = { Icon(Icons.Default.PhotoLibrary, contentDescription = null) },
+                    modifier = Modifier.clickable(onClick = onGalleryClick)
+                )
+                ListItem(
+                    headlineContent = { Text("Camera") },
+                    leadingContent = { Icon(Icons.Default.CameraAlt, contentDescription = null) },
+                    modifier = Modifier.clickable(onClick = onCameraClick)
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text("Cancel") }
+        }
+    )
 }
 
 @Composable
