@@ -7,7 +7,12 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.*
 import androidx.navigation.toRoute
 import kotlinx.serialization.Serializable
+import me.ashishekka.echo.screens.HomeScreen
+import me.ashishekka.echo.shared.screens.home.HomeIntent
+import me.ashishekka.echo.shared.screens.home.HomeSideEffect
+import me.ashishekka.echo.shared.screens.home.HomeViewModel
 import me.ashishekka.echo.ui.theme.EchoTheme
+import org.koin.compose.viewmodel.koinViewModel
 
 @Serializable
 object ListDestination
@@ -30,13 +35,32 @@ fun App() {
 @Composable
 fun EchoNavGraph() {
     val navController = rememberNavController()
+    val homeViewModel = koinViewModel<HomeViewModel>()
+
+    LaunchedEffect(Unit) {
+        homeViewModel.sideEffect.collect { effect ->
+            when (effect) {
+                is HomeSideEffect.NavigateToChat -> {
+                    navController.navigate(DetailDestination(effect.chatId.value))
+                }
+            }
+        }
+    }
 
     NavHost(
         navController = navController,
         startDestination = ListDestination
     ) {
         composable<ListDestination> {
-            Text("Home Chat List (TODO)")
+            HomeScreen(
+                onChatClick = { chatId ->
+                    homeViewModel.onIntent(HomeIntent.ClickChat(chatId))
+                },
+                onNewChatClick = {
+                    homeViewModel.onIntent(HomeIntent.NewChat)
+                },
+                viewModel = homeViewModel
+            )
         }
         composable<DetailDestination> { backStackEntry ->
             val destination = backStackEntry.toRoute<DetailDestination>()
