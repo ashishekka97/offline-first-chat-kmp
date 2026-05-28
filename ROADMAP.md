@@ -23,15 +23,31 @@ This roadmap outlines the implementation phases and technical tasks for the Echo
 *   [x] **Hardening: Chat & Message Repositories**: Abstract DAOs behind Repositories to act as a Single Source of Truth and handle Entity-to-Domain mapping.
 *   [x] **Hardening: Structured Error Handling**: Replace nullable/boolean returns in I/O and Media services with Sealed Result types for better error propagation.
 *   [x] **Hardening: Atomic DAO Operations**: Audit and wrap complex multi-table operations in `@Transaction` blocks.
+*   [x] **Hardening: Domain Model Decoupling**: Isolate business logic from Room-specific annotations by creating dedicated Domain Models and Data Entities with clear mapping layers.
+*   [x] **Hardening: Unified Repository Helpers**: Standardize exception handling and Result mapping using `safeDatabaseCall` utilities.
 
-## Phase 4: AI & Domain Logic
-**Goal:** Implement the reactive simulation engine and shared presentation layer.
+## Phase 4: AI & Shared Presentation
+**Goal:** Implement the reactive simulation engine, shared presentation layer, and core foundations.
 *   [x] **Domain: AI Simulation Engine**: Implement randomized response selection and simulated "thinking" delay logic.
 *   [x] **Domain: Agent Lifecycle & Debouncing**: Implement message counting and input debouncing to manage simulation triggers.
-
 *   [x] **Presentation: Home ViewModel**: Implement the shared view model for chat list management and swipe-to-delete logic.
 *   [x] **Presentation: Chat Detail ViewModel**: Implement the shared view model for message history, auto-scroll triggers, and "New Chat" initialization (creating chat on first message).
+*   [x] **Presentation: Multi-Chat Drafts**: Implement logic for saving and restoring message drafts uniquely per Chat ID using DataStore.
 *   [x] **Presentation: New Chat Intent**: Define the navigation and state handling for starting fresh conversations with the AI agent.
+*   [x] **Foundation: Strongly Typed IDs**: Implement value classes for `ChatId`, `MessageId`, and `ParticipantId` to ensure type safety.
+*   [x] **Foundation: Unified ID Generation**: Create a centralized service for consistent ID creation across the app.
+*   [x] **Foundation: Smart Formatting Utilities**: Implement localized relative timestamps and human-readable file size formatters.
+*   [x] **Foundation: Modular DI**: Refactor Koin modules for persistence, infrastructure, domain, and use cases.
+*   [x] **Validation: Comprehensive Unit Tests**: Establish a full test suite for the shared module covering DAOs, Repositories, Use Cases, and ViewModels.
+
+## Phase 4.5: Advanced Infrastructure
+**Goal:** Resolve cross-platform technical gaps for media and localization.
+*   [x] **Infrastructure: Media Intake Bridge**: Extend `LocalAssetManager` with Android-specific logic to handle `content://` URIs and external file streams.
+*   [x] **Infrastructure: Shared Localization Strategy**: Refactor `DateTimeUtils` and shared business logic to use a platform-agnostic `Strings` provider.
+*   [x] **Infrastructure: Shared Design Tokens**: Define branding colors, spacing, and typography constants in `commonMain` for UI consistency.
+*   [x] **Infrastructure: Shared Logging Harness**: Implement a lightweight logging interface to replace `println` with platform-native logs (Logcat/os_log).
+*   [x] **Infrastructure: Media Logic Hardening**: Implement IO safety, file deduplication via hashing, and iOS path consistency in media services.
+*   [x] **Infrastructure: Runtime Path Resolution**: Implement a bridge to resolve relative filenames to platform-absolute paths in the domain mapper for seamless UI loading.
 
 ## Phase 5: Android Platform (Compose)
 **Goal:** Build the Android user interface using Jetpack Compose.

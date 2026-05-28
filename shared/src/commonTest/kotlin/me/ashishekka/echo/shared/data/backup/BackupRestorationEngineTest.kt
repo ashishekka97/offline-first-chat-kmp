@@ -20,7 +20,9 @@ import me.ashishekka.echo.shared.domain.BackupError
 import me.ashishekka.echo.shared.domain.DatabaseError
 import me.ashishekka.echo.shared.domain.PreferenceError
 import me.ashishekka.echo.shared.domain.Result
+import me.ashishekka.echo.shared.domain.model.ChatId
 import okio.FileSystem
+import okio.Path
 import okio.Source
 import okio.fakefilesystem.FakeFileSystem
 import kotlin.test.BeforeTest
@@ -145,6 +147,7 @@ class BackupRestorationEngineTest {
         override fun readText(fileName: String): Result<String, AssetError> = Result.Failure(AssetError.NotFound)
         override fun writeText(fileName: String, content: String): Result<Unit, AssetError> = Result.Success(Unit)
         override fun readBytes(fileName: String): Result<ByteArray, AssetError> = Result.Failure(AssetError.NotFound)
+        override fun readUriBytes(uriPath: String): Result<ByteArray, AssetError> = readBytes(uriPath)
         override fun writeBytes(fileName: String, bytes: ByteArray): Result<Unit, AssetError> = Result.Success(Unit)
         override fun deleteFile(fileName: String): Result<Unit, AssetError> = Result.Success(Unit)
         override fun getAbsolutePath(fileName: String): String = ""
@@ -168,5 +171,9 @@ class BackupRestorationEngineTest {
             (isRestoreCompleted as MutableStateFlow).value = completed
             return Result.Success(Unit)
         }
+
+        override val drafts: Flow<Map<ChatId, String>> = MutableStateFlow(emptyMap())
+        override suspend fun saveDraft(chatId: ChatId, text: String): Result<Unit, PreferenceError> = Result.Success(Unit)
+        override suspend fun clearDraft(chatId: ChatId): Result<Unit, PreferenceError> = Result.Success(Unit)
     }
 }

@@ -4,11 +4,10 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import me.ashishekka.echo.shared.data.dao.ChatDao
 import me.ashishekka.echo.shared.data.dao.ParticipantDao
-import me.ashishekka.echo.shared.data.entity.ChatEntity
-import me.ashishekka.echo.shared.data.entity.ParticipantEntity
-import me.ashishekka.echo.shared.data.entity.ChatParticipantCrossRef
-import me.ashishekka.echo.shared.data.entity.MessageEntity
-import me.ashishekka.echo.shared.data.entity.MessageType
+import me.ashishekka.echo.shared.data.entity.*
+import me.ashishekka.echo.shared.domain.model.ChatId
+import me.ashishekka.echo.shared.domain.model.MessageId
+import me.ashishekka.echo.shared.domain.model.ParticipantId
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -38,8 +37,9 @@ class ChatDaoTest {
 
     @Test
     fun testInsertAndGetAllChats() = runTest {
+        val chatId = ChatId("chat_1")
         val chat = ChatEntity(
-            id = "chat_1",
+            id = chatId,
             title = "Test Chat",
             lastMessage = "Hello",
             lastMessageTimestamp = 1000L,
@@ -50,61 +50,68 @@ class ChatDaoTest {
         
         val chats = chatDao.getAllChats().getData()
         assertEquals(1, chats.size)
-        assertEquals("chat_1", chats[0].chat.id)
+        assertEquals(chatId, chats[0].chat.id)
         assertEquals("Hello", chats[0].chat.lastMessage)
     }
 
     @Test
     fun testChatWithParticipants() = runTest {
-        val chat = ChatEntity("chat_1", "Test Chat", "Hi", 1000L, 1000L, 1000L)
-        val p1 = ParticipantEntity("user_1", "Alice", null, false)
-        val p2 = ParticipantEntity("user_2", "Bob", null, true)
+        val chatId = ChatId("chat_1")
+        val chat = ChatEntity(chatId, "Test Chat", "Hi", 1000L, 1000L, 1000L)
+        val p1Id = ParticipantId("user_1")
+        val p2Id = ParticipantId("user_2")
+        val p1 = ParticipantEntity(p1Id, "Alice", null, false)
+        val p2 = ParticipantEntity(p2Id, "Bob", null, true)
         
         chatDao.insertChat(chat)
         participantDao.insertParticipant(p1)
         participantDao.insertParticipant(p2)
         
-        chatDao.insertChatParticipantCrossRef(ChatParticipantCrossRef("chat_1", "user_1"))
-        chatDao.insertChatParticipantCrossRef(ChatParticipantCrossRef("chat_1", "user_2"))
+        chatDao.insertChatParticipantCrossRef(ChatParticipantCrossRef(chatId, p1Id))
+        chatDao.insertChatParticipantCrossRef(ChatParticipantCrossRef(chatId, p2Id))
         
         val chats = chatDao.getAllChats().getData()
         assertEquals(1, chats.size)
         assertEquals(2, chats[0].participants.size)
         
-        val other = chats[0].getOtherParticipant("user_1")
+        val other = chats[0].getOtherParticipant(p1Id)
         assertEquals("Bob", other?.name)
     }
 
     @Test
     fun testDeleteChatCascadesToMessages() = runTest {
-        val chat = ChatEntity("chat_1", "Test Chat", "Hi", 1000L, 1000L, 1000L)
-        val user = ParticipantEntity("user_1", "Alice", null, false)
-        val message = MessageEntity("msg_1", "chat_1", "user_1", "Hello", MessageType.TEXT, null, 1001L)
+        val chatId = ChatId("chat_1")
+        val chat = ChatEntity(chatId, "Test Chat", "Hi", 1000L, 1000L, 1000L)
+        val p1Id = ParticipantId("user_1")
+        val user = ParticipantEntity(p1Id, "Alice", null, false)
+        val message = MessageEntity(MessageId("msg_1"), chatId, p1Id, "Hello", MessageTypeEntity.TEXT, null, 1001L)
         
         chatDao.insertChat(chat)
         db.participantDao().insertParticipant(user)
         db.messageDao().insertMessage(message)
         
         // Verify message exists
-        assertEquals(1, db.messageDao().getMessagesForChat("chat_1").getData().size)
+        assertEquals(1, db.messageDao().getMessagesForChat(chatId).getData().size)
         
         // Delete chat
         chatDao.deleteChat(chat)
         
         // Verify message is gone (cascaded)
-        assertTrue(db.messageDao().getMessagesForChat("chat_1").getData().isEmpty())
+        assertTrue(db.messageDao().getMessagesForChat(chatId).getData().isEmpty())
     }
 
     @Test
     fun testChatsAreSortedByTimestamp() = runTest {
-        val chat1 = ChatEntity("chat_1", "Old Chat", "Old", 1000L, 1000L, 1000L)
-        val chat2 = ChatEntity("chat_2", "New Chat", "New", 2000L, 2000L, 2000L)
+        val chat1Id = ChatId("chat_1")
+        val chat2Id = ChatId("chat_2")
+        val chat1 = ChatEntity(chat1Id, "Old Chat", "Old", 1000L, 1000L, 1000L)
+        val chat2 = ChatEntity(chat2Id, "New Chat", "New", 2000L, 2000L, 2000L)
         
         chatDao.insertChat(chat1)
         chatDao.insertChat(chat2)
         
         val chats = chatDao.getAllChats().getData()
-        assertEquals("chat_2", chats[0].chat.id) // Newest first
-        assertEquals("chat_1", chats[1].chat.id)
+        assertEquals(chat2Id, chats[0].chat.id) // Newest first
+        assertEquals(chat1Id, chats[1].chat.id)
     }
 }

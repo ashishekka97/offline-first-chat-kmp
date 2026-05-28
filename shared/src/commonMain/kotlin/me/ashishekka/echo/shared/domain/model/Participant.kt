@@ -9,7 +9,7 @@ package me.ashishekka.echo.shared.domain.model
  * @property isAgent True if the participant is an AI agent, false if they are a human user.
  */
 data class Participant(
-    val id: String,
+    val id: ParticipantId,
     val name: String,
     val profileImageUrl: String?,
     val isAgent: Boolean

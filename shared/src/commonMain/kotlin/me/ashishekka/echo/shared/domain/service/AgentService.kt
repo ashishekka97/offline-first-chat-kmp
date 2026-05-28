@@ -1,20 +1,17 @@
 package me.ashishekka.echo.shared.domain.service
 
-import me.ashishekka.echo.shared.data.entity.FileDetails
-import me.ashishekka.echo.shared.data.entity.MessageType
-import me.ashishekka.echo.shared.domain.Constants
-import me.ashishekka.echo.shared.domain.repository.MessageRepository
 import kotlinx.coroutines.*
-import kotlinx.datetime.Clock
-import kotlin.random.Random
-import me.ashishekka.echo.shared.di.DispatcherProvider
-import me.ashishekka.echo.shared.domain.Result
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.datetime.Clock
+import me.ashishekka.echo.shared.di.DispatcherProvider
+import me.ashishekka.echo.shared.domain.Constants
+import me.ashishekka.echo.shared.domain.model.*
+import me.ashishekka.echo.shared.domain.repository.MessageRepository
+import me.ashishekka.echo.shared.util.Log
+import kotlin.random.Random
 
 /**
  * Service responsible for simulating AI agent interactions.
@@ -23,38 +20,62 @@ interface AgentService {
     /**
      * A reactive map of chatId to its typing status.
      */
-    val typingStates: StateFlow<Map<String, Boolean>>
+    val typingStates: StateFlow<Map<ChatId, Boolean>>
 
     /**
      * Triggers a simulated reply for the given [chatId].
      * The service internally handles debouncing and message counting.
      */
-    fun triggerReply(chatId: String)
+    fun triggerReply(chatId: ChatId)
+
+    /**
+     * Cancels any active simulations and stops background processing.
+     */
+    fun cancel()
 }
 
 /**
  * Default implementation of [AgentService].
  */
+@OptIn(FlowPreview::class)
 class DefaultAgentService(
     private val messageRepository: MessageRepository,
+    private val idGenerator: IdGenerator,
     private val dispatcherProvider: DispatcherProvider,
     private val scope: CoroutineScope = CoroutineScope(dispatcherProvider.default + SupervisorJob()),
     private val clock: Clock = Clock.System
 ) : AgentService {
 
-    private val _typingStates = MutableStateFlow<Map<String, Boolean>>(emptyMap())
-    override val typingStates: StateFlow<Map<String, Boolean>> = _typingStates.asStateFlow()
+    private val _typingStates = MutableStateFlow<Map<ChatId, Boolean>>(emptyMap())
+    override val typingStates: StateFlow<Map<ChatId, Boolean>> = _typingStates.asStateFlow()
+
+    private val triggerFlow = MutableSharedFlow<ChatId>(
+        extraBufferCapacity = 64,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST
+    )
 
     // Mutex to guard state mutations for thread safety
     private val mutex = Mutex()
 
     // Tracks user message count per chat to trigger reply every 4-5 messages
-    private val messageCounters = mutableMapOf<String, Int>()
+    private val messageCounters = mutableMapOf<ChatId, Int>()
     
     // Tracks active simulation jobs to handle debouncing
-    private val simulationJobs = mutableMapOf<String, Job>()
+    private val simulationJobs = mutableMapOf<ChatId, Job>()
 
-    override fun triggerReply(chatId: String) {
+    init {
+        // Requirement: Don't trigger if user rapidly sends multiple messages (debounce)
+        triggerFlow
+            .debounce(500) // Wait for 500ms of inactivity before starting simulation
+            .onEach { chatId ->
+                mutex.withLock {
+                    startSimulationLocked(chatId)
+                }
+            }
+            .launchIn(scope)
+    }
+
+    override fun triggerReply(chatId: ChatId) {
         scope.launch {
             mutex.withLock {
                 val currentCount = (messageCounters[chatId] ?: 0) + 1
@@ -65,46 +86,65 @@ class DefaultAgentService(
                 
                 if (currentCount >= triggerThreshold) {
                     messageCounters[chatId] = 0 // Reset counter
-                    startSimulationLocked(chatId)
+                    triggerFlow.tryEmit(chatId)
                 }
             }
         }
+    }
+
+    override fun cancel() {
+        scope.cancel()
     }
 
     /**
      * Starts the simulation. MUST be called within a [mutex] lock to ensure
      * [simulationJobs] is updated safely and existing jobs are cancelled.
      */
-    private fun startSimulationLocked(chatId: String) {
-        // Debounce: Cancel any existing simulation for this chat
+    private val _startSimulationLocked = ::startSimulationLocked
+    private fun startSimulationLocked(chatId: ChatId) {
+        // Cancel any existing simulation for this chat
         simulationJobs[chatId]?.cancel()
         
         simulationJobs[chatId] = scope.launch {
             try {
+                // Ensure we don't start multiple overlapping simulations
+                // if rapid triggers happen outside the mutex
+                yield() 
+                
                 _typingStates.update { it + (chatId to true) }
+                
                 // 1. Thinking delay (1-2 seconds)
                 delay(Random.nextLong(1000, 2000))
                 
+                if (!isActive) return@launch // Double check if cancelled during delay
+
                 // 2. Generate randomized reply
                 val isImageReply = Random.nextFloat() < 0.3 // 30% chance for image
                 
-                val messageId = "agent_msg_${clock.now().toEpochMilliseconds()}"
+                val messageId = MessageId(idGenerator.generateUuid())
                 val timestamp = clock.now().toEpochMilliseconds()
 
-                if (isImageReply) {
+                val result = if (isImageReply) {
                     sendImageReply(messageId, chatId, timestamp)
                 } else {
                     sendTextReply(messageId, chatId, timestamp)
                 }
+                
+                // Hardening: Handle repository failures gracefully in simulation
+                if (result is me.ashishekka.echo.shared.domain.Result.Failure) {
+                    // Log error or handle as needed for simulation resilience
+                    Log.e("AgentService", "Agent simulation failed for chat $chatId: ${result.error}")
+                }
             } finally {
+                // Ensure typing state is always cleared even on cancellation/error
                 _typingStates.update { it + (chatId to false) }
             }
         }
     }
 
-    private suspend fun sendTextReply(id: String, chatId: String, timestamp: Long) {
+    private suspend fun sendTextReply(id: MessageId, chatId: ChatId, timestamp: Long): me.ashishekka.echo.shared.domain.Result<Unit, me.ashishekka.echo.shared.domain.AppError> {
         val reply = TEXT_REPLIES.random()
-        messageRepository.sendMessage(
+        return messageRepository.sendMessage(
             id = id,
             chatId = chatId,
             senderId = Constants.DEFAULT_AGENT_ID,
@@ -114,9 +154,9 @@ class DefaultAgentService(
         )
     }
 
-    private suspend fun sendImageReply(id: String, chatId: String, timestamp: Long) {
+    private suspend fun sendImageReply(id: MessageId, chatId: ChatId, timestamp: Long): me.ashishekka.echo.shared.domain.Result<Unit, me.ashishekka.echo.shared.domain.AppError> {
         val (caption, assetName) = IMAGE_REPLIES.random()
-        messageRepository.sendMessage(
+        return messageRepository.sendMessage(
             id = id,
             chatId = chatId,
             senderId = Constants.DEFAULT_AGENT_ID,

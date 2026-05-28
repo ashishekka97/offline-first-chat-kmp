@@ -1,12 +1,14 @@
 package me.ashishekka.echo.shared.domain
 
+import me.ashishekka.echo.shared.domain.model.ParticipantId
+
 /**
  * Application-wide constants.
  */
 object Constants {
     /** The ID of the local user for the MVP. */
-    const val CURRENT_USER_ID = "user_1"
+    val CURRENT_USER_ID = ParticipantId("user_1")
 
     /** The ID of the default AI agent for the MVP. */
-    const val DEFAULT_AGENT_ID = "agent_1"
+    val DEFAULT_AGENT_ID = ParticipantId("agent_1")
 }

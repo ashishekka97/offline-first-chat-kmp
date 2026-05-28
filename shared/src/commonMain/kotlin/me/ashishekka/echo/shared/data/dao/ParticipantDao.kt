@@ -5,6 +5,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import me.ashishekka.echo.shared.data.entity.ParticipantEntity
+import me.ashishekka.echo.shared.domain.model.ParticipantId
 
 /**
  * Data Access Object for participant operations.
@@ -21,7 +22,7 @@ interface ParticipantDao {
      * Returns a participant by their [id].
      */
     @Query("SELECT * FROM participants WHERE id = :id")
-    suspend fun getParticipantById(id: String): ParticipantEntity?
+    suspend fun getParticipantById(id: ParticipantId): ParticipantEntity?
 
     /**
      * Returns a list of all participants.

@@ -12,6 +12,11 @@ import me.ashishekka.echo.shared.domain.PreferenceError
 import me.ashishekka.echo.shared.domain.Result
 import okio.IOException
 
+import androidx.datastore.preferences.core.stringPreferencesKey
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import me.ashishekka.echo.shared.domain.model.ChatId
+
 /**
  * Interface for accessing application preferences.
  */
@@ -21,6 +26,15 @@ interface PreferenceStorage {
 
     /** Updates the initial data restoration status. */
     suspend fun setRestoreCompleted(completed: Boolean): Result<Unit, PreferenceError>
+
+    /** Observable flow of message drafts for all chats. */
+    val drafts: Flow<Map<ChatId, String>>
+
+    /** Updates the draft for a specific chat. */
+    suspend fun saveDraft(chatId: ChatId, text: String): Result<Unit, PreferenceError>
+
+    /** Clears the draft for a specific chat. */
+    suspend fun clearDraft(chatId: ChatId): Result<Unit, PreferenceError>
 }
 
 /**
@@ -53,7 +67,53 @@ class DataStorePreferenceStorage(
         }
     }
 
+    override val drafts: Flow<Map<ChatId, String>> = dataStore.data
+        .catch { exception ->
+            if (exception is IOException) emit(emptyPreferences()) else throw exception
+        }
+        .map { preferences ->
+            val json = preferences[MESSAGE_DRAFTS] ?: return@map emptyMap()
+            try {
+                Json.decodeFromString<Map<String, String>>(json).mapKeys { ChatId(it.key) }
+            } catch (e: Exception) {
+                emptyMap()
+            }
+        }
+
+    override suspend fun saveDraft(chatId: ChatId, text: String): Result<Unit, PreferenceError> {
+        return try {
+            dataStore.edit { preferences ->
+                val currentJson = preferences[MESSAGE_DRAFTS]
+                val currentMap = if (currentJson != null) {
+                    Json.decodeFromString<Map<String, String>>(currentJson).toMutableMap()
+                } else {
+                    mutableMapOf()
+                }
+                currentMap[chatId.value] = text
+                preferences[MESSAGE_DRAFTS] = Json.encodeToString(currentMap)
+            }
+            Result.Success(Unit)
+        } catch (e: Exception) {
+            Result.Failure(PreferenceError.Unknown(e))
+        }
+    }
+
+    override suspend fun clearDraft(chatId: ChatId): Result<Unit, PreferenceError> {
+        return try {
+            dataStore.edit { preferences ->
+                val currentJson = preferences[MESSAGE_DRAFTS] ?: return@edit
+                val currentMap = Json.decodeFromString<Map<String, String>>(currentJson).toMutableMap()
+                currentMap.remove(chatId.value)
+                preferences[MESSAGE_DRAFTS] = Json.encodeToString(currentMap)
+            }
+            Result.Success(Unit)
+        } catch (e: Exception) {
+            Result.Failure(PreferenceError.Unknown(e))
+        }
+    }
+
     companion object {
         private val IS_RESTORE_COMPLETED = booleanPreferencesKey("is_restore_completed")
+        private val MESSAGE_DRAFTS = stringPreferencesKey("message_drafts")
     }
 }

@@ -6,6 +6,7 @@ import me.ashishekka.echo.shared.data.file.LocalAssetManager
 import me.ashishekka.echo.shared.data.media.MediaProcessor
 import me.ashishekka.echo.shared.di.DispatcherProvider
 import me.ashishekka.echo.shared.domain.Result
+import okio.ByteString.Companion.toByteString
 import okio.FileSystem
 import okio.Path.Companion.toPath
 
@@ -49,34 +50,32 @@ class DefaultMediaRestorationService(
                     readByteArray()
                 }
 
-                // 2. Write main file to local storage
-                val localFileName = "file_${message.id}_${bundledAssetName}"
+                // 2. Write main file to local storage using SHA-256 hash for deduplication
+                val hash = fileBytes.toByteString().sha256().hex()
+                val localFileName = "img_$hash.jpg"
                 val writeResult = localAssetManager.writeBytes(localFileName, fileBytes)
                 if (writeResult is Result.Failure) return@map message
                 
-                val localFilePath = localAssetManager.getAbsolutePath(localFileName)
-
                 // 3. Generate thumbnail
                 val thumbResult = mediaProcessor.generateThumbnail(fileBytes)
-                val thumbPath = if (thumbResult is Result.Success) {
+                val thumbName = if (thumbResult is Result.Success) {
                     val thumbBytes = thumbResult.data
-                    val thumbFileName = "thumb_${message.id}_${bundledAssetName}"
+                    val thumbFileName = "thumb_$localFileName"
                     val thumbWriteResult = localAssetManager.writeBytes(thumbFileName, thumbBytes)
-                    if (thumbWriteResult is Result.Success) {
-                        localAssetManager.getAbsolutePath(thumbFileName)
-                    } else {
-                        ""
-                    }
+                    if (thumbWriteResult is Result.Success) thumbFileName else ""
                 } else {
                     ""
                 }
 
-                // 4. Update message with local paths
+                // 4. Update message with relative local paths (essential for iOS sandbox stability)
                 message.copy(
                     file = fileDetails.copy(
-                        path = localFilePath,
-                        thumbnail = fileDetails.thumbnail?.copy(path = thumbPath)
-                            ?: if (thumbPath.isNotBlank()) me.ashishekka.echo.shared.data.entity.ThumbnailDetails(thumbPath) else null
+                        path = localFileName,
+                        thumbnail = if (thumbName.isNotBlank()) {
+                            me.ashishekka.echo.shared.data.entity.ThumbnailDetailsEntity(thumbName)
+                        } else {
+                            null
+                        }
                     )
                 )
             } catch (e: Exception) {

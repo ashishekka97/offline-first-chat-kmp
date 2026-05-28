@@ -1,7 +1,27 @@
 package me.ashishekka.echo.shared.domain.model
 
-import me.ashishekka.echo.shared.data.entity.FileDetails
-import me.ashishekka.echo.shared.data.entity.MessageType
+/**
+ * The type of message.
+ */
+enum class MessageType { TEXT, FILE }
+
+/**
+ * Details of a file attached to a message.
+ */
+data class FileDetails(
+    val path: String,
+    val fileSize: Long,
+    val thumbnail: ThumbnailDetails?,
+    val fullPath: String = ""
+)
+
+/**
+ * Details of a thumbnail generated for a media file.
+ */
+data class ThumbnailDetails(
+    val path: String,
+    val fullPath: String = ""
+)
 
 /**
  * Domain model representing a chat message.
@@ -16,12 +36,14 @@ import me.ashishekka.echo.shared.data.entity.MessageType
  * @property isFromMe True if the message was sent by the local user.
  */
 data class Message(
-    val id: String,
-    val chatId: String,
+    val id: MessageId,
+    val chatId: ChatId,
     val sender: Participant,
     val message: String,
     val type: MessageType,
     val file: FileDetails?,
     val timestamp: Long,
-    val isFromMe: Boolean
+    val isFromMe: Boolean,
+    val displayTimestamp: String = "",
+    val displaySize: String = ""
 )

@@ -13,18 +13,21 @@ import me.ashishekka.echo.shared.data.dao.MessageDao
 import me.ashishekka.echo.shared.data.entity.ChatEntity
 import me.ashishekka.echo.shared.data.entity.MessageEntity
 import me.ashishekka.echo.shared.data.mapper.toDomain
+import me.ashishekka.echo.shared.data.mapper.toEntity
 import me.ashishekka.echo.shared.domain.Constants
 import me.ashishekka.echo.shared.domain.DatabaseError
 import me.ashishekka.echo.shared.domain.Result
-import me.ashishekka.echo.shared.domain.model.Chat
+import me.ashishekka.echo.shared.domain.model.*
 import me.ashishekka.echo.shared.domain.repository.ChatRepository
+import me.ashishekka.echo.shared.util.StringProvider
 
 /**
  * Offline-first implementation of [ChatRepository].
  */
 class OfflineFirstChatRepository(
     private val chatDao: ChatDao,
-    private val messageDao: MessageDao
+    private val messageDao: MessageDao,
+    private val stringProvider: StringProvider
 ) : ChatRepository {
 
     override fun getPagedChats(): Flow<PagingData<Chat>> {
@@ -32,16 +35,16 @@ class OfflineFirstChatRepository(
             config = PagingConfig(pageSize = 20),
             pagingSourceFactory = { chatDao.getAllChats() }
         ).flow.map { pagingData ->
-            pagingData.map { it.toDomain(Constants.CURRENT_USER_ID) }
+            pagingData.map { it.toDomain(Constants.CURRENT_USER_ID, stringProvider) }
         }
     }
 
-    override fun getChatById(id: String): Flow<Chat?> {
-        return chatDao.getChatById(id).map { it?.toDomain(Constants.CURRENT_USER_ID) }
+    override fun getChatById(id: ChatId): Flow<Chat?> {
+        return chatDao.getChatById(id).map { it?.toDomain(Constants.CURRENT_USER_ID, stringProvider) }
     }
 
-    override suspend fun createChat(id: String, title: String, participantIds: List<String>): Result<Unit, DatabaseError> {
-        return try {
+    override suspend fun createChat(id: ChatId, title: String, participantIds: List<ParticipantId>): Result<Unit, DatabaseError> {
+        return safeDatabaseCall {
             val now = Clock.System.now().toEpochMilliseconds()
             val chatEntity = ChatEntity(
                 id = id,
@@ -52,24 +55,21 @@ class OfflineFirstChatRepository(
                 updatedAt = now
             )
             chatDao.insertChatWithParticipants(chatEntity, participantIds)
-            Result.Success(Unit)
-        } catch (e: Exception) {
-            Result.Failure(DatabaseError.Unknown(e))
         }
     }
 
     override suspend fun createChatWithMessage(
-        chatId: String,
+        chatId: ChatId,
         title: String,
-        participantIds: List<String>,
-        messageId: String,
+        participantIds: List<ParticipantId>,
+        messageId: MessageId,
         message: String,
-        senderId: String,
-        type: me.ashishekka.echo.shared.data.entity.MessageType,
-        file: me.ashishekka.echo.shared.data.entity.FileDetails?,
+        senderId: ParticipantId,
+        type: MessageType,
+        file: FileDetails?,
         timestamp: Long
     ): Result<Unit, DatabaseError> {
-        return try {
+        return safeDatabaseCall {
             val chatEntity = ChatEntity(
                 id = chatId,
                 title = title,
@@ -83,36 +83,30 @@ class OfflineFirstChatRepository(
                 chatId = chatId,
                 senderId = senderId,
                 message = message,
-                type = type,
-                file = file,
+                type = type.toEntity(),
+                file = file?.toEntity(),
                 timestamp = timestamp
             )
             chatDao.insertChatWithMessage(chatEntity, participantIds, messageEntity, messageDao)
-            Result.Success(Unit)
-        } catch (e: Exception) {
-            Result.Failure(DatabaseError.Unknown(e))
         }
     }
 
-    override suspend fun updateLastMessage(chatId: String, message: String, timestamp: Long): Result<Unit, DatabaseError> {
-        return try {
+    override suspend fun updateLastMessage(chatId: ChatId, message: String, timestamp: Long): Result<Unit, DatabaseError> {
+        return safeDatabaseCall {
             chatDao.updateLastMessage(chatId, message, timestamp)
-            Result.Success(Unit)
-        } catch (e: Exception) {
-            Result.Failure(DatabaseError.Unknown(e))
         }
     }
 
-    override suspend fun deleteChat(chatId: String): Result<Unit, DatabaseError> {
-        return try {
-            // ChatDao uses CASCADE for messages, so deleting the chat deletes its messages too.
-            val chatWithParticipants = chatDao.getChatById(chatId).firstOrNull()
-            chatWithParticipants?.chat?.let { 
-                chatDao.deleteChat(it)
-                Result.Success(Unit)
-            } ?: Result.Failure(DatabaseError.NotFound)
-        } catch (e: Exception) {
-            Result.Failure(DatabaseError.Unknown(e))
+    override suspend fun updateChatTitle(chatId: ChatId, newTitle: String): Result<Unit, DatabaseError> {
+        return safeDatabaseCall {
+            chatDao.updateChatTitle(chatId, newTitle)
         }
+    }
+
+    override suspend fun deleteChat(chatId: ChatId): Result<Unit, DatabaseError> {
+        val chatWithParticipants = chatDao.getChatById(chatId).firstOrNull()
+        return chatWithParticipants?.chat?.let {
+            safeDatabaseCall { chatDao.deleteChat(it) }
+        } ?: Result.Failure(DatabaseError.NotFound)
     }
 }

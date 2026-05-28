@@ -15,6 +15,13 @@ interface LocalAssetManager {
     fun readText(fileName: String): Result<String, AssetError>
     fun writeText(fileName: String, content: String): Result<Unit, AssetError>
     fun readBytes(fileName: String): Result<ByteArray, AssetError>
+    
+    /**
+     * Reads bytes from a platform-specific URI (e.g., content:// on Android).
+     * If the path is not a URI, it falls back to standard file reading.
+     */
+    fun readUriBytes(uriPath: String): Result<ByteArray, AssetError>
+    
     fun writeBytes(fileName: String, bytes: ByteArray): Result<Unit, AssetError>
     fun deleteFile(fileName: String): Result<Unit, AssetError>
     fun getAbsolutePath(fileName: String): String
@@ -46,10 +53,18 @@ interface AssetReader {
     fun readAssetSource(fileName: String): Result<Source, AssetError>
 }
 
+/**
+ * Interface for reading bytes from platform-specific URIs.
+ */
+interface UriReader {
+    fun readUriBytes(uriPath: String): Result<ByteArray, AssetError>
+}
+
 class DefaultLocalAssetManager(
     private val baseDirPath: String,
     private val assetReader: AssetReader,
-    private val fileSystem: FileSystem
+    private val fileSystem: FileSystem,
+    private val uriReader: UriReader? = null
 ) : LocalAssetManager {
 
     private val basePath: Path = baseDirPath.toPath()
@@ -94,6 +109,10 @@ class DefaultLocalAssetManager(
         } catch (e: Exception) {
             Result.Failure(AssetError.Unknown(e))
         }
+    }
+
+    override fun readUriBytes(uriPath: String): Result<ByteArray, AssetError> {
+        return uriReader?.readUriBytes(uriPath) ?: readBytes(uriPath)
     }
 
     override fun writeBytes(fileName: String, bytes: ByteArray): Result<Unit, AssetError> {

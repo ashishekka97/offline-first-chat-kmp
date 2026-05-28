@@ -7,6 +7,7 @@ import me.ashishekka.echo.shared.data.dao.ParticipantDao
 import me.ashishekka.echo.shared.data.repository.OfflineFirstParticipantRepository
 import me.ashishekka.echo.shared.domain.Result
 import me.ashishekka.echo.shared.domain.model.Participant
+import me.ashishekka.echo.shared.domain.model.ParticipantId
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -35,20 +36,21 @@ class ParticipantRepositoryTest {
 
     @Test
     fun testSaveAndGetParticipant() = runTest {
-        val participant = Participant("u1", "Alice", null, false)
+        val participantId = ParticipantId("u1")
+        val participant = Participant(participantId, "Alice", null, false)
         
         val saveResult = repository.saveParticipant(participant)
         assertTrue(saveResult is Result.Success)
         
-        val getResult = repository.getParticipantById("u1")
+        val getResult = repository.getParticipantById(participantId)
         assertTrue(getResult is Result.Success)
         assertEquals(participant, getResult.data)
     }
 
     @Test
     fun testGetAllParticipants() = runTest {
-        repository.saveParticipant(Participant("u1", "Alice", null, false))
-        repository.saveParticipant(Participant("u2", "Bob", null, true))
+        repository.saveParticipant(Participant(ParticipantId("u1"), "Alice", null, false))
+        repository.saveParticipant(Participant(ParticipantId("u2"), "Bob", null, true))
         
         val result = repository.getAllParticipants()
         assertTrue(result is Result.Success)
@@ -57,7 +59,7 @@ class ParticipantRepositoryTest {
 
     @Test
     fun testGetNonExistentParticipantFails() = runTest {
-        val result = repository.getParticipantById("unknown")
+        val result = repository.getParticipantById(ParticipantId("unknown"))
         assertTrue(result is Result.Failure)
     }
 }

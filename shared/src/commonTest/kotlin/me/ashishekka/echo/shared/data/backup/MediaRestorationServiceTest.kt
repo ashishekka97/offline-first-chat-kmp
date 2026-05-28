@@ -4,18 +4,19 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
-import me.ashishekka.echo.shared.data.entity.FileDetails
+import me.ashishekka.echo.shared.data.entity.FileDetailsEntity
 import me.ashishekka.echo.shared.data.entity.MessageEntity
-import me.ashishekka.echo.shared.data.entity.MessageType
-import me.ashishekka.echo.shared.data.file.LocalAssetManager
+import me.ashishekka.echo.shared.data.entity.MessageTypeEntity
+import me.ashishekka.echo.shared.data.file.FakeLocalAssetManager
 import me.ashishekka.echo.shared.data.media.MediaProcessor
 import me.ashishekka.echo.shared.di.DispatcherProvider
-import me.ashishekka.echo.shared.domain.AssetError
 import me.ashishekka.echo.shared.domain.MediaError
 import me.ashishekka.echo.shared.domain.Result
+import me.ashishekka.echo.shared.domain.model.ChatId
+import me.ashishekka.echo.shared.domain.model.MessageId
+import me.ashishekka.echo.shared.domain.model.ParticipantId
 import okio.FileSystem
 import okio.Path.Companion.toPath
-import okio.Source
 import okio.fakefilesystem.FakeFileSystem
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -58,12 +59,12 @@ class MediaRestorationServiceTest {
         }
 
         val message = MessageEntity(
-            id = "m1",
-            chatId = "c1",
-            senderId = "u1",
+            id = MessageId("m1"),
+            chatId = ChatId("c1"),
+            senderId = ParticipantId("u1"),
             message = "",
-            type = MessageType.FILE,
-            file = FileDetails(path = bundledAssetName, fileSize = 3, thumbnail = null),
+            type = MessageTypeEntity.FILE,
+            file = FileDetailsEntity(path = bundledAssetName, fileSize = 3, thumbnail = null),
             timestamp = 0
         )
 
@@ -74,46 +75,20 @@ class MediaRestorationServiceTest {
         val updatedFile = updatedMessage.file
         assertNotNull(updatedFile)
         
-        // Verify local paths
-        assertTrue(updatedFile.path.contains("file_m1_image.jpg"))
-        assertTrue(updatedFile.thumbnail?.path?.contains("thumb_m1_image.jpg") == true)
+        // Verify local paths are relative and hashed
+        assertTrue(updatedFile.path.startsWith("img_"))
+        assertTrue(updatedFile.path.endsWith(".jpg"))
+        assertTrue(updatedFile.thumbnail?.path?.startsWith("thumb_img_") == true)
         
         // Verify LocalAssetManager interactions
-        assertTrue(localAssetManager.storedFiles.containsKey("file_m1_image.jpg"))
-        assertTrue(localAssetManager.storedFiles.containsKey("thumb_m1_image.jpg"))
+        val fileName = updatedFile.path
+        val thumbName = updatedFile.thumbnail!!.path
+        assertTrue(localAssetManager.storedFiles.containsKey(fileName))
+        assertTrue(localAssetManager.storedFiles.containsKey(thumbName))
         
         // Verify bytes
-        assertTrue(imageBytes.contentEquals(localAssetManager.storedFiles["file_m1_image.jpg"]))
-        assertTrue(byteArrayOf(0).contentEquals(localAssetManager.storedFiles["thumb_m1_image.jpg"]))
-    }
-
-    class FakeLocalAssetManager : LocalAssetManager {
-        val storedFiles = mutableMapOf<String, ByteArray>()
-        override fun readText(fileName: String): Result<String, AssetError> = Result.Failure(AssetError.NotFound)
-        override fun writeText(fileName: String, content: String): Result<Unit, AssetError> {
-            storedFiles[fileName] = content.encodeToByteArray()
-            return Result.Success(Unit)
-        }
-        override fun readBytes(fileName: String): Result<ByteArray, AssetError> {
-            val bytes = storedFiles[fileName]
-            return if (bytes != null) Result.Success(bytes) else Result.Failure(AssetError.NotFound)
-        }
-        override fun writeBytes(fileName: String, bytes: ByteArray): Result<Unit, AssetError> {
-            storedFiles[fileName] = bytes
-            return Result.Success(Unit)
-        }
-        override fun deleteFile(fileName: String): Result<Unit, AssetError> {
-            storedFiles.remove(fileName)
-            return Result.Success(Unit)
-        }
-        override fun getAbsolutePath(fileName: String): String = "/local/$fileName"
-        override fun exists(fileName: String): Boolean = storedFiles.containsKey(fileName)
-        override fun readBundledAsset(fileName: String): Result<String, AssetError> = Result.Failure(AssetError.NotFound)
-        override fun readBundledAssetBytes(fileName: String): Result<ByteArray, AssetError> = Result.Failure(AssetError.NotFound)
-        override fun bundledAssetSource(fileName: String): Result<Source, AssetError> = Result.Failure(AssetError.NotFound)
-        override suspend fun copyBundledAssetToLocal(fileName: String): Result<Unit, AssetError> = Result.Failure(AssetError.NotFound)
-        override fun getZipFileSystem(fileName: String): Result<FileSystem, AssetError> = Result.Failure(AssetError.NotFound)
-        override fun source(fileName: String): Result<Source, AssetError> = Result.Failure(AssetError.NotFound)
+        assertTrue(imageBytes.contentEquals(localAssetManager.storedFiles[fileName]))
+        assertTrue(byteArrayOf(0).contentEquals(localAssetManager.storedFiles[thumbName]))
     }
 
     class FakeMediaProcessor : MediaProcessor {

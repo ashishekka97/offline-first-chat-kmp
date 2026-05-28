@@ -9,12 +9,13 @@ import me.ashishekka.echo.shared.data.AppDatabase
 import me.ashishekka.echo.shared.data.DATA_STORE_FILE_NAME
 import me.ashishekka.echo.shared.data.DatabaseConstants
 import me.ashishekka.echo.shared.data.createDataStore
-import me.ashishekka.echo.shared.data.file.AndroidAssetReader
-import me.ashishekka.echo.shared.data.file.AssetReader
-import me.ashishekka.echo.shared.data.file.DefaultLocalAssetManager
-import me.ashishekka.echo.shared.data.file.LocalAssetManager
+import me.ashishekka.echo.shared.data.file.*
 import me.ashishekka.echo.shared.data.media.AndroidMediaProcessor
 import me.ashishekka.echo.shared.data.media.MediaProcessor
+import me.ashishekka.echo.shared.util.AndroidLogger
+import me.ashishekka.echo.shared.util.AndroidStringProvider
+import me.ashishekka.echo.shared.util.Logger
+import me.ashishekka.echo.shared.util.StringProvider
 import okio.FileSystem
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.Module
@@ -41,11 +42,18 @@ actual fun getPlatformDataModule(): Module = module {
 
     single<AssetReader> { AndroidAssetReader(androidContext()) }
 
+    single<Logger> { AndroidLogger() }
+    
+    single<UriReader> { AndroidUriReader(androidContext()) }
+    
+    single<StringProvider> { AndroidStringProvider(androidContext()) }
+
     single<LocalAssetManager> {
         DefaultLocalAssetManager(
             baseDirPath = androidContext().filesDir.absolutePath,
             assetReader = get(),
-            fileSystem = FileSystem.SYSTEM
+            fileSystem = FileSystem.SYSTEM,
+            uriReader = get()
         )
     }
 

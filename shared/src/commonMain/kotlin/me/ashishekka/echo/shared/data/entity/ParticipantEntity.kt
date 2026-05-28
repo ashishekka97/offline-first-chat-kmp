@@ -2,6 +2,7 @@ package me.ashishekka.echo.shared.data.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import me.ashishekka.echo.shared.domain.model.ParticipantId
 
 /**
  * Represents a participant (user or AI agent) in the database.
@@ -14,7 +15,7 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "participants")
 data class ParticipantEntity(
     @PrimaryKey
-    val id: String,
+    val id: ParticipantId,
     val name: String,
     val profileImageUrl: String?,
     val isAgent: Boolean

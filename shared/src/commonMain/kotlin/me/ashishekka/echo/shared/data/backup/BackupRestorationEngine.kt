@@ -12,8 +12,8 @@ import me.ashishekka.echo.shared.domain.Result
  * Result of the backup restoration process.
  */
 sealed class RestorationResult {
-    object Success : RestorationResult()
-    object AlreadyCompleted : RestorationResult()
+    data object Success : RestorationResult()
+    data object AlreadyCompleted : RestorationResult()
     data class Failure(val message: String, val throwable: Throwable? = null) : RestorationResult()
 }
 

@@ -1,14 +1,15 @@
 package me.ashishekka.echo.shared.domain.usecase
 
 import kotlinx.datetime.Clock
-import me.ashishekka.echo.shared.data.entity.FileDetails
-import me.ashishekka.echo.shared.data.entity.MessageType
+import me.ashishekka.echo.shared.data.file.LocalAssetManager
 import me.ashishekka.echo.shared.domain.AppError
 import me.ashishekka.echo.shared.domain.Constants
 import me.ashishekka.echo.shared.domain.Result
+import me.ashishekka.echo.shared.domain.model.*
 import me.ashishekka.echo.shared.domain.onSuccess
 import me.ashishekka.echo.shared.domain.repository.ChatRepository
 import me.ashishekka.echo.shared.domain.service.AgentService
+import me.ashishekka.echo.shared.domain.service.MediaService
 
 /**
  * Use case for starting a new chat with an initial message.
@@ -17,31 +18,55 @@ import me.ashishekka.echo.shared.domain.service.AgentService
  */
 class StartChatUseCase(
     private val chatRepository: ChatRepository,
-    private val agentService: AgentService
+    private val agentService: AgentService,
+    private val mediaService: MediaService,
+    private val localAssetManager: LocalAssetManager
 ) {
     /**
      * Creates a new chat and its first message, then triggers the AI simulation.
      */
     suspend operator fun invoke(
-        chatId: String,
-        title: String,
-        participantIds: List<String>,
-        messageId: String,
+        chatId: ChatId,
+        participantIds: List<ParticipantId>,
+        messageId: MessageId,
         message: String,
-        senderId: String,
+        senderId: ParticipantId,
         type: MessageType = MessageType.TEXT,
-        file: FileDetails? = null,
+        localMediaPath: String? = null,
         timestamp: Long = Clock.System.now().toEpochMilliseconds()
     ): Result<Unit, AppError> {
+        var finalType = type
+        var finalFileDetails: FileDetails? = null
+
+        if (localMediaPath != null) {
+            val bytesResult = localAssetManager.readUriBytes(localMediaPath)
+            if (bytesResult is Result.Success) {
+                val processResult = mediaService.processImage(bytesResult.data, localMediaPath)
+                if (processResult is Result.Success) {
+                    finalFileDetails = processResult.data
+                    finalType = MessageType.FILE
+                }
+            }
+        }
+
+        // Assignment: Chat title auto-generated from first message
+        val autoTitle = if (message.isNotBlank()) {
+            message.take(20).let { if (it.length < message.length) "$it..." else it }
+        } else if (finalType == MessageType.FILE) {
+            "Image Chat"
+        } else {
+            "New Chat"
+        }
+
         return chatRepository.createChatWithMessage(
             chatId = chatId,
-            title = title,
+            title = autoTitle,
             participantIds = participantIds,
             messageId = messageId,
             message = message,
             senderId = senderId,
-            type = type,
-            file = file,
+            type = finalType,
+            file = finalFileDetails,
             timestamp = timestamp
         ).onSuccess {
             // Trigger AI simulation only if the sender is the current user
