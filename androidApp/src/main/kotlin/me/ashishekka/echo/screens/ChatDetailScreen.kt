@@ -56,6 +56,13 @@ fun ChatDetailScreen(
     val messages = state.messages.collectAsLazyPagingItems()
     val listState = rememberLazyListState()
 
+    // Auto-scroll to bottom when messages change or agent starts typing
+    LaunchedEffect(messages.itemCount, state.isAgentTyping) {
+        if (messages.itemCount > 0) {
+            listState.animateScrollToItem(messages.itemCount - 1)
+        }
+    }
+
     var showSourcePicker by remember { mutableStateOf(false) }
     var capturedImageUri by remember { mutableStateOf<Uri?>(null) }
     var showRenameDialog by remember { mutableStateOf(false) }
@@ -231,6 +238,7 @@ fun MessageBubble(
         DesignTokens.Colors.AgentBubble.toColor()
     }
     val textColor = DesignTokens.Colors.TextPrimary.toColor()
+    val cornerRadius = DesignTokens.Shape.BubbleCornerRadius.dp
 
     Column(
         modifier = Modifier
@@ -241,10 +249,10 @@ fun MessageBubble(
         Surface(
             color = bubbleColor,
             shape = RoundedCornerShape(
-                topStart = 16.dp,
-                topEnd = 16.dp,
-                bottomStart = if (message.isFromMe) 16.dp else 4.dp,
-                bottomEnd = if (message.isFromMe) 4.dp else 16.dp
+                topStart = cornerRadius,
+                topEnd = cornerRadius,
+                bottomStart = if (message.isFromMe) cornerRadius else 4.dp,
+                bottomEnd = if (message.isFromMe) 4.dp else cornerRadius
             ),
             modifier = Modifier.widthIn(max = 280.dp)
         ) {

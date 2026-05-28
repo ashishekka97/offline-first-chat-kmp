@@ -76,15 +76,19 @@ class DefaultAgentService(
     }
 
     override fun triggerReply(chatId: ChatId) {
+        Log.d("AgentService", "triggerReply called for chat $chatId")
         scope.launch {
             mutex.withLock {
                 val currentCount = (messageCounters[chatId] ?: 0) + 1
                 messageCounters[chatId] = currentCount
+                Log.d("AgentService", "Message count for $chatId: $currentCount")
 
                 // Trigger reply every 4th or 5th message (randomized for variety)
                 val triggerThreshold = if (Random.nextBoolean()) 4 else 5
+                Log.d("AgentService", "Trigger threshold: $triggerThreshold")
                 
                 if (currentCount >= triggerThreshold) {
+                    Log.d("AgentService", "Threshold reached, emitting trigger")
                     messageCounters[chatId] = 0 // Reset counter
                     triggerFlow.tryEmit(chatId)
                 }
