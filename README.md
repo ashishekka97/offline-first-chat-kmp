@@ -21,14 +21,14 @@ Echo is an **offline-first Kotlin Multiplatform (KMP) chat application** designe
 | :---: | :---: |
 | <img src="demo/android-home.png" width="300"> | <img src="demo/android-chat.png" width="300"> |
 
-**[🎥 Watch Android Demo Video](demo/android-video.webm)**
+**[🎥 Watch Android Demo Video](https://drive.google.com/file/d/11gIWzTvInr5yTSP9TIiaUyxNqxYuQDCJ/view?usp=sharing)**
 
 ### iOS (SwiftUI)
 | Home Screen | Chat Detail | Attachments |
 | :---: | :---: | :---: |
 | <img src="demo/ios-chat-agent.png" width="200"> | <img src="demo/ios-chat-media.png" width="200"> | <img src="demo/ios-attachments.png" width="200"> |
 
-**[🎥 Watch iOS Demo Video](demo/ios-video.mov)**
+**[🎥 Watch iOS Demo Video](https://drive.google.com/file/d/1abSXK08CzW7oCE2Ohuit2aMLlyFStfiy/view?usp=sharing)**
 
 ## 🏗 Architecture Decisions
 
