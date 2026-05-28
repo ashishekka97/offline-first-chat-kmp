@@ -47,6 +47,7 @@ import java.io.File
 fun ChatDetailScreen(
     chatId: String,
     onBackClick: () -> Unit,
+    onImageClick: (String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ChatDetailViewModel = koinViewModel(parameters = { parametersOf(ChatId(chatId)) })
 ) {
@@ -145,7 +146,10 @@ fun ChatDetailScreen(
             ) { index ->
                 val message = messages[index]
                 if (message != null) {
-                    MessageBubble(message = message)
+                    MessageBubble(
+                        message = message,
+                        onImageClick = onImageClick
+                    )
                 }
             }
 
@@ -164,7 +168,10 @@ fun ChatDetailScreen(
 }
 
 @Composable
-fun MessageBubble(message: Message) {
+fun MessageBubble(
+    message: Message,
+    onImageClick: (String) -> Unit
+) {
     val alignment = if (message.isFromMe) Alignment.End else Alignment.Start
     val bubbleColor = if (message.isFromMe) {
         DesignTokens.Colors.UserBubble.toColor()
@@ -199,6 +206,10 @@ fun MessageBubble(message: Message) {
                             .size(200.dp)
                             .clip(RoundedCornerShape(8.dp))
                             .background(Color.LightGray)
+                            .clickable {
+                                val url = message.file?.fullPath ?: message.file?.path
+                                if (url != null) onImageClick(url)
+                            }
                     )
                     if (message.message.isNotEmpty()) {
                         Text(

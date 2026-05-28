@@ -8,6 +8,7 @@ import androidx.navigation.compose.*
 import androidx.navigation.toRoute
 import kotlinx.serialization.Serializable
 import me.ashishekka.echo.screens.ChatDetailScreen
+import me.ashishekka.echo.screens.FullscreenImageScreen
 import me.ashishekka.echo.screens.HomeScreen
 import me.ashishekka.echo.shared.screens.home.HomeIntent
 import me.ashishekka.echo.shared.screens.home.HomeSideEffect
@@ -20,6 +21,9 @@ object ListDestination
 
 @Serializable
 data class DetailDestination(val objectId: String)
+
+@Serializable
+data class FullscreenImageDestination(val imageUrl: String)
 
 @Composable
 fun App() {
@@ -67,7 +71,17 @@ fun EchoNavGraph() {
             val destination = backStackEntry.toRoute<DetailDestination>()
             ChatDetailScreen(
                 chatId = destination.objectId,
-                onBackClick = { navController.popBackStack() }
+                onBackClick = { navController.popBackStack() },
+                onImageClick = { imageUrl ->
+                    navController.navigate(FullscreenImageDestination(imageUrl))
+                }
+            )
+        }
+        composable<FullscreenImageDestination> { backStackEntry ->
+            val destination = backStackEntry.toRoute<FullscreenImageDestination>()
+            FullscreenImageScreen(
+                imageUrl = destination.imageUrl,
+                onCloseClick = { navController.popBackStack() }
             )
         }
     }
