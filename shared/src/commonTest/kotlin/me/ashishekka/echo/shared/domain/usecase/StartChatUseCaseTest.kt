@@ -14,6 +14,12 @@ import me.ashishekka.echo.shared.domain.Result
 import me.ashishekka.echo.shared.domain.model.*
 import me.ashishekka.echo.shared.domain.repository.ChatRepository
 import me.ashishekka.echo.shared.domain.service.AgentService
+import me.ashishekka.echo.shared.domain.service.MediaService
+import me.ashishekka.echo.shared.data.file.LocalAssetManager
+import me.ashishekka.echo.shared.domain.AssetError
+import me.ashishekka.echo.shared.domain.MediaError
+import okio.Source
+import okio.FileSystem
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -24,20 +30,23 @@ class StartChatUseCaseTest {
 
     private lateinit var chatRepository: FakeChatRepository
     private lateinit var agentService: FakeAgentService
+    private lateinit var mediaService: FakeMediaService
+    private lateinit var localAssetManager: FakeLocalAssetManager
     private lateinit var startChatUseCase: StartChatUseCase
 
     @BeforeTest
     fun setup() {
         chatRepository = FakeChatRepository()
         agentService = FakeAgentService()
-        startChatUseCase = StartChatUseCase(chatRepository, agentService)
+        mediaService = FakeMediaService()
+        localAssetManager = FakeLocalAssetManager()
+        startChatUseCase = StartChatUseCase(chatRepository, agentService, mediaService, localAssetManager)
     }
 
     @Test
     fun testInvokeTriggersAgentForUserMessage() = runTest {
         val result = startChatUseCase(
             chatId = ChatId("c1"),
-            title = "New Chat",
             participantIds = listOf(ParticipantId("p1"), ParticipantId("p2")),
             messageId = MessageId("m1"),
             message = "Hello",
@@ -53,7 +62,6 @@ class StartChatUseCaseTest {
     fun testInvokeDoesNotTriggerAgentForOtherSender() = runTest {
         val result = startChatUseCase(
             chatId = ChatId("c1"),
-            title = "New Chat",
             participantIds = listOf(ParticipantId("p1"), ParticipantId("p2")),
             messageId = MessageId("m1"),
             message = "Hello",
@@ -85,6 +93,7 @@ class StartChatUseCaseTest {
             return Result.Success(Unit)
         }
         override suspend fun updateLastMessage(chatId: ChatId, message: String, timestamp: Long): Result<Unit, DatabaseError> = Result.Success(Unit)
+        override suspend fun updateChatTitle(chatId: ChatId, newTitle: String): Result<Unit, DatabaseError> = Result.Success(Unit)
         override suspend fun deleteChat(chatId: ChatId): Result<Unit, DatabaseError> = Result.Success(Unit)
     }
 
@@ -94,5 +103,27 @@ class StartChatUseCaseTest {
         override fun triggerReply(chatId: ChatId) {
             triggerCount++
         }
+    }
+
+    class FakeMediaService : MediaService {
+        override suspend fun processImage(bytes: ByteArray, fileName: String): Result<FileDetails, MediaError> {
+            return Result.Success(FileDetails(fileName, bytes.size.toLong(), null))
+        }
+    }
+
+    class FakeLocalAssetManager : LocalAssetManager {
+        override fun readText(fileName: String): Result<String, AssetError> = Result.Failure(AssetError.NotFound)
+        override fun writeText(fileName: String, content: String): Result<Unit, AssetError> = Result.Success(Unit)
+        override fun readBytes(fileName: String): Result<ByteArray, AssetError> = Result.Success(ByteArray(0))
+        override fun writeBytes(fileName: String, bytes: ByteArray): Result<Unit, AssetError> = Result.Success(Unit)
+        override fun deleteFile(fileName: String): Result<Unit, AssetError> = Result.Success(Unit)
+        override fun getAbsolutePath(fileName: String): String = fileName
+        override fun exists(fileName: String): Boolean = true
+        override fun readBundledAsset(fileName: String): Result<String, AssetError> = Result.Failure(AssetError.NotFound)
+        override fun readBundledAssetBytes(fileName: String): Result<ByteArray, AssetError> = Result.Failure(AssetError.NotFound)
+        override fun bundledAssetSource(fileName: String): Result<Source, AssetError> = Result.Failure(AssetError.NotFound)
+        override suspend fun copyBundledAssetToLocal(fileName: String): Result<Unit, AssetError> = Result.Success(Unit)
+        override fun getZipFileSystem(fileName: String): Result<FileSystem, AssetError> = Result.Failure(AssetError.NotFound)
+        override fun source(fileName: String): Result<Source, AssetError> = Result.Failure(AssetError.NotFound)
     }
 }

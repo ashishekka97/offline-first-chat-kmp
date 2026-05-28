@@ -11,6 +11,7 @@ import me.ashishekka.echo.shared.domain.repository.MessageRepository
 import me.ashishekka.echo.shared.domain.DatabaseError
 import me.ashishekka.echo.shared.data.file.LocalAssetManager
 import me.ashishekka.echo.shared.domain.AssetError
+import me.ashishekka.echo.shared.domain.service.AgentService
 import okio.Source
 import okio.FileSystem
 import kotlin.test.BeforeTest
@@ -19,6 +20,8 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import androidx.paging.PagingData
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import me.ashishekka.echo.shared.domain.model.*
 
@@ -28,6 +31,7 @@ class DeleteChatUseCaseTest {
     private lateinit var chatRepository: FakeChatRepository
     private lateinit var messageRepository: FakeMessageRepository
     private lateinit var localAssetManager: FakeLocalAssetManager
+    private lateinit var agentService: FakeAgentService
     private lateinit var deleteChatUseCase: DeleteChatUseCase
 
     @BeforeTest
@@ -35,7 +39,8 @@ class DeleteChatUseCaseTest {
         chatRepository = FakeChatRepository()
         messageRepository = FakeMessageRepository()
         localAssetManager = FakeLocalAssetManager()
-        deleteChatUseCase = DeleteChatUseCase(chatRepository, messageRepository, localAssetManager)
+        agentService = FakeAgentService()
+        deleteChatUseCase = DeleteChatUseCase(chatRepository, messageRepository, localAssetManager, agentService)
     }
 
     @Test
@@ -64,6 +69,7 @@ class DeleteChatUseCaseTest {
         override suspend fun createChat(id: ChatId, title: String, participantIds: List<ParticipantId>): Result<Unit, DatabaseError> = Result.Success(Unit)
         override suspend fun createChatWithMessage(chatId: ChatId, title: String, participantIds: List<ParticipantId>, messageId: MessageId, message: String, senderId: ParticipantId, type: MessageType, file: FileDetails?, timestamp: Long): Result<Unit, DatabaseError> = Result.Success(Unit)
         override suspend fun updateLastMessage(chatId: ChatId, message: String, timestamp: Long): Result<Unit, DatabaseError> = Result.Success(Unit)
+        override suspend fun updateChatTitle(chatId: ChatId, newTitle: String): Result<Unit, DatabaseError> = Result.Success(Unit)
         override suspend fun deleteChat(chatId: ChatId): Result<Unit, DatabaseError> {
             deleteCalled = true
             deletedChatId = chatId
@@ -97,5 +103,10 @@ class DeleteChatUseCaseTest {
         override suspend fun copyBundledAssetToLocal(fileName: String): Result<Unit, AssetError> = Result.Failure(AssetError.NotFound)
         override fun getZipFileSystem(fileName: String): Result<FileSystem, AssetError> = Result.Failure(AssetError.NotFound)
         override fun source(fileName: String): Result<Source, AssetError> = Result.Failure(AssetError.NotFound)
+    }
+
+    class FakeAgentService : AgentService {
+        override val typingStates: StateFlow<Map<ChatId, Boolean>> = MutableStateFlow(emptyMap())
+        override fun triggerReply(chatId: ChatId) {}
     }
 }

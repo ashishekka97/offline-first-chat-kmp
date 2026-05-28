@@ -3,6 +3,9 @@ package me.ashishekka.echo.shared.screens.home
 import androidx.paging.PagingData
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -16,6 +19,7 @@ import me.ashishekka.echo.shared.domain.Result
 import me.ashishekka.echo.shared.domain.model.*
 import me.ashishekka.echo.shared.domain.repository.ChatRepository
 import me.ashishekka.echo.shared.domain.repository.MessageRepository
+import me.ashishekka.echo.shared.domain.service.AgentService
 import me.ashishekka.echo.shared.domain.service.IdGenerator
 import me.ashishekka.echo.shared.domain.usecase.DeleteChatUseCase
 import me.ashishekka.echo.shared.domain.usecase.GetPagedChatsUseCase
@@ -31,12 +35,13 @@ import kotlin.test.assertTrue
 class HomeViewModelTest {
 
     private val idGenerator = FakeIdGenerator()
+    private val agentService = FakeAgentService()
 
     @Test
     fun testInitialStateHasChatsFlow() = runTest {
         val repository = FakeChatRepository()
         val getPagedChatsUseCase = GetPagedChatsUseCase(repository)
-        val deleteChatUseCase = DeleteChatUseCase(repository, FakeMessageRepository(), FakeLocalAssetManager())
+        val deleteChatUseCase = DeleteChatUseCase(repository, FakeMessageRepository(), FakeLocalAssetManager(), agentService)
         val viewModel = HomeViewModel(getPagedChatsUseCase, deleteChatUseCase, idGenerator)
 
         val state = viewModel.state.value
@@ -48,12 +53,17 @@ class HomeViewModelTest {
     fun testDeleteChatCallsUseCase() = runTest {
         val repository = FakeChatRepository()
         val getPagedChatsUseCase = GetPagedChatsUseCase(repository)
-        val deleteChatUseCase = DeleteChatUseCase(repository, FakeMessageRepository(), FakeLocalAssetManager())
+        val deleteChatUseCase = DeleteChatUseCase(repository, FakeMessageRepository(), FakeLocalAssetManager(), agentService)
         val viewModel = HomeViewModel(getPagedChatsUseCase, deleteChatUseCase, idGenerator)
 
-        viewModel.onIntent(HomeIntent.DeleteChat(ChatId("chat_1")))
+        val chatId = ChatId("chat_1")
+        viewModel.onIntent(HomeIntent.ConfirmDelete(chatId))
+        assertEquals(chatId, viewModel.state.value.pendingDeleteChatId)
         
-        // UseCase execution would trigger repository deletion in this setup.
+        viewModel.onIntent(HomeIntent.DeletePendingChat)
+        advanceUntilIdle()
+
+        assertNull(viewModel.state.value.pendingDeleteChatId)
         assertNull(viewModel.state.value.error)
     }
 
@@ -61,10 +71,11 @@ class HomeViewModelTest {
     fun testDeleteChatFailureSetsErrorState() = runTest {
         val repository = FakeChatRepository(shouldFail = true)
         val getPagedChatsUseCase = GetPagedChatsUseCase(repository)
-        val deleteChatUseCase = DeleteChatUseCase(repository, FakeMessageRepository(), FakeLocalAssetManager())
+        val deleteChatUseCase = DeleteChatUseCase(repository, FakeMessageRepository(), FakeLocalAssetManager(), agentService)
         val viewModel = HomeViewModel(getPagedChatsUseCase, deleteChatUseCase, idGenerator)
 
-        viewModel.onIntent(HomeIntent.DeleteChat(ChatId("chat_1")))
+        viewModel.onIntent(HomeIntent.ConfirmDelete(ChatId("chat_1")))
+        viewModel.onIntent(HomeIntent.DeletePendingChat)
         
         // Let coroutine finish
         advanceUntilIdle()
@@ -79,7 +90,7 @@ class HomeViewModelTest {
     fun testClickChatTriggersNavigationSideEffect() = runTest {
         val repository = FakeChatRepository()
         val getPagedChatsUseCase = GetPagedChatsUseCase(repository)
-        val deleteChatUseCase = DeleteChatUseCase(repository, FakeMessageRepository(), FakeLocalAssetManager())
+        val deleteChatUseCase = DeleteChatUseCase(repository, FakeMessageRepository(), FakeLocalAssetManager(), agentService)
         val viewModel = HomeViewModel(getPagedChatsUseCase, deleteChatUseCase, idGenerator)
 
         viewModel.onIntent(HomeIntent.ClickChat(ChatId("chat_123")))
@@ -93,7 +104,7 @@ class HomeViewModelTest {
     fun testNewChatTriggersNavigationWithUuid() = runTest {
         val repository = FakeChatRepository()
         val getPagedChatsUseCase = GetPagedChatsUseCase(repository)
-        val deleteChatUseCase = DeleteChatUseCase(repository, FakeMessageRepository(), FakeLocalAssetManager())
+        val deleteChatUseCase = DeleteChatUseCase(repository, FakeMessageRepository(), FakeLocalAssetManager(), agentService)
         val viewModel = HomeViewModel(getPagedChatsUseCase, deleteChatUseCase, idGenerator)
 
         idGenerator.nextId = "fixed-uuid"
@@ -111,6 +122,7 @@ class FakeChatRepository(private val shouldFail: Boolean = false) : ChatReposito
     override suspend fun createChat(id: ChatId, title: String, participantIds: List<ParticipantId>): Result<Unit, DatabaseError> = Result.Success(Unit)
     override suspend fun createChatWithMessage(chatId: ChatId, title: String, participantIds: List<ParticipantId>, messageId: MessageId, message: String, senderId: ParticipantId, type: me.ashishekka.echo.shared.data.entity.MessageType, file: FileDetails?, timestamp: Long): Result<Unit, DatabaseError> = Result.Success(Unit)
     override suspend fun updateLastMessage(chatId: ChatId, message: String, timestamp: Long): Result<Unit, DatabaseError> = Result.Success(Unit)
+    override suspend fun updateChatTitle(chatId: ChatId, newTitle: String): Result<Unit, DatabaseError> = Result.Success(Unit)
     override suspend fun deleteChat(chatId: ChatId): Result<Unit, DatabaseError> {
         return if (shouldFail) Result.Failure(DatabaseError.NotFound) else Result.Success(Unit)
     }
@@ -142,4 +154,9 @@ class FakeLocalAssetManager : LocalAssetManager {
 class FakeIdGenerator : IdGenerator {
     var nextId: String = "default-id"
     override fun generateUuid(): String = nextId
+}
+
+class FakeAgentService : AgentService {
+    override val typingStates: StateFlow<Map<ChatId, Boolean>> = MutableStateFlow(emptyMap())
+    override fun triggerReply(chatId: ChatId) {}
 }
