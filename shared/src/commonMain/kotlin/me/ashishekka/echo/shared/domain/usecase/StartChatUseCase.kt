@@ -6,6 +6,9 @@ import me.ashishekka.echo.shared.data.entity.MessageType
 import me.ashishekka.echo.shared.domain.AppError
 import me.ashishekka.echo.shared.domain.Constants
 import me.ashishekka.echo.shared.domain.Result
+import me.ashishekka.echo.shared.domain.model.ChatId
+import me.ashishekka.echo.shared.domain.model.MessageId
+import me.ashishekka.echo.shared.domain.model.ParticipantId
 import me.ashishekka.echo.shared.domain.onSuccess
 import me.ashishekka.echo.shared.domain.repository.ChatRepository
 import me.ashishekka.echo.shared.domain.service.AgentService
@@ -23,12 +26,12 @@ class StartChatUseCase(
      * Creates a new chat and its first message, then triggers the AI simulation.
      */
     suspend operator fun invoke(
-        chatId: String,
+        chatId: ChatId,
         title: String,
-        participantIds: List<String>,
-        messageId: String,
+        participantIds: List<ParticipantId>,
+        messageId: MessageId,
         message: String,
-        senderId: String,
+        senderId: ParticipantId,
         type: MessageType = MessageType.TEXT,
         file: FileDetails? = null,
         timestamp: Long = Clock.System.now().toEpochMilliseconds()

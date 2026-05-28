@@ -24,14 +24,16 @@ This roadmap outlines the implementation phases and technical tasks for the Echo
 *   [x] **Hardening: Structured Error Handling**: Replace nullable/boolean returns in I/O and Media services with Sealed Result types for better error propagation.
 *   [x] **Hardening: Atomic DAO Operations**: Audit and wrap complex multi-table operations in `@Transaction` blocks.
 
-## Phase 4: AI & Domain Logic
-**Goal:** Implement the reactive simulation engine and shared presentation layer.
+## Phase 4: AI & Shared Presentation
+**Goal:** Implement the reactive simulation engine, shared presentation layer, and core foundations.
 *   [x] **Domain: AI Simulation Engine**: Implement randomized response selection and simulated "thinking" delay logic.
 *   [x] **Domain: Agent Lifecycle & Debouncing**: Implement message counting and input debouncing to manage simulation triggers.
-
 *   [x] **Presentation: Home ViewModel**: Implement the shared view model for chat list management and swipe-to-delete logic.
 *   [x] **Presentation: Chat Detail ViewModel**: Implement the shared view model for message history, auto-scroll triggers, and "New Chat" initialization (creating chat on first message).
 *   [x] **Presentation: New Chat Intent**: Define the navigation and state handling for starting fresh conversations with the AI agent.
+*   [x] **Foundation: Strongly Typed IDs**: Implement value classes for `ChatId`, `MessageId`, and `ParticipantId` to ensure type safety.
+*   [x] **Foundation: Unified ID Generation**: Create a centralized service for consistent ID creation across the app.
+*   [x] **Foundation: Modular DI**: Refactor Koin modules for persistence, infrastructure, domain, and use cases.
 
 ## Phase 5: Android Platform (Compose)
 **Goal:** Build the Android user interface using Jetpack Compose.

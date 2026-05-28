@@ -11,7 +11,7 @@ package me.ashishekka.echo.shared.domain.model
  * @property updatedAt The timestamp when the chat was last updated.
  */
 data class Chat(
-    val id: String,
+    val id: ChatId,
     val title: String,
     val lastMessage: String?,
     val lastMessageTimestamp: Long,

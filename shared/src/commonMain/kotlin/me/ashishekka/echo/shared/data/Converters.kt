@@ -3,11 +3,14 @@ package me.ashishekka.echo.shared.data
 import androidx.room.TypeConverter
 import me.ashishekka.echo.shared.data.entity.MessageSender
 import me.ashishekka.echo.shared.data.entity.MessageType
+import me.ashishekka.echo.shared.domain.model.ChatId
+import me.ashishekka.echo.shared.domain.model.MessageId
+import me.ashishekka.echo.shared.domain.model.ParticipantId
 
 /**
  * Room TypeConverters for the Echo Chat App.
  *
- * This class handles the conversion between complex Kotlin types (like Enums)
+ * This class handles the conversion between complex Kotlin types (like Enums and Value Classes)
  * and primitive types that SQLite can store.
  */
 class Converters {
@@ -28,4 +31,22 @@ class Converters {
     @TypeConverter
     fun toMessageSender(value: String): MessageSender = 
         MessageSender.entries.find { it.name.lowercase() == value } ?: MessageSender.USER
+
+    @TypeConverter
+    fun fromChatId(id: ChatId): String = id.value
+
+    @TypeConverter
+    fun toChatId(value: String): ChatId = ChatId(value)
+
+    @TypeConverter
+    fun fromMessageId(id: MessageId): String = id.value
+
+    @TypeConverter
+    fun toMessageId(value: String): MessageId = MessageId(value)
+
+    @TypeConverter
+    fun fromParticipantId(id: ParticipantId): String = id.value
+
+    @TypeConverter
+    fun toParticipantId(value: String): ParticipantId = ParticipantId(value)
 }

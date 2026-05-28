@@ -5,6 +5,9 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import me.ashishekka.echo.shared.domain.model.ChatId
+import me.ashishekka.echo.shared.domain.model.MessageId
+import me.ashishekka.echo.shared.domain.model.ParticipantId
 
 enum class MessageType { TEXT, FILE }
 enum class MessageSender { USER, AGENT }
@@ -44,9 +47,9 @@ enum class MessageSender { USER, AGENT }
 )
 data class MessageEntity(
     @PrimaryKey
-    val id: String,
-    val chatId: String,
-    val senderId: String,
+    val id: MessageId,
+    val chatId: ChatId,
+    val senderId: ParticipantId,
     val message: String,
     val type: MessageType,
     @Embedded(prefix = "file_")

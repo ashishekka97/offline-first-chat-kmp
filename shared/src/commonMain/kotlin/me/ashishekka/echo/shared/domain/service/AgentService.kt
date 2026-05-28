@@ -1,20 +1,21 @@
 package me.ashishekka.echo.shared.domain.service
 
-import me.ashishekka.echo.shared.data.entity.FileDetails
-import me.ashishekka.echo.shared.data.entity.MessageType
-import me.ashishekka.echo.shared.domain.Constants
-import me.ashishekka.echo.shared.domain.repository.MessageRepository
 import kotlinx.coroutines.*
-import kotlinx.datetime.Clock
-import kotlin.random.Random
-import me.ashishekka.echo.shared.di.DispatcherProvider
-import me.ashishekka.echo.shared.domain.Result
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.datetime.Clock
+import me.ashishekka.echo.shared.data.entity.FileDetails
+import me.ashishekka.echo.shared.data.entity.MessageType
+import me.ashishekka.echo.shared.di.DispatcherProvider
+import me.ashishekka.echo.shared.domain.Constants
+import me.ashishekka.echo.shared.domain.model.ChatId
+import me.ashishekka.echo.shared.domain.model.MessageId
+import me.ashishekka.echo.shared.domain.repository.MessageRepository
+import kotlin.random.Random
 
 /**
  * Service responsible for simulating AI agent interactions.
@@ -23,13 +24,13 @@ interface AgentService {
     /**
      * A reactive map of chatId to its typing status.
      */
-    val typingStates: StateFlow<Map<String, Boolean>>
+    val typingStates: StateFlow<Map<ChatId, Boolean>>
 
     /**
      * Triggers a simulated reply for the given [chatId].
      * The service internally handles debouncing and message counting.
      */
-    fun triggerReply(chatId: String)
+    fun triggerReply(chatId: ChatId)
 }
 
 /**
@@ -37,24 +38,25 @@ interface AgentService {
  */
 class DefaultAgentService(
     private val messageRepository: MessageRepository,
+    private val idGenerator: IdGenerator,
     private val dispatcherProvider: DispatcherProvider,
     private val scope: CoroutineScope = CoroutineScope(dispatcherProvider.default + SupervisorJob()),
     private val clock: Clock = Clock.System
 ) : AgentService {
 
-    private val _typingStates = MutableStateFlow<Map<String, Boolean>>(emptyMap())
-    override val typingStates: StateFlow<Map<String, Boolean>> = _typingStates.asStateFlow()
+    private val _typingStates = MutableStateFlow<Map<ChatId, Boolean>>(emptyMap())
+    override val typingStates: StateFlow<Map<ChatId, Boolean>> = _typingStates.asStateFlow()
 
     // Mutex to guard state mutations for thread safety
     private val mutex = Mutex()
 
     // Tracks user message count per chat to trigger reply every 4-5 messages
-    private val messageCounters = mutableMapOf<String, Int>()
+    private val messageCounters = mutableMapOf<ChatId, Int>()
     
     // Tracks active simulation jobs to handle debouncing
-    private val simulationJobs = mutableMapOf<String, Job>()
+    private val simulationJobs = mutableMapOf<ChatId, Job>()
 
-    override fun triggerReply(chatId: String) {
+    override fun triggerReply(chatId: ChatId) {
         scope.launch {
             mutex.withLock {
                 val currentCount = (messageCounters[chatId] ?: 0) + 1
@@ -75,7 +77,7 @@ class DefaultAgentService(
      * Starts the simulation. MUST be called within a [mutex] lock to ensure
      * [simulationJobs] is updated safely and existing jobs are cancelled.
      */
-    private fun startSimulationLocked(chatId: String) {
+    private fun startSimulationLocked(chatId: ChatId) {
         // Debounce: Cancel any existing simulation for this chat
         simulationJobs[chatId]?.cancel()
         
@@ -88,7 +90,7 @@ class DefaultAgentService(
                 // 2. Generate randomized reply
                 val isImageReply = Random.nextFloat() < 0.3 // 30% chance for image
                 
-                val messageId = "agent_msg_${clock.now().toEpochMilliseconds()}"
+                val messageId = MessageId(idGenerator.generateUuid())
                 val timestamp = clock.now().toEpochMilliseconds()
 
                 if (isImageReply) {
@@ -102,7 +104,7 @@ class DefaultAgentService(
         }
     }
 
-    private suspend fun sendTextReply(id: String, chatId: String, timestamp: Long) {
+    private suspend fun sendTextReply(id: MessageId, chatId: ChatId, timestamp: Long) {
         val reply = TEXT_REPLIES.random()
         messageRepository.sendMessage(
             id = id,
@@ -114,7 +116,7 @@ class DefaultAgentService(
         )
     }
 
-    private suspend fun sendImageReply(id: String, chatId: String, timestamp: Long) {
+    private suspend fun sendImageReply(id: MessageId, chatId: ChatId, timestamp: Long) {
         val (caption, assetName) = IMAGE_REPLIES.random()
         messageRepository.sendMessage(
             id = id,

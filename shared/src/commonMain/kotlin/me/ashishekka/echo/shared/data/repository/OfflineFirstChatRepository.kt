@@ -17,6 +17,9 @@ import me.ashishekka.echo.shared.domain.Constants
 import me.ashishekka.echo.shared.domain.DatabaseError
 import me.ashishekka.echo.shared.domain.Result
 import me.ashishekka.echo.shared.domain.model.Chat
+import me.ashishekka.echo.shared.domain.model.ChatId
+import me.ashishekka.echo.shared.domain.model.MessageId
+import me.ashishekka.echo.shared.domain.model.ParticipantId
 import me.ashishekka.echo.shared.domain.repository.ChatRepository
 
 /**
@@ -36,11 +39,11 @@ class OfflineFirstChatRepository(
         }
     }
 
-    override fun getChatById(id: String): Flow<Chat?> {
+    override fun getChatById(id: ChatId): Flow<Chat?> {
         return chatDao.getChatById(id).map { it?.toDomain(Constants.CURRENT_USER_ID) }
     }
 
-    override suspend fun createChat(id: String, title: String, participantIds: List<String>): Result<Unit, DatabaseError> {
+    override suspend fun createChat(id: ChatId, title: String, participantIds: List<ParticipantId>): Result<Unit, DatabaseError> {
         return try {
             val now = Clock.System.now().toEpochMilliseconds()
             val chatEntity = ChatEntity(
@@ -59,12 +62,12 @@ class OfflineFirstChatRepository(
     }
 
     override suspend fun createChatWithMessage(
-        chatId: String,
+        chatId: ChatId,
         title: String,
-        participantIds: List<String>,
-        messageId: String,
+        participantIds: List<ParticipantId>,
+        messageId: MessageId,
         message: String,
-        senderId: String,
+        senderId: ParticipantId,
         type: me.ashishekka.echo.shared.data.entity.MessageType,
         file: me.ashishekka.echo.shared.data.entity.FileDetails?,
         timestamp: Long
@@ -94,7 +97,7 @@ class OfflineFirstChatRepository(
         }
     }
 
-    override suspend fun updateLastMessage(chatId: String, message: String, timestamp: Long): Result<Unit, DatabaseError> {
+    override suspend fun updateLastMessage(chatId: ChatId, message: String, timestamp: Long): Result<Unit, DatabaseError> {
         return try {
             chatDao.updateLastMessage(chatId, message, timestamp)
             Result.Success(Unit)
@@ -103,7 +106,7 @@ class OfflineFirstChatRepository(
         }
     }
 
-    override suspend fun deleteChat(chatId: String): Result<Unit, DatabaseError> {
+    override suspend fun deleteChat(chatId: ChatId): Result<Unit, DatabaseError> {
         return try {
             // ChatDao uses CASCADE for messages, so deleting the chat deletes its messages too.
             val chatWithParticipants = chatDao.getChatById(chatId).firstOrNull()

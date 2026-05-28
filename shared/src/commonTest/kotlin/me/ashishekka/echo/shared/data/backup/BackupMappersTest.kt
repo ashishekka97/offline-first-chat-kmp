@@ -1,6 +1,9 @@
 package me.ashishekka.echo.shared.data.backup
 
 import me.ashishekka.echo.shared.data.entity.MessageType
+import me.ashishekka.echo.shared.domain.model.ChatId
+import me.ashishekka.echo.shared.domain.model.MessageId
+import me.ashishekka.echo.shared.domain.model.ParticipantId
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -12,7 +15,7 @@ class BackupMappersTest {
 
     @Test
     fun testParticipantDtoToEntity() {
-        val dto = ParticipantDto("user-1", "Alice", "url", false)
+        val dto = ParticipantDto(ParticipantId("user-1"), "Alice", "url", false)
         val entity = dto.toEntity()
         assertEquals(dto.id, entity.id)
         assertEquals(dto.name, entity.name)
@@ -21,10 +24,11 @@ class BackupMappersTest {
 
     @Test
     fun testChatDtoToEntityWithRelativeTime() {
+        val chatId = ChatId("chat-1")
         val dto = ChatDto(
-            id = "chat-1",
+            id = chatId,
             title = "Topic",
-            participantIds = listOf("u1"),
+            participantIds = listOf(ParticipantId("u1")),
             lastMessage = "Hey",
             lastMessageTimestampOffsetMs = -1000L,
             createdAtOffsetMs = -5000L,
@@ -38,11 +42,12 @@ class BackupMappersTest {
 
     @Test
     fun testMessageDtoToEntityWithComplexFile() {
+        val messageId = MessageId("m1")
         val dto = MessageDto(
-            id = "m1",
+            id = messageId,
             message = "Photo",
             type = "FILE",
-            sender = "u1",
+            sender = ParticipantId("u1"),
             timestampOffsetMs = 0,
             file = FileDto(
                 path = "url",
@@ -51,7 +56,7 @@ class BackupMappersTest {
                 thumbnail = ThumbnailDto(bundledAssetName = "thumb.jpg")
             )
         )
-        val entity = dto.toEntity("c1", baseTime)
+        val entity = dto.toEntity(ChatId("c1"), baseTime)
         
         assertEquals(MessageType.FILE, entity.type)
         assertNotNull(entity.file)
@@ -62,10 +67,13 @@ class BackupMappersTest {
 
     @Test
     fun testChatDtoToCrossRefs() {
+        val chatId = ChatId("c1")
+        val p1Id = ParticipantId("p1")
+        val p2Id = ParticipantId("p2")
         val dto = ChatDto(
-            id = "c1",
+            id = chatId,
             title = "T",
-            participantIds = listOf("p1", "p2"),
+            participantIds = listOf(p1Id, p2Id),
             lastMessage = null,
             lastMessageTimestampOffsetMs = 0,
             createdAtOffsetMs = 0,
@@ -73,8 +81,8 @@ class BackupMappersTest {
         )
         val refs = dto.toCrossRefs()
         assertEquals(2, refs.size)
-        assertEquals("p1", refs[0].participantId)
-        assertEquals("p2", refs[1].participantId)
+        assertEquals(p1Id, refs[0].participantId)
+        assertEquals(p2Id, refs[1].participantId)
     }
 
     @Test

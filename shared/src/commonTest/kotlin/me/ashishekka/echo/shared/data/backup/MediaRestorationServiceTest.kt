@@ -13,6 +13,9 @@ import me.ashishekka.echo.shared.di.DispatcherProvider
 import me.ashishekka.echo.shared.domain.AssetError
 import me.ashishekka.echo.shared.domain.MediaError
 import me.ashishekka.echo.shared.domain.Result
+import me.ashishekka.echo.shared.domain.model.ChatId
+import me.ashishekka.echo.shared.domain.model.MessageId
+import me.ashishekka.echo.shared.domain.model.ParticipantId
 import okio.FileSystem
 import okio.Path.Companion.toPath
 import okio.Source
@@ -58,9 +61,9 @@ class MediaRestorationServiceTest {
         }
 
         val message = MessageEntity(
-            id = "m1",
-            chatId = "c1",
-            senderId = "u1",
+            id = MessageId("m1"),
+            chatId = ChatId("c1"),
+            senderId = ParticipantId("u1"),
             message = "",
             type = MessageType.FILE,
             file = FileDetails(path = bundledAssetName, fileSize = 3, thumbnail = null),

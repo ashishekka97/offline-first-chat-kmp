@@ -3,6 +3,7 @@ package me.ashishekka.echo.shared.data.entity
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import me.ashishekka.echo.shared.domain.model.ChatId
 
 /**
  * Represents a chat conversation in the database.
@@ -22,7 +23,7 @@ import androidx.room.PrimaryKey
 )
 data class ChatEntity(
     @PrimaryKey
-    val id: String,
+    val id: ChatId,
     val title: String,
     val lastMessage: String?,
     val lastMessageTimestamp: Long,

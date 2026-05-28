@@ -3,6 +3,8 @@ package me.ashishekka.echo.shared.data.entity
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
+import me.ashishekka.echo.shared.domain.model.ChatId
+import me.ashishekka.echo.shared.domain.model.ParticipantId
 
 /**
  * A cross-reference table that links [ChatEntity] and [ParticipantEntity] in a many-to-many relationship.
@@ -30,6 +32,6 @@ import androidx.room.Index
     indices = [Index(value = ["participantId"])]
 )
 data class ChatParticipantCrossRef(
-    val chatId: String,
-    val participantId: String
+    val chatId: ChatId,
+    val participantId: ParticipantId
 )

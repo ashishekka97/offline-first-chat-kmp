@@ -6,6 +6,9 @@ import me.ashishekka.echo.shared.data.entity.MessageType
 import me.ashishekka.echo.shared.domain.AppError
 import me.ashishekka.echo.shared.domain.Constants
 import me.ashishekka.echo.shared.domain.Result
+import me.ashishekka.echo.shared.domain.model.ChatId
+import me.ashishekka.echo.shared.domain.model.MessageId
+import me.ashishekka.echo.shared.domain.model.ParticipantId
 import me.ashishekka.echo.shared.domain.onSuccess
 import me.ashishekka.echo.shared.domain.repository.MessageRepository
 import me.ashishekka.echo.shared.domain.service.AgentService
@@ -21,9 +24,9 @@ class SendMessageUseCase(
      * Sends a message and triggers the AI agent simulation if the sender is the current user.
      */
     suspend operator fun invoke(
-        id: String,
-        chatId: String,
-        senderId: String,
+        id: MessageId,
+        chatId: ChatId,
+        senderId: ParticipantId,
         message: String,
         type: MessageType = MessageType.TEXT,
         file: FileDetails? = null,

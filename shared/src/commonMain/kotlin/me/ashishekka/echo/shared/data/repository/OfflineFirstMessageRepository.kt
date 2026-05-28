@@ -14,7 +14,10 @@ import me.ashishekka.echo.shared.data.mapper.toDomain
 import me.ashishekka.echo.shared.domain.Constants
 import me.ashishekka.echo.shared.domain.DatabaseError
 import me.ashishekka.echo.shared.domain.Result
+import me.ashishekka.echo.shared.domain.model.ChatId
 import me.ashishekka.echo.shared.domain.model.Message
+import me.ashishekka.echo.shared.domain.model.MessageId
+import me.ashishekka.echo.shared.domain.model.ParticipantId
 import me.ashishekka.echo.shared.domain.repository.MessageRepository
 
 /**
@@ -24,7 +27,7 @@ class OfflineFirstMessageRepository(
     private val messageDao: MessageDao
 ) : MessageRepository {
 
-    override fun getPagedMessagesForChat(chatId: String): Flow<PagingData<Message>> {
+    override fun getPagedMessagesForChat(chatId: ChatId): Flow<PagingData<Message>> {
         return Pager(
             config = PagingConfig(pageSize = 20),
             pagingSourceFactory = { messageDao.getMessagesForChat(chatId) }
@@ -34,9 +37,9 @@ class OfflineFirstMessageRepository(
     }
 
     override suspend fun sendMessage(
-        id: String,
-        chatId: String,
-        senderId: String,
+        id: MessageId,
+        chatId: ChatId,
+        senderId: ParticipantId,
         message: String,
         type: MessageType,
         file: FileDetails?,
@@ -59,7 +62,19 @@ class OfflineFirstMessageRepository(
         }
     }
 
-    override suspend fun deleteMessagesForChat(chatId: String): Result<Unit, DatabaseError> {
+    override suspend fun getFilePathsForChat(chatId: ChatId): Result<List<String>, DatabaseError> {
+        return try {
+            val messages = messageDao.getMessagesByChatId(chatId)
+            val paths = messages.mapNotNull { it.file }
+                .flatMap { listOfNotNull(it.path, it.thumbnail?.path) }
+                .filter { it.isNotBlank() }
+            Result.Success(paths)
+        } catch (e: Exception) {
+            Result.Failure(DatabaseError.Unknown(e))
+        }
+    }
+
+    override suspend fun deleteMessagesForChat(chatId: ChatId): Result<Unit, DatabaseError> {
         return try {
             messageDao.deleteMessagesForChat(chatId)
             Result.Success(Unit)

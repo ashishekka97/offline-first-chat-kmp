@@ -9,6 +9,8 @@ import me.ashishekka.echo.shared.data.entity.ParticipantEntity
 import me.ashishekka.echo.shared.data.repository.OfflineFirstMessageRepository
 import me.ashishekka.echo.shared.domain.Constants
 import me.ashishekka.echo.shared.domain.Result
+import me.ashishekka.echo.shared.domain.model.ChatId
+import me.ashishekka.echo.shared.domain.model.MessageId
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -37,16 +39,18 @@ class MessageRepositoryTest {
 
     @Test
     fun testSendMessageSavesToDatabase() = runTest {
-        val chat = ChatEntity("chat_1", "Test", null, 1000L, 1000L, 1000L)
+        val chatId = ChatId("chat_1")
+        val messageId = MessageId("msg_1")
+        val chat = ChatEntity(chatId, "Test", null, 1000L, 1000L, 1000L)
         val user = ParticipantEntity(Constants.CURRENT_USER_ID, "Me", null, false)
         
         db.chatDao().insertChat(chat)
         db.participantDao().insertParticipant(user)
         
-        val result = repository.sendMessage("msg_1", "chat_1", user.id, "Hello")
+        val result = repository.sendMessage(messageId, chatId, user.id, "Hello")
         assertTrue(result is Result.Success)
         
-        val messages = messageDao.getMessagesForChat("chat_1").getData()
+        val messages = messageDao.getMessagesForChat(chatId).getData()
         assertEquals(1, messages.size)
         assertEquals("Hello", messages[0].message.message)
     }

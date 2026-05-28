@@ -17,7 +17,10 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import me.ashishekka.echo.shared.domain.DatabaseError
+import me.ashishekka.echo.shared.domain.model.ChatId
 import me.ashishekka.echo.shared.domain.model.Message
+import me.ashishekka.echo.shared.domain.model.MessageId
+import me.ashishekka.echo.shared.domain.model.ParticipantId
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class SendMessageUseCaseTest {
@@ -36,8 +39,8 @@ class SendMessageUseCaseTest {
     @Test
     fun testInvokeTriggersAgentForUserMessage() = runTest {
         val result = sendMessageUseCase(
-            id = "m1",
-            chatId = "c1",
+            id = MessageId("m1"),
+            chatId = ChatId("c1"),
             senderId = Constants.CURRENT_USER_ID,
             message = "Hello"
         )
@@ -50,9 +53,9 @@ class SendMessageUseCaseTest {
     @Test
     fun testInvokeDoesNotTriggerAgentForOtherSender() = runTest {
         val result = sendMessageUseCase(
-            id = "m1",
-            chatId = "c1",
-            senderId = "other_user",
+            id = MessageId("m1"),
+            chatId = ChatId("c1"),
+            senderId = ParticipantId("other_user"),
             message = "Hello"
         )
 
@@ -63,11 +66,11 @@ class SendMessageUseCaseTest {
 
     class FakeMessageRepository : MessageRepository {
         var sendCount = 0
-        override fun getPagedMessagesForChat(chatId: String): Flow<PagingData<Message>> = emptyFlow()
+        override fun getPagedMessagesForChat(chatId: ChatId): Flow<PagingData<Message>> = emptyFlow()
         override suspend fun sendMessage(
-            id: String,
-            chatId: String,
-            senderId: String,
+            id: MessageId,
+            chatId: ChatId,
+            senderId: ParticipantId,
             message: String,
             type: MessageType,
             file: FileDetails?,
@@ -76,13 +79,15 @@ class SendMessageUseCaseTest {
             sendCount++
             return Result.Success(Unit)
         }
-        override suspend fun deleteMessagesForChat(chatId: String): Result<Unit, DatabaseError> = Result.Success(Unit)
+
+        override suspend fun getFilePathsForChat(chatId: ChatId): Result<List<String>, DatabaseError> = Result.Success(emptyList())
+        override suspend fun deleteMessagesForChat(chatId: ChatId): Result<Unit, DatabaseError> = Result.Success(Unit)
     }
 
     class FakeAgentService : AgentService {
-        override val typingStates: StateFlow<Map<String, Boolean>> = MutableStateFlow(emptyMap())
+        override val typingStates: StateFlow<Map<ChatId, Boolean>> = MutableStateFlow(emptyMap())
         var triggerCount = 0
-        override fun triggerReply(chatId: String) {
+        override fun triggerReply(chatId: ChatId) {
             triggerCount++
         }
     }

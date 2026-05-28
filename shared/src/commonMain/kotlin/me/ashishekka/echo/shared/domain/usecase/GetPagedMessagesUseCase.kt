@@ -2,6 +2,7 @@ package me.ashishekka.echo.shared.domain.usecase
 
 import androidx.paging.PagingData
 import kotlinx.coroutines.flow.Flow
+import me.ashishekka.echo.shared.domain.model.ChatId
 import me.ashishekka.echo.shared.domain.model.Message
 import me.ashishekka.echo.shared.domain.repository.MessageRepository
 
@@ -14,7 +15,7 @@ class GetPagedMessagesUseCase(
     /**
      * Returns a [Flow] of [PagingData] containing [Message] domain models for the given [chatId].
      */
-    operator fun invoke(chatId: String): Flow<PagingData<Message>> {
+    operator fun invoke(chatId: ChatId): Flow<PagingData<Message>> {
         return messageRepository.getPagedMessagesForChat(chatId)
     }
 }

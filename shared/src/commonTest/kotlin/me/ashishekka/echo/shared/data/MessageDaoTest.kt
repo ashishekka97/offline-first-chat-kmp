@@ -6,6 +6,9 @@ import me.ashishekka.echo.shared.data.dao.ChatDao
 import me.ashishekka.echo.shared.data.dao.MessageDao
 import me.ashishekka.echo.shared.data.dao.ParticipantDao
 import me.ashishekka.echo.shared.data.entity.*
+import me.ashishekka.echo.shared.domain.model.ChatId
+import me.ashishekka.echo.shared.domain.model.MessageId
+import me.ashishekka.echo.shared.domain.model.ParticipantId
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -35,16 +38,18 @@ class MessageDaoTest {
 
     @Test
     fun testInsertAndGetMessages() = runTest {
-        val chat = ChatEntity("chat_1", "Test Chat", null, 1000L, 1000L, 1000L)
-        val user = ParticipantEntity("user_1", "Alice", null, false)
+        val chatId = ChatId("chat_1")
+        val participantId = ParticipantId("user_1")
+        val chat = ChatEntity(chatId, "Test Chat", null, 1000L, 1000L, 1000L)
+        val user = ParticipantEntity(participantId, "Alice", null, false)
         
         chatDao.insertChat(chat)
         participantDao.insertParticipant(user)
         
         val message = MessageEntity(
-            id = "msg_1",
-            chatId = "chat_1",
-            senderId = "user_1",
+            id = MessageId("msg_1"),
+            chatId = chatId,
+            senderId = participantId,
             message = "Hello World",
             type = MessageType.TEXT,
             file = null,
@@ -52,7 +57,7 @@ class MessageDaoTest {
         )
         messageDao.insertMessage(message)
         
-        val messages = messageDao.getMessagesForChat("chat_1").getData()
+        val messages = messageDao.getMessagesForChat(chatId).getData()
         assertEquals(1, messages.size)
         assertEquals("Hello World", messages[0].message.message)
         assertEquals("Alice", messages[0].sender.name)
@@ -60,16 +65,18 @@ class MessageDaoTest {
 
     @Test
     fun testInsertFileMessage() = runTest {
-        val chat = ChatEntity("chat_1", "Test Chat", null, 1000L, 1000L, 1000L)
-        val user = ParticipantEntity("user_1", "Alice", null, false)
+        val chatId = ChatId("chat_1")
+        val participantId = ParticipantId("user_1")
+        val chat = ChatEntity(chatId, "Test Chat", null, 1000L, 1000L, 1000L)
+        val user = ParticipantEntity(participantId, "Alice", null, false)
         
         chatDao.insertChat(chat)
         participantDao.insertParticipant(user)
         
         val message = MessageEntity(
-            id = "msg_2",
-            chatId = "chat_1",
-            senderId = "user_1",
+            id = MessageId("msg_2"),
+            chatId = chatId,
+            senderId = participantId,
             message = "Image caption",
             type = MessageType.FILE,
             file = FileDetails(
@@ -81,7 +88,7 @@ class MessageDaoTest {
         )
         messageDao.insertMessage(message)
         
-        val messages = messageDao.getMessagesForChat("chat_1").getData()
+        val messages = messageDao.getMessagesForChat(chatId).getData()
         assertEquals(1, messages.size)
         assertEquals(MessageType.FILE, messages[0].message.type)
         assertEquals("path/to/file.jpg", messages[0].message.file?.path)

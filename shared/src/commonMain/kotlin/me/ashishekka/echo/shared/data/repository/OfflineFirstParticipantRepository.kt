@@ -1,11 +1,12 @@
 package me.ashishekka.echo.shared.data.repository
 
 import me.ashishekka.echo.shared.data.dao.ParticipantDao
-import me.ashishekka.echo.shared.data.entity.ParticipantEntity
 import me.ashishekka.echo.shared.data.mapper.toDomain
+import me.ashishekka.echo.shared.data.mapper.toEntity
 import me.ashishekka.echo.shared.domain.DatabaseError
 import me.ashishekka.echo.shared.domain.Result
 import me.ashishekka.echo.shared.domain.model.Participant
+import me.ashishekka.echo.shared.domain.model.ParticipantId
 import me.ashishekka.echo.shared.domain.repository.ParticipantRepository
 
 /**
@@ -15,10 +16,10 @@ class OfflineFirstParticipantRepository(
     private val participantDao: ParticipantDao
 ) : ParticipantRepository {
 
-    override suspend fun getParticipantById(id: String): Result<Participant, DatabaseError> {
+    override suspend fun getParticipantById(id: ParticipantId): Result<Participant, DatabaseError> {
         return try {
-            participantDao.getParticipantById(id)?.let {
-                Result.Success(it.toDomain())
+            participantDao.getParticipantById(id)?.toDomain()?.let { 
+                Result.Success(it)
             } ?: Result.Failure(DatabaseError.NotFound)
         } catch (e: Exception) {
             Result.Failure(DatabaseError.Unknown(e))
@@ -36,13 +37,7 @@ class OfflineFirstParticipantRepository(
 
     override suspend fun saveParticipant(participant: Participant): Result<Unit, DatabaseError> {
         return try {
-            val entity = ParticipantEntity(
-                id = participant.id,
-                name = participant.name,
-                profileImageUrl = participant.profileImageUrl,
-                isAgent = participant.isAgent
-            )
-            participantDao.insertParticipant(entity)
+            participantDao.insertParticipant(participant.toEntity())
             Result.Success(Unit)
         } catch (e: Exception) {
             Result.Failure(DatabaseError.Unknown(e))

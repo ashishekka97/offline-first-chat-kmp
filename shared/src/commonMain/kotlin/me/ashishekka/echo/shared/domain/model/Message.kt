@@ -16,8 +16,8 @@ import me.ashishekka.echo.shared.data.entity.MessageType
  * @property isFromMe True if the message was sent by the local user.
  */
 data class Message(
-    val id: String,
-    val chatId: String,
+    val id: MessageId,
+    val chatId: ChatId,
     val sender: Participant,
     val message: String,
     val type: MessageType,

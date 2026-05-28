@@ -1,6 +1,7 @@
 package me.ashishekka.echo.shared.data.backup
 
 import me.ashishekka.echo.shared.domain.Result
+import me.ashishekka.echo.shared.domain.model.ParticipantId
 import okio.Path.Companion.toPath
 import okio.fakefilesystem.FakeFileSystem
 import kotlin.test.BeforeTest
@@ -68,14 +69,14 @@ class BackupParserTest {
         assertTrue(result is Result.Success)
         val data = result.data
         assertTrue(parser.validateSeedData(data, fileSystem) is Result.Success)
-        assertEquals("u1", data.participants[0].id)
+        assertEquals(ParticipantId("u1"), data.participants[0].id)
     }
 
     @Test
     fun testValidationFailsWithMissingParticipant() {
         val invalidData = SeedDataDto(
-            participants = listOf(ParticipantDto("u1", "Alice", null, false)),
-            chats = listOf(ChatDto("c1", "Topic", listOf("u1", "a1"), null, 0, 0, 0)),
+            participants = listOf(ParticipantDto(ParticipantId("u1"), "Alice", null, false)),
+            chats = listOf(ChatDto(me.ashishekka.echo.shared.domain.model.ChatId("c1"), "Topic", listOf(ParticipantId("u1"), ParticipantId("a1")), null, 0, 0, 0)),
             messages = emptyMap()
         )
         assertTrue(parser.validateSeedData(invalidData, fileSystem) is Result.Failure)
@@ -84,9 +85,9 @@ class BackupParserTest {
     @Test
     fun testValidationFailsWithMessageKeyMismatch() {
         val invalidData = SeedDataDto(
-            participants = listOf(ParticipantDto("u1", "Alice", null, false)),
-            chats = listOf(ChatDto("c1", "Topic", listOf("u1"), null, 0, 0, 0)),
-            messages = mapOf("unknown_chat" to listOf(MessageDto("m1", "Hi", "text", "u1", 0)))
+            participants = listOf(ParticipantDto(ParticipantId("u1"), "Alice", null, false)),
+            chats = listOf(ChatDto(me.ashishekka.echo.shared.domain.model.ChatId("c1"), "Topic", listOf(ParticipantId("u1")), null, 0, 0, 0)),
+            messages = mapOf(me.ashishekka.echo.shared.domain.model.ChatId("unknown_chat") to listOf(MessageDto(me.ashishekka.echo.shared.domain.model.MessageId("m1"), "Hi", "text", ParticipantId("u1"), 0)))
         )
         assertTrue(parser.validateSeedData(invalidData, fileSystem) is Result.Failure)
     }

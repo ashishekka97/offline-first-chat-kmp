@@ -11,7 +11,7 @@ import me.ashishekka.echo.shared.data.entity.MessageType
 import me.ashishekka.echo.shared.domain.Constants
 import me.ashishekka.echo.shared.domain.DatabaseError
 import me.ashishekka.echo.shared.domain.Result
-import me.ashishekka.echo.shared.domain.model.Chat
+import me.ashishekka.echo.shared.domain.model.*
 import me.ashishekka.echo.shared.domain.repository.ChatRepository
 import me.ashishekka.echo.shared.domain.service.AgentService
 import kotlin.test.BeforeTest
@@ -36,10 +36,10 @@ class StartChatUseCaseTest {
     @Test
     fun testInvokeTriggersAgentForUserMessage() = runTest {
         val result = startChatUseCase(
-            chatId = "c1",
+            chatId = ChatId("c1"),
             title = "New Chat",
-            participantIds = listOf("p1", "p2"),
-            messageId = "m1",
+            participantIds = listOf(ParticipantId("p1"), ParticipantId("p2")),
+            messageId = MessageId("m1"),
             message = "Hello",
             senderId = Constants.CURRENT_USER_ID
         )
@@ -52,12 +52,12 @@ class StartChatUseCaseTest {
     @Test
     fun testInvokeDoesNotTriggerAgentForOtherSender() = runTest {
         val result = startChatUseCase(
-            chatId = "c1",
+            chatId = ChatId("c1"),
             title = "New Chat",
-            participantIds = listOf("p1", "p2"),
-            messageId = "m1",
+            participantIds = listOf(ParticipantId("p1"), ParticipantId("p2")),
+            messageId = MessageId("m1"),
             message = "Hello",
-            senderId = "other_user"
+            senderId = ParticipantId("other_user")
         )
 
         assertEquals(Result.Success(Unit), result)
@@ -68,15 +68,15 @@ class StartChatUseCaseTest {
     class FakeChatRepository : ChatRepository {
         var createCount = 0
         override fun getPagedChats(): Flow<PagingData<Chat>> = emptyFlow()
-        override fun getChatById(id: String): Flow<Chat?> = emptyFlow()
-        override suspend fun createChat(id: String, title: String, participantIds: List<String>): Result<Unit, DatabaseError> = Result.Success(Unit)
+        override fun getChatById(id: ChatId): Flow<Chat?> = emptyFlow()
+        override suspend fun createChat(id: ChatId, title: String, participantIds: List<ParticipantId>): Result<Unit, DatabaseError> = Result.Success(Unit)
         override suspend fun createChatWithMessage(
-            chatId: String,
+            chatId: ChatId,
             title: String,
-            participantIds: List<String>,
-            messageId: String,
+            participantIds: List<ParticipantId>,
+            messageId: MessageId,
             message: String,
-            senderId: String,
+            senderId: ParticipantId,
             type: MessageType,
             file: FileDetails?,
             timestamp: Long
@@ -84,14 +84,14 @@ class StartChatUseCaseTest {
             createCount++
             return Result.Success(Unit)
         }
-        override suspend fun updateLastMessage(chatId: String, message: String, timestamp: Long): Result<Unit, DatabaseError> = Result.Success(Unit)
-        override suspend fun deleteChat(chatId: String): Result<Unit, DatabaseError> = Result.Success(Unit)
+        override suspend fun updateLastMessage(chatId: ChatId, message: String, timestamp: Long): Result<Unit, DatabaseError> = Result.Success(Unit)
+        override suspend fun deleteChat(chatId: ChatId): Result<Unit, DatabaseError> = Result.Success(Unit)
     }
 
     class FakeAgentService : AgentService {
-        override val typingStates: StateFlow<Map<String, Boolean>> = MutableStateFlow(emptyMap())
+        override val typingStates: StateFlow<Map<ChatId, Boolean>> = MutableStateFlow(emptyMap())
         var triggerCount = 0
-        override fun triggerReply(chatId: String) {
+        override fun triggerReply(chatId: ChatId) {
             triggerCount++
         }
     }

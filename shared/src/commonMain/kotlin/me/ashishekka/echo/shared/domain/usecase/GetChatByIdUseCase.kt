@@ -2,6 +2,7 @@ package me.ashishekka.echo.shared.domain.usecase
 
 import kotlinx.coroutines.flow.Flow
 import me.ashishekka.echo.shared.domain.model.Chat
+import me.ashishekka.echo.shared.domain.model.ChatId
 import me.ashishekka.echo.shared.domain.repository.ChatRepository
 
 /**
@@ -13,7 +14,7 @@ class GetChatByIdUseCase(
     /**
      * Returns a [Flow] of [Chat] domain model for the given [id], or null if not found.
      */
-    operator fun invoke(id: String): Flow<Chat?> {
+    operator fun invoke(id: ChatId): Flow<Chat?> {
         return chatRepository.getChatById(id)
     }
 }

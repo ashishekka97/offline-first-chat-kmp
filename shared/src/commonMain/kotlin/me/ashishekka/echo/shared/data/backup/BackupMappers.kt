@@ -7,6 +7,7 @@ import me.ashishekka.echo.shared.data.entity.MessageEntity
 import me.ashishekka.echo.shared.data.entity.MessageType
 import me.ashishekka.echo.shared.data.entity.ParticipantEntity
 import me.ashishekka.echo.shared.data.entity.ThumbnailDetails
+import me.ashishekka.echo.shared.domain.model.ChatId
 
 /**
  * Maps a [ParticipantDto] to a [ParticipantEntity].
@@ -38,7 +39,7 @@ fun ChatDto.toEntity(baseTime: Long): ChatEntity = ChatEntity(
  * @param chatId The ID of the chat this message belongs to.
  * @param baseTime The current system time to use as a base for relative offsets.
  */
-fun MessageDto.toEntity(chatId: String, baseTime: Long): MessageEntity = MessageEntity(
+fun MessageDto.toEntity(chatId: ChatId, baseTime: Long): MessageEntity = MessageEntity(
     id = this.id,
     chatId = chatId,
     senderId = this.sender,

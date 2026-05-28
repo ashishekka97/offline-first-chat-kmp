@@ -4,8 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,8 +13,10 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import me.ashishekka.echo.shared.domain.AppError
 import me.ashishekka.echo.shared.domain.model.Chat
+import me.ashishekka.echo.shared.domain.model.ChatId
 import me.ashishekka.echo.shared.domain.onFailure
 import me.ashishekka.echo.shared.domain.onSuccess
+import me.ashishekka.echo.shared.domain.service.IdGenerator
 import me.ashishekka.echo.shared.domain.usecase.DeleteChatUseCase
 import me.ashishekka.echo.shared.domain.usecase.GetPagedChatsUseCase
 
@@ -33,8 +33,8 @@ data class HomeState(
  * Intents for the Home screen.
  */
 sealed interface HomeIntent {
-    data class DeleteChat(val chatId: String) : HomeIntent
-    data class ClickChat(val chatId: String) : HomeIntent
+    data class DeleteChat(val chatId: ChatId) : HomeIntent
+    data class ClickChat(val chatId: ChatId) : HomeIntent
     data object NewChat : HomeIntent
     data object ClearError : HomeIntent
 }
@@ -43,7 +43,7 @@ sealed interface HomeIntent {
  * Side effects (one-time events) for the Home screen.
  */
 sealed interface HomeSideEffect {
-    data class NavigateToChat(val chatId: String) : HomeSideEffect
+    data class NavigateToChat(val chatId: ChatId) : HomeSideEffect
 }
 
 /**
@@ -51,7 +51,8 @@ sealed interface HomeSideEffect {
  */
 class HomeViewModel(
     private val getPagedChatsUseCase: GetPagedChatsUseCase,
-    private val deleteChatUseCase: DeleteChatUseCase
+    private val deleteChatUseCase: DeleteChatUseCase,
+    private val idGenerator: IdGenerator
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(HomeState())
@@ -79,7 +80,7 @@ class HomeViewModel(
         }
     }
 
-    private fun deleteChat(chatId: String) {
+    private fun deleteChat(chatId: ChatId) {
         viewModelScope.launch {
             _state.value = _state.value.copy(isDeleting = true)
             deleteChatUseCase(chatId)
@@ -92,17 +93,16 @@ class HomeViewModel(
         }
     }
 
-    private fun navigateToChat(chatId: String) {
+    private fun navigateToChat(chatId: ChatId) {
         viewModelScope.launch {
             _sideEffect.send(HomeSideEffect.NavigateToChat(chatId))
         }
     }
 
-    @OptIn(ExperimentalUuidApi::class)
     private fun startNewChat() {
         viewModelScope.launch {
             // Generate a random UUID for the new chat session.
-            val tempId = Uuid.random().toString()
+            val tempId = ChatId(idGenerator.generateUuid())
             _sideEffect.send(HomeSideEffect.NavigateToChat(tempId))
         }
     }

@@ -7,7 +7,10 @@ import me.ashishekka.echo.shared.data.entity.FileDetails
 import me.ashishekka.echo.shared.data.entity.MessageType
 import me.ashishekka.echo.shared.domain.DatabaseError
 import me.ashishekka.echo.shared.domain.Result
+import me.ashishekka.echo.shared.domain.model.ChatId
 import me.ashishekka.echo.shared.domain.model.Message
+import me.ashishekka.echo.shared.domain.model.MessageId
+import me.ashishekka.echo.shared.domain.model.ParticipantId
 
 /**
  * Repository interface for message operations.
@@ -16,15 +19,15 @@ interface MessageRepository {
     /**
      * Returns a paginated [Flow] of [Message] domain models for a specific [chatId].
      */
-    fun getPagedMessagesForChat(chatId: String): Flow<PagingData<Message>>
+    fun getPagedMessagesForChat(chatId: ChatId): Flow<PagingData<Message>>
 
     /**
      * Sends a new message in a chat.
      */
     suspend fun sendMessage(
-        id: String,
-        chatId: String,
-        senderId: String,
+        id: MessageId,
+        chatId: ChatId,
+        senderId: ParticipantId,
         message: String,
         type: MessageType = MessageType.TEXT,
         file: FileDetails? = null,
@@ -32,7 +35,12 @@ interface MessageRepository {
     ): Result<Unit, DatabaseError>
 
     /**
+     * Returns a list of all physical file paths associated with messages in a chat.
+     */
+    suspend fun getFilePathsForChat(chatId: ChatId): Result<List<String>, DatabaseError>
+
+    /**
      * Deletes all messages for a specific [chatId].
      */
-    suspend fun deleteMessagesForChat(chatId: String): Result<Unit, DatabaseError>
+    suspend fun deleteMessagesForChat(chatId: ChatId): Result<Unit, DatabaseError>
 }

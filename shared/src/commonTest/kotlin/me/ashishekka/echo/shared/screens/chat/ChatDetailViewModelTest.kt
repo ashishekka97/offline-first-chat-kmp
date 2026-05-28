@@ -15,13 +15,12 @@ import me.ashishekka.echo.shared.data.entity.FileDetails
 import me.ashishekka.echo.shared.data.entity.MessageType
 import me.ashishekka.echo.shared.domain.DatabaseError
 import me.ashishekka.echo.shared.domain.Result
-import me.ashishekka.echo.shared.domain.model.Chat
-import me.ashishekka.echo.shared.domain.model.Message
-import me.ashishekka.echo.shared.domain.model.Participant
+import me.ashishekka.echo.shared.domain.model.*
 import me.ashishekka.echo.shared.domain.repository.ChatRepository
 import me.ashishekka.echo.shared.domain.repository.MessageRepository
 import me.ashishekka.echo.shared.domain.repository.ParticipantRepository
 import me.ashishekka.echo.shared.domain.service.AgentService
+import me.ashishekka.echo.shared.domain.service.IdGenerator
 import me.ashishekka.echo.shared.domain.usecase.GetChatByIdUseCase
 import me.ashishekka.echo.shared.domain.usecase.GetPagedMessagesUseCase
 import me.ashishekka.echo.shared.domain.usecase.SendMessageUseCase
@@ -40,6 +39,7 @@ class ChatDetailViewModelTest {
     private val messageRepo = FakeMessageRepo()
     private val agentService = FakeAgentService()
     private val participantRepo = FakeParticipantRepo()
+    private val idGenerator = FakeIdGenerator()
 
     private val getChatByIdUseCase = GetChatByIdUseCase(chatRepo)
     private val getPagedMessagesUseCase = GetPagedMessagesUseCase(messageRepo)
@@ -48,7 +48,7 @@ class ChatDetailViewModelTest {
 
     @Test
     fun testInitialStateForExistingChat() = runTest {
-        val chatId = "existing_chat"
+        val chatId = ChatId("existing_chat")
         chatRepo.setChat(chatId, Chat(chatId, "Title", null, 0L, 0L, 0L))
         
         val viewModel = createViewModel(chatId)
@@ -64,8 +64,7 @@ class ChatDetailViewModelTest {
 
     @Test
     fun testInitialStateForNewChat() = runTest {
-        val chatId = "new_chat"
-        // chatRepo returns null for unknown chat
+        val chatId = ChatId("new_chat")
         
         val viewModel = createViewModel(chatId)
         
@@ -79,7 +78,7 @@ class ChatDetailViewModelTest {
 
     @Test
     fun testObserveTypingState() = runTest {
-        val chatId = "existing_chat"
+        val chatId = ChatId("existing_chat")
         val viewModel = createViewModel(chatId)
         advanceUntilIdle()
 
@@ -96,7 +95,7 @@ class ChatDetailViewModelTest {
 
     @Test
     fun testSendMessageInExistingChat() = runTest {
-        val chatId = "existing_chat"
+        val chatId = ChatId("existing_chat")
         chatRepo.setChat(chatId, Chat(chatId, "Title", null, 0L, 0L, 0L))
         val viewModel = createViewModel(chatId)
         advanceUntilIdle()
@@ -113,7 +112,7 @@ class ChatDetailViewModelTest {
 
     @Test
     fun testSendMessageInNewChat() = runTest {
-        val chatId = "new_chat"
+        val chatId = ChatId("new_chat")
         val viewModel = createViewModel(chatId)
         advanceUntilIdle()
 
@@ -130,7 +129,7 @@ class ChatDetailViewModelTest {
 
     @Test
     fun testOnInitialMessagesLoadedTriggersScroll() = runTest {
-        val chatId = "existing_chat"
+        val chatId = ChatId("existing_chat")
         val viewModel = createViewModel(chatId)
         advanceUntilIdle()
 
@@ -142,7 +141,7 @@ class ChatDetailViewModelTest {
 
     @Test
     fun testSendMessageFailureSetsError() = runTest {
-        val chatId = "existing_chat"
+        val chatId = ChatId("existing_chat")
         chatRepo.setChat(chatId, Chat(chatId, "Title", null, 0L, 0L, 0L))
         messageRepo.shouldFail = true
         val viewModel = createViewModel(chatId)
@@ -155,38 +154,39 @@ class ChatDetailViewModelTest {
         assertTrue(viewModel.state.value.error is DatabaseError.Unknown)
     }
 
-    private fun createViewModel(chatId: String) = ChatDetailViewModel(
+    private fun createViewModel(chatId: ChatId) = ChatDetailViewModel(
         chatId = chatId,
         getChatByIdUseCase = getChatByIdUseCase,
         getPagedMessagesUseCase = getPagedMessagesUseCase,
         sendMessageUseCase = sendMessageUseCase,
         startChatUseCase = startChatUseCase,
         agentService = agentService,
-        participantRepository = participantRepo
+        participantRepository = participantRepo,
+        idGenerator = idGenerator
     )
 }
 
 class FakeChatRepo : ChatRepository {
-    private val chats = mutableMapOf<String, Chat?>()
-    var lastCreatedChatId: String? = null
+    private val chats = mutableMapOf<ChatId, Chat?>()
+    var lastCreatedChatId: ChatId? = null
     var lastCreatedChatMessage: String? = null
 
-    fun setChat(id: String, chat: Chat?) {
+    fun setChat(id: ChatId, chat: Chat?) {
         chats[id] = chat
     }
 
     override fun getPagedChats(): Flow<PagingData<Chat>> = flowOf(PagingData.empty())
 
-    override fun getChatById(id: String): Flow<Chat?> = flowOf(chats[id])
+    override fun getChatById(id: ChatId): Flow<Chat?> = flowOf(chats[id])
 
-    override suspend fun createChat(id: String, title: String, participantIds: List<String>): Result<Unit, DatabaseError> {
+    override suspend fun createChat(id: ChatId, title: String, participantIds: List<ParticipantId>): Result<Unit, DatabaseError> {
         lastCreatedChatId = id
         return Result.Success(Unit)
     }
 
     override suspend fun createChatWithMessage(
-        chatId: String, title: String, participantIds: List<String>,
-        messageId: String, message: String, senderId: String,
+        chatId: ChatId, title: String, participantIds: List<ParticipantId>,
+        messageId: MessageId, message: String, senderId: ParticipantId,
         type: MessageType, file: FileDetails?, timestamp: Long
     ): Result<Unit, DatabaseError> {
         lastCreatedChatId = chatId
@@ -194,19 +194,19 @@ class FakeChatRepo : ChatRepository {
         return Result.Success(Unit)
     }
 
-    override suspend fun updateLastMessage(chatId: String, message: String, timestamp: Long): Result<Unit, DatabaseError> = Result.Success(Unit)
-    override suspend fun deleteChat(chatId: String): Result<Unit, DatabaseError> = Result.Success(Unit)
+    override suspend fun updateLastMessage(chatId: ChatId, message: String, timestamp: Long): Result<Unit, DatabaseError> = Result.Success(Unit)
+    override suspend fun deleteChat(chatId: ChatId): Result<Unit, DatabaseError> = Result.Success(Unit)
 }
 
 class FakeMessageRepo : MessageRepository {
     var lastSentMessage: String? = null
-    var lastChatId: String? = null
+    var lastChatId: ChatId? = null
     var shouldFail: Boolean = false
 
-    override fun getPagedMessagesForChat(chatId: String): Flow<PagingData<Message>> = flowOf(PagingData.empty())
+    override fun getPagedMessagesForChat(chatId: ChatId): Flow<PagingData<Message>> = flowOf(PagingData.empty())
 
     override suspend fun sendMessage(
-        id: String, chatId: String, senderId: String, message: String,
+        id: MessageId, chatId: ChatId, senderId: ParticipantId, message: String,
         type: MessageType, file: FileDetails?, timestamp: Long
     ): Result<Unit, DatabaseError> {
         if (shouldFail) return Result.Failure(DatabaseError.Unknown(Exception("Failed")))
@@ -215,24 +215,31 @@ class FakeMessageRepo : MessageRepository {
         return Result.Success(Unit)
     }
 
-    override suspend fun deleteMessagesForChat(chatId: String): Result<Unit, DatabaseError> = Result.Success(Unit)
+    override suspend fun getFilePathsForChat(chatId: ChatId): Result<List<String>, DatabaseError> = Result.Success(emptyList())
+
+    override suspend fun deleteMessagesForChat(chatId: ChatId): Result<Unit, DatabaseError> = Result.Success(Unit)
 }
 
 class FakeAgentService : AgentService {
-    private val _typingStates = MutableStateFlow<Map<String, Boolean>>(emptyMap())
-    override val typingStates: StateFlow<Map<String, Boolean>> = _typingStates.asStateFlow()
+    private val _typingStates = MutableStateFlow<Map<ChatId, Boolean>>(emptyMap())
+    override val typingStates: StateFlow<Map<ChatId, Boolean>> = _typingStates.asStateFlow()
 
-    fun setTyping(chatId: String, isTyping: Boolean) {
+    fun setTyping(chatId: ChatId, isTyping: Boolean) {
         _typingStates.update { it + (chatId to isTyping) }
     }
 
-    override fun triggerReply(chatId: String) {}
+    override fun triggerReply(chatId: ChatId) {}
 }
 
 class FakeParticipantRepo : ParticipantRepository {
-    override suspend fun getParticipantById(id: String): Result<Participant, DatabaseError> {
+    override suspend fun getParticipantById(id: ParticipantId): Result<Participant, DatabaseError> {
         return Result.Success(Participant(id, "Agent", null, true))
     }
     override suspend fun getAllParticipants(): Result<List<Participant>, DatabaseError> = Result.Success(emptyList())
     override suspend fun saveParticipant(participant: Participant): Result<Unit, DatabaseError> = Result.Success(Unit)
+}
+
+class FakeIdGenerator : IdGenerator {
+    var nextId: String = "uuid-123"
+    override fun generateUuid(): String = nextId
 }
