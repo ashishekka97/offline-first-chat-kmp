@@ -46,6 +46,8 @@ This roadmap outlines the implementation phases and technical tasks for the Echo
 *   [x] **Infrastructure: Shared Localization Strategy**: Refactor `DateTimeUtils` and shared business logic to use a platform-agnostic `Strings` provider.
 *   [x] **Infrastructure: Shared Design Tokens**: Define branding colors, spacing, and typography constants in `commonMain` for UI consistency.
 *   [x] **Infrastructure: Shared Logging Harness**: Implement a lightweight logging interface to replace `println` with platform-native logs (Logcat/os_log).
+*   [x] **Infrastructure: Media Logic Hardening**: Implement IO safety, file deduplication via hashing, and iOS path consistency in media services.
+*   [x] **Infrastructure: Runtime Path Resolution**: Implement a bridge to resolve relative filenames to platform-absolute paths in the domain mapper for seamless UI loading.
 
 ## Phase 5: Android Platform (Compose)
 **Goal:** Build the Android user interface using Jetpack Compose.

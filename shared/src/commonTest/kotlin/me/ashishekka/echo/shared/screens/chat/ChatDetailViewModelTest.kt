@@ -272,7 +272,7 @@ class FakePreferenceStorage : me.ashishekka.echo.shared.data.PreferenceStorage {
 
 class FakeMediaService : MediaService {
     override suspend fun processImage(bytes: ByteArray, originalPath: String): Result<FileDetails, MediaError> {
-        return Result.Success(FileDetails(originalPath, bytes.size.toLong(), null))
+        return Result.Success(FileDetails(path = originalPath, fileSize = bytes.size.toLong(), thumbnail = null))
     }
 }
 

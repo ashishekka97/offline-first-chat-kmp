@@ -11,14 +11,16 @@ enum class MessageType { TEXT, FILE }
 data class FileDetails(
     val path: String,
     val fileSize: Long,
-    val thumbnail: ThumbnailDetails?
+    val thumbnail: ThumbnailDetails?,
+    val fullPath: String = ""
 )
 
 /**
  * Details of a thumbnail generated for a media file.
  */
 data class ThumbnailDetails(
-    val path: String
+    val path: String,
+    val fullPath: String = ""
 )
 
 /**

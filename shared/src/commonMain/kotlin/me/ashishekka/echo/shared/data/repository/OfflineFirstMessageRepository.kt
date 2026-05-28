@@ -22,7 +22,8 @@ import me.ashishekka.echo.shared.util.StringProvider
  */
 class OfflineFirstMessageRepository(
     private val messageDao: MessageDao,
-    private val stringProvider: StringProvider
+    private val stringProvider: StringProvider,
+    private val localAssetManager: me.ashishekka.echo.shared.data.file.LocalAssetManager
 ) : MessageRepository {
 
     override fun getPagedMessagesForChat(chatId: ChatId): Flow<PagingData<Message>> {
@@ -30,7 +31,7 @@ class OfflineFirstMessageRepository(
             config = PagingConfig(pageSize = 20),
             pagingSourceFactory = { messageDao.getMessagesForChat(chatId) }
         ).flow.map { pagingData ->
-            pagingData.map { it.toDomain(Constants.CURRENT_USER_ID, stringProvider) }
+            pagingData.map { it.toDomain(Constants.CURRENT_USER_ID, stringProvider, localAssetManager) }
         }
     }
 

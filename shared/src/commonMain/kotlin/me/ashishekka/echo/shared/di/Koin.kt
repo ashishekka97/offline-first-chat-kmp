@@ -56,7 +56,7 @@ val infrastructureModule = module {
 val domainModule = module {
     single<AgentService> { DefaultAgentService(get(), get(), get()) }
     single<ChatRepository> { OfflineFirstChatRepository(get(), get(), get()) }
-    single<MessageRepository> { OfflineFirstMessageRepository(get(), get()) }
+    single<MessageRepository> { OfflineFirstMessageRepository(get(), get(), get()) }
     single<ParticipantRepository> { OfflineFirstParticipantRepository(get()) }
 }
 

@@ -36,14 +36,21 @@ class SendMessageUseCase(
         var finalFileDetails: FileDetails? = null
 
         if (localMediaPath != null) {
-            // If it's a local file path (from picker), process it
+            // If it's a local file path (from picker), process it.
+            // Requirement: Don't silently fail if the user intentionally attached a file.
             val bytesResult = localAssetManager.readUriBytes(localMediaPath)
-            if (bytesResult is Result.Success) {
-                val processResult = mediaService.processImage(bytesResult.data, localMediaPath)
-                if (processResult is Result.Success) {
-                    finalFileDetails = processResult.data
-                    finalType = MessageType.FILE
+            when (bytesResult) {
+                is Result.Success -> {
+                    val processResult = mediaService.processImage(bytesResult.data, localMediaPath)
+                    when (processResult) {
+                        is Result.Success -> {
+                            finalFileDetails = processResult.data
+                            finalType = MessageType.FILE
+                        }
+                        is Result.Failure -> return Result.Failure(processResult.error)
+                    }
                 }
+                is Result.Failure -> return Result.Failure(bytesResult.error)
             }
         }
 

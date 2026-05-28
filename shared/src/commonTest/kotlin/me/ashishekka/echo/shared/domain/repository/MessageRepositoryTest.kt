@@ -6,6 +6,7 @@ import me.ashishekka.echo.shared.data.*
 import me.ashishekka.echo.shared.data.dao.MessageDao
 import me.ashishekka.echo.shared.data.entity.ChatEntity
 import me.ashishekka.echo.shared.data.entity.ParticipantEntity
+import me.ashishekka.echo.shared.data.file.FakeLocalAssetManager
 import me.ashishekka.echo.shared.data.repository.OfflineFirstMessageRepository
 import me.ashishekka.echo.shared.domain.Constants
 import me.ashishekka.echo.shared.domain.Result
@@ -24,13 +25,15 @@ class MessageRepositoryTest {
     private lateinit var db: AppDatabase
     private lateinit var messageDao: MessageDao
     private lateinit var repository: MessageRepository
+    private lateinit var localAssetManager: FakeLocalAssetManager
 
     @BeforeTest
     fun setup() {
         val builder = getTestDatabaseBuilder()
         db = createDatabase(builder, kotlinx.coroutines.Dispatchers.Unconfined)
         messageDao = db.messageDao()
-        repository = OfflineFirstMessageRepository(messageDao, FakeStringProvider())
+        localAssetManager = FakeLocalAssetManager()
+        repository = OfflineFirstMessageRepository(messageDao, FakeStringProvider(), localAssetManager)
     }
 
     @AfterTest

@@ -13,7 +13,9 @@ import me.ashishekka.echo.shared.data.file.*
 import me.ashishekka.echo.shared.data.media.AndroidMediaProcessor
 import me.ashishekka.echo.shared.data.media.MediaProcessor
 import me.ashishekka.echo.shared.util.AndroidLogger
+import me.ashishekka.echo.shared.util.AndroidStringProvider
 import me.ashishekka.echo.shared.util.Logger
+import me.ashishekka.echo.shared.util.StringProvider
 import okio.FileSystem
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.Module

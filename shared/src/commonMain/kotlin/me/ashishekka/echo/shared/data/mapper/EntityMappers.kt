@@ -1,6 +1,7 @@
 package me.ashishekka.echo.shared.data.mapper
 
 import me.ashishekka.echo.shared.data.entity.*
+import me.ashishekka.echo.shared.data.file.LocalAssetManager
 import me.ashishekka.echo.shared.domain.model.*
 import me.ashishekka.echo.shared.domain.util.DateTimeUtils
 import me.ashishekka.echo.shared.domain.util.FileSizeUtils
@@ -59,15 +60,20 @@ fun ChatWithParticipants.toDomain(currentUserId: ParticipantId, stringProvider: 
  *
  * @param currentUserId The ID of the local user to set [Message.isFromMe].
  * @param stringProvider The provider for localized smart timestamps.
+ * @param assetManager The manager to resolve absolute file paths for UI loading.
  */
-fun MessageWithSender.toDomain(currentUserId: ParticipantId, stringProvider: StringProvider): Message {
+fun MessageWithSender.toDomain(
+    currentUserId: ParticipantId, 
+    stringProvider: StringProvider,
+    assetManager: LocalAssetManager
+): Message {
     return Message(
         id = message.id,
         chatId = message.chatId,
         sender = sender.toDomain(),
         message = message.message,
         type = message.type.toDomain(),
-        file = message.file?.toDomain(),
+        file = message.file?.toDomain(assetManager),
         timestamp = message.timestamp,
         isFromMe = message.senderId.value == currentUserId.value,
         displayTimestamp = DateTimeUtils.formatSmartTimestamp(message.timestamp, stringProvider),
@@ -94,11 +100,12 @@ fun MessageType.toEntity(): MessageTypeEntity = when (this) {
 /**
  * Maps [FileDetailsEntity] to [FileDetails] domain model.
  */
-fun FileDetailsEntity.toDomain(): FileDetails {
+fun FileDetailsEntity.toDomain(assetManager: LocalAssetManager): FileDetails {
     return FileDetails(
         path = path,
         fileSize = fileSize,
-        thumbnail = thumbnail?.toDomain()
+        fullPath = assetManager.getAbsolutePath(path),
+        thumbnail = thumbnail?.toDomain(assetManager)
     )
 }
 
@@ -116,9 +123,10 @@ fun FileDetails.toEntity(): FileDetailsEntity {
 /**
  * Maps [ThumbnailDetailsEntity] to [ThumbnailDetails] domain model.
  */
-fun ThumbnailDetailsEntity.toDomain(): ThumbnailDetails {
+fun ThumbnailDetailsEntity.toDomain(assetManager: LocalAssetManager): ThumbnailDetails {
     return ThumbnailDetails(
-        path = path
+        path = path,
+        fullPath = assetManager.getAbsolutePath(path)
     )
 }
 
