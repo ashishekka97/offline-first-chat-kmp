@@ -3,6 +3,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.composeCompiler)
+    alias(libs.plugins.kotlinxSerialization)
 }
 
 dependencies {
@@ -12,14 +13,14 @@ dependencies {
     implementation(libs.androidx.viewmodel.compose)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.compose.foundation)
+    implementation("androidx.paging:paging-compose:3.3.5")
     implementation(libs.compose.runtime)
     implementation(libs.compose.material.icons.core)
+    implementation("androidx.compose.material:material-icons-extended:1.7.3")
     implementation(libs.compose.material3)
     implementation(libs.koin.compose.viewmodel)
-
-    // Removed: kotlinx.serialization.core
-    // Removed: coil.compose
-    // Removed: coil.network.ktor
+    implementation("io.coil-kt.coil3:coil-compose:3.0.4")
+    implementation("io.coil-kt.coil3:coil-network-okhttp:3.0.4")
 }
 
 android {

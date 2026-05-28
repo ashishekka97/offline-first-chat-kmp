@@ -8,4 +8,5 @@ plugins {
     // Added for Room Database
     alias(libs.plugins.ksp) apply false
     alias(libs.plugins.room) apply false
+    alias(libs.plugins.kotlinxSerialization) apply false
 }

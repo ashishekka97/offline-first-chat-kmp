@@ -2,6 +2,7 @@ package me.ashishekka.echo.shared.data.backup
 
 import kotlinx.coroutines.withContext
 import me.ashishekka.echo.shared.data.entity.MessageEntity
+import me.ashishekka.echo.shared.data.entity.ThumbnailDetailsEntity
 import me.ashishekka.echo.shared.data.file.LocalAssetManager
 import me.ashishekka.echo.shared.data.media.MediaProcessor
 import me.ashishekka.echo.shared.di.DispatcherProvider
@@ -72,7 +73,7 @@ class DefaultMediaRestorationService(
                     file = fileDetails.copy(
                         path = localFileName,
                         thumbnail = if (thumbName.isNotBlank()) {
-                            me.ashishekka.echo.shared.data.entity.ThumbnailDetailsEntity(thumbName)
+                            ThumbnailDetailsEntity(thumbName)
                         } else {
                             null
                         }

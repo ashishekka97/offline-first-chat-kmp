@@ -7,8 +7,8 @@ import me.ashishekka.echo.shared.domain.model.ParticipantId
  */
 object Constants {
     /** The ID of the local user for the MVP. */
-    val CURRENT_USER_ID = ParticipantId("user_1")
+    val CURRENT_USER_ID = ParticipantId("user")
 
     /** The ID of the default AI agent for the MVP. */
-    val DEFAULT_AGENT_ID = ParticipantId("agent_1")
+    val DEFAULT_AGENT_ID = ParticipantId("agent")
 }

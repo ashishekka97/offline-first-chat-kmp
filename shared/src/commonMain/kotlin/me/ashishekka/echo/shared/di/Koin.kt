@@ -51,10 +51,10 @@ val infrastructureModule = module {
     single<BackupRestorationEngine> { DefaultBackupRestorationEngine(get(), get(), get(), get(), get(), get()) }
     single<IdGenerator> { DefaultIdGenerator() }
     single<MediaService> { DefaultMediaService(get(), get(), get()) }
+    single<AgentService> { DefaultAgentService(get(), get(), get(), get()) }
 }
 
 val domainModule = module {
-    single<AgentService> { DefaultAgentService(get(), get(), get()) }
     single<ChatRepository> { OfflineFirstChatRepository(get(), get(), get()) }
     single<MessageRepository> { OfflineFirstMessageRepository(get(), get(), get()) }
     single<ParticipantRepository> { OfflineFirstParticipantRepository(get()) }
@@ -82,7 +82,8 @@ val viewModelModule = module {
             participantRepository = get(),
             chatRepository = get(),
             preferenceStorage = get(),
-            idGenerator = get()
+            idGenerator = get(),
+            dispatcherProvider = get()
         )
     }
 }

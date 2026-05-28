@@ -51,12 +51,14 @@ This roadmap outlines the implementation phases and technical tasks for the Echo
 
 ## Phase 5: Android Platform (Compose)
 **Goal:** Build the Android user interface using Jetpack Compose.
-*   [ ] **Android: Splash & Startup Routing**: Handle the first-run restore UI vs. immediate application launch.
-*   [ ] **Android: Home Screen UI & Interactions**: Build the chat list UI with swipe-to-delete confirmation.
-*   [ ] **Android: Chat Detail Message List**: Implement bubble-style message history with auto-scroll behavior.
-*   [ ] **Android: Chat Detail Input & Keyboard**: Implement the message input bar with keyboard inset handling.
-*   [ ] **Android: Chat Detail Media Rendering**: Integrate Coil for local URI and thumbnail rendering.
-*   [ ] **Android: Chat Detail Media Picking**: Implement Gallery and Camera picker intents integrated with the Media Processor.
+*   [x] **Android: Splash & Startup Routing**: Handle the first-run restore UI vs. immediate application launch.
+*   [x] **Android: Home Screen UI & Interactions**: Build the chat list UI with swipe-to-delete confirmation.
+*   [x] **Android: Chat Detail Message List**: Implement bubble-style message history with auto-scroll behavior.
+*   [x] **Android: Chat Detail Input & Keyboard**: Implement the message input bar with keyboard inset handling.
+*   [x] **Android: Chat Detail Media Rendering**: Integrate Coil for local URI and thumbnail rendering.
+*   [x] **Android: Chat Detail Media Picking**: Implement Gallery and Camera picker intents integrated with the Media Processor.
+*   [x] **Android: Fullscreen Image Viewer**: Implement a zoomable fullscreen image screen with pinch-to-zoom support.
+*   [x] **Android: Tappable Title Editing**: Implement title editing via the top app bar (Bonus).
 
 ## Phase 6: iOS Platform (SwiftUI)
 **Goal:** Build the iOS user interface using SwiftUI.
@@ -66,6 +68,8 @@ This roadmap outlines the implementation phases and technical tasks for the Echo
 *   [ ] **iOS: Chat Detail Message List**: Implement the message history view with bubble styling and auto-scroll.
 *   [ ] **iOS: Chat Detail Input & Keyboard**: Implement the native input field with keyboard avoiding logic.
 *   [ ] **iOS: Media Rendering & Picking**: Implement SwiftUI image loading and native PHPicker/Camera integration.
+*   [ ] **iOS: Fullscreen Image Viewer**: Implement a zoomable fullscreen image view with pinch-to-zoom support.
+*   [ ] **iOS: Tappable Title Editing**: Implement title editing via the navigation bar (Bonus).
 
 ## Phase 7: Final Polish & Resilience
 **Goal:** Ensure UI robustness and cross-platform validation.

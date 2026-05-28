@@ -5,17 +5,16 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
-import me.ashishekka.echo.R
 
 @Composable
 fun EmptyScreenContent(
+    text: String,
     modifier: Modifier = Modifier,
 ) {
     Box(
         modifier = modifier,
         contentAlignment = Alignment.Center,
     ) {
-        Text(stringResource(R.string.no_data_available))
+        Text(text)
     }
 }

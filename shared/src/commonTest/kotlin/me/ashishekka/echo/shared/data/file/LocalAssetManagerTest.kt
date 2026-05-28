@@ -120,6 +120,21 @@ class LocalAssetManagerTest {
         assertTrue(content.contentEquals(bytes))
     }
 
+    @Test
+    fun testGetAbsolutePathWithUrls() {
+        val httpUrl = "http://example.com/image.jpg"
+        val httpsUrl = "https://example.com/image.jpg"
+        val contentUri = "content://media/external/images/media/1"
+        val fileUri = "file:///storage/emulated/0/image.jpg"
+        val localFile = "my_image.jpg"
+
+        assertEquals(httpUrl, manager.getAbsolutePath(httpUrl))
+        assertEquals(httpsUrl, manager.getAbsolutePath(httpsUrl))
+        assertEquals(contentUri, manager.getAbsolutePath(contentUri))
+        assertEquals(fileUri, manager.getAbsolutePath(fileUri))
+        assertEquals("$baseDirPath/my_image.jpg", manager.getAbsolutePath(localFile))
+    }
+
     private fun <T, E : me.ashishekka.echo.shared.domain.AppError> assertSuccess(result: Result<T, E>) {
         assertTrue(result is Result.Success, "Expected Success but was $result")
     }

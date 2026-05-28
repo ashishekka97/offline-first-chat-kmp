@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import me.ashishekka.echo.shared.data.dao.MessageDao
 import me.ashishekka.echo.shared.data.entity.MessageEntity
+import me.ashishekka.echo.shared.data.file.LocalAssetManager
 import me.ashishekka.echo.shared.data.mapper.toDomain
 import me.ashishekka.echo.shared.data.mapper.toEntity
 import me.ashishekka.echo.shared.domain.Constants
@@ -23,7 +24,7 @@ import me.ashishekka.echo.shared.util.StringProvider
 class OfflineFirstMessageRepository(
     private val messageDao: MessageDao,
     private val stringProvider: StringProvider,
-    private val localAssetManager: me.ashishekka.echo.shared.data.file.LocalAssetManager
+    private val localAssetManager: LocalAssetManager
 ) : MessageRepository {
 
     override fun getPagedMessagesForChat(chatId: ChatId): Flow<PagingData<Message>> {
