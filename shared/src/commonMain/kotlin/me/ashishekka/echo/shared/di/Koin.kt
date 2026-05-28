@@ -21,9 +21,12 @@ import me.ashishekka.echo.shared.domain.repository.ParticipantRepository
 import me.ashishekka.echo.shared.domain.service.AgentService
 import me.ashishekka.echo.shared.domain.service.DefaultAgentService
 import me.ashishekka.echo.shared.domain.usecase.DeleteChatUseCase
+import me.ashishekka.echo.shared.domain.usecase.GetChatByIdUseCase
 import me.ashishekka.echo.shared.domain.usecase.GetPagedChatsUseCase
+import me.ashishekka.echo.shared.domain.usecase.GetPagedMessagesUseCase
 import me.ashishekka.echo.shared.domain.usecase.SendMessageUseCase
 import me.ashishekka.echo.shared.domain.usecase.StartChatUseCase
+import me.ashishekka.echo.shared.screens.chat.ChatDetailViewModel
 import me.ashishekka.echo.shared.screens.home.HomeViewModel
 import org.koin.core.context.startKoin
 import org.koin.core.logger.Level
@@ -65,6 +68,8 @@ val dataModule = module {
 
     // Use Cases
     factory { GetPagedChatsUseCase(get()) }
+    factory { GetPagedMessagesUseCase(get()) }
+    factory { GetChatByIdUseCase(get()) }
     factory { StartChatUseCase(get(), get()) }
     factory { SendMessageUseCase(get(), get()) }
     factory { DeleteChatUseCase(get(), get(), get()) }
@@ -72,6 +77,15 @@ val dataModule = module {
 
 val viewModelModule = module {
     factoryOf(::HomeViewModel)
+    factory { (chatId: String) ->
+        ChatDetailViewModel(
+            chatId = chatId,
+            getChatByIdUseCase = get(),
+            getPagedMessagesUseCase = get(),
+            sendMessageUseCase = get(),
+            startChatUseCase = get()
+        )
+    }
 }
 
 fun initKoin(appDeclaration: KoinAppDeclaration = {}) {
