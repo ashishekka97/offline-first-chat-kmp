@@ -19,13 +19,15 @@ import me.ashishekka.echo.shared.domain.DatabaseError
 import me.ashishekka.echo.shared.domain.Result
 import me.ashishekka.echo.shared.domain.model.*
 import me.ashishekka.echo.shared.domain.repository.ChatRepository
+import me.ashishekka.echo.shared.util.StringProvider
 
 /**
  * Offline-first implementation of [ChatRepository].
  */
 class OfflineFirstChatRepository(
     private val chatDao: ChatDao,
-    private val messageDao: MessageDao
+    private val messageDao: MessageDao,
+    private val stringProvider: StringProvider
 ) : ChatRepository {
 
     override fun getPagedChats(): Flow<PagingData<Chat>> {
@@ -33,12 +35,12 @@ class OfflineFirstChatRepository(
             config = PagingConfig(pageSize = 20),
             pagingSourceFactory = { chatDao.getAllChats() }
         ).flow.map { pagingData ->
-            pagingData.map { it.toDomain(Constants.CURRENT_USER_ID) }
+            pagingData.map { it.toDomain(Constants.CURRENT_USER_ID, stringProvider) }
         }
     }
 
     override fun getChatById(id: ChatId): Flow<Chat?> {
-        return chatDao.getChatById(id).map { it?.toDomain(Constants.CURRENT_USER_ID) }
+        return chatDao.getChatById(id).map { it?.toDomain(Constants.CURRENT_USER_ID, stringProvider) }
     }
 
     override suspend fun createChat(id: ChatId, title: String, participantIds: List<ParticipantId>): Result<Unit, DatabaseError> {

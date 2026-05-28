@@ -13,6 +13,7 @@ import me.ashishekka.echo.shared.domain.Constants
 import me.ashishekka.echo.shared.domain.Result
 import me.ashishekka.echo.shared.domain.model.ChatId
 import me.ashishekka.echo.shared.domain.model.ParticipantId
+import me.ashishekka.echo.shared.util.FakeStringProvider
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -33,7 +34,7 @@ class ChatRepositoryTest {
         db = createDatabase(builder, kotlinx.coroutines.Dispatchers.Unconfined)
         chatDao = db.chatDao()
         participantDao = db.participantDao()
-        repository = OfflineFirstChatRepository(chatDao, db.messageDao())
+        repository = OfflineFirstChatRepository(chatDao, db.messageDao(), FakeStringProvider())
     }
 
     @AfterTest

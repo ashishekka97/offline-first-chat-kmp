@@ -15,12 +15,14 @@ import me.ashishekka.echo.shared.domain.DatabaseError
 import me.ashishekka.echo.shared.domain.Result
 import me.ashishekka.echo.shared.domain.model.*
 import me.ashishekka.echo.shared.domain.repository.MessageRepository
+import me.ashishekka.echo.shared.util.StringProvider
 
 /**
  * Offline-first implementation of [MessageRepository].
  */
 class OfflineFirstMessageRepository(
-    private val messageDao: MessageDao
+    private val messageDao: MessageDao,
+    private val stringProvider: StringProvider
 ) : MessageRepository {
 
     override fun getPagedMessagesForChat(chatId: ChatId): Flow<PagingData<Message>> {
@@ -28,7 +30,7 @@ class OfflineFirstMessageRepository(
             config = PagingConfig(pageSize = 20),
             pagingSourceFactory = { messageDao.getMessagesForChat(chatId) }
         ).flow.map { pagingData ->
-            pagingData.map { it.toDomain(Constants.CURRENT_USER_ID) }
+            pagingData.map { it.toDomain(Constants.CURRENT_USER_ID, stringProvider) }
         }
     }
 
