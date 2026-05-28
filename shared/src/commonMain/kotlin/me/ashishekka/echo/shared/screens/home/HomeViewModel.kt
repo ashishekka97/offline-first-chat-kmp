@@ -4,13 +4,18 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
+import androidx.paging.map
 import com.rickclephas.kmp.nativecoroutines.NativeCoroutines
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import me.ashishekka.echo.shared.data.backup.BackupRestorationEngine
@@ -31,7 +36,7 @@ data class HomeState(
     val chats: Flow<PagingData<Chat>> = MutableStateFlow(PagingData.empty()),
     val isDeleting: Boolean = false,
     val pendingDeleteChatId: ChatId? = null,
-    val isInitialBootstrap: Boolean = false,
+    val isInitialBootstrap: Boolean = true,
     val error: AppError? = null
 )
 
@@ -97,6 +102,8 @@ class HomeViewModel(
                             )
                         }
                     }
+                } else {
+                    _state.value = _state.value.copy(isInitialBootstrap = false)
                 }
             } catch (e: Exception) {
                 _state.value = _state.value.copy(isInitialBootstrap = false)
@@ -104,9 +111,20 @@ class HomeViewModel(
         }
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     private fun loadChats() {
+        // Cache the raw PagingData flow first to satisfy Paging's collection rules.
+        val cachedChatsFlow = getPagedChatsUseCase().cachedIn(viewModelScope)
+        val draftsFlow = preferenceStorage.drafts
+        
         _state.value = _state.value.copy(
-            chats = getPagedChatsUseCase().cachedIn(viewModelScope)
+            chats = cachedChatsFlow.flatMapLatest { pagingData ->
+                draftsFlow.map { drafts ->
+                    pagingData.map { chat ->
+                        chat.copy(draft = drafts[chat.id])
+                    }
+                }
+            }
         )
     }
 

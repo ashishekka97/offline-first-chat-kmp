@@ -1,5 +1,10 @@
 package me.ashishekka.echo
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -10,6 +15,7 @@ import kotlinx.serialization.Serializable
 import me.ashishekka.echo.screens.ChatDetailScreen
 import me.ashishekka.echo.screens.FullscreenImageScreen
 import me.ashishekka.echo.screens.HomeScreen
+import me.ashishekka.echo.screens.SplashScreen
 import me.ashishekka.echo.shared.screens.home.HomeIntent
 import me.ashishekka.echo.shared.screens.home.HomeSideEffect
 import me.ashishekka.echo.shared.screens.home.HomeViewModel
@@ -27,20 +33,34 @@ data class FullscreenImageDestination(val imageUrl: String)
 
 @Composable
 fun App() {
+    val homeViewModel = koinViewModel<HomeViewModel>()
+    val state by homeViewModel.state.collectAsState()
+
     EchoTheme {
         Surface(
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background
         ) {
-            EchoNavGraph()
+            AnimatedContent(
+                targetState = state.isInitialBootstrap,
+                transitionSpec = {
+                    fadeIn(animationSpec = tween(500)) togetherWith fadeOut(animationSpec = tween(500))
+                },
+                label = "SplashToHome"
+            ) { isBootstrapping ->
+                if (isBootstrapping) {
+                    SplashScreen()
+                } else {
+                    EchoNavGraph(homeViewModel)
+                }
+            }
         }
     }
 }
 
 @Composable
-fun EchoNavGraph() {
+fun EchoNavGraph(homeViewModel: HomeViewModel) {
     val navController = rememberNavController()
-    val homeViewModel = koinViewModel<HomeViewModel>()
 
     LaunchedEffect(Unit) {
         homeViewModel.sideEffect.collect { effect ->

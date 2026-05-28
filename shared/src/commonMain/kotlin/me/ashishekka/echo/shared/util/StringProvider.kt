@@ -6,6 +6,7 @@ package me.ashishekka.echo.shared.util
  */
 interface StringProvider {
     fun get(key: EchoString): String
+    val is24HourFormat: Boolean
 }
 
 /**

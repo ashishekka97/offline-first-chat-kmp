@@ -5,7 +5,7 @@ struct ChatRow: View {
     let chat: Chat
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 4) {
             HStack {
                 Text(chat.title)
                     .font(.headline)
@@ -16,10 +16,18 @@ struct ChatRow: View {
                     .foregroundColor(.secondary)
             }
             
-            Text(chat.lastMessage ?? "No messages yet")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-                .lineLimit(1)
+            if let draft = chat.draft, !draft.isEmpty {
+                Text("Draft: \(draft)")
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .foregroundColor(.accentColor)
+                    .lineLimit(1)
+            } else {
+                Text(chat.lastMessage ?? "No messages yet")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                    .lineLimit(1)
+            }
         }
         .padding(.vertical, 4)
     }
@@ -86,10 +94,22 @@ struct HomeView: View {
                     viewModel.onIntent(intent: HomeIntentCancelDelete())
                 }
                 Button("Delete", role: .destructive) {
+                    let generator = UIImpactFeedbackGenerator(style: .medium)
+                    generator.impactOccurred()
                     viewModel.onIntent(intent: HomeIntentDeletePendingChat())
                 }
             } message: {
                 Text("Are you sure you want to delete this conversation? This action cannot be undone.")
+            }
+            .alert("Error", isPresented: Binding(
+                get: { viewModel.state?.error != nil },
+                set: { if !$0 { viewModel.onIntent(intent: HomeIntentClearError()) } }
+            )) {
+                Button("OK") { viewModel.onIntent(intent: HomeIntentClearError()) }
+            } message: {
+                if let error = viewModel.state?.error {
+                    Text(String(describing: error))
+                }
             }
         }
     }

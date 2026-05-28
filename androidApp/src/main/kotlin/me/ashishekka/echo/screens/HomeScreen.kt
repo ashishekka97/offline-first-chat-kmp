@@ -1,5 +1,7 @@
 package me.ashishekka.echo.screens
 
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -32,12 +34,27 @@ fun HomeScreen(
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = koinViewModel()
 ) {
+    val haptic = LocalHapticFeedback.current
     val state by viewModel.state.collectAsState()
     val chats = state.chats.collectAsLazyPagingItems()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(state.error) {
+        state.error?.let { error ->
+            snackbarHostState.showSnackbar(
+                message = "Error: ${error::class.simpleName}",
+                actionLabel = "Dismiss"
+            )
+            viewModel.onIntent(HomeIntent.ClearError)
+        }
+    }
 
     if (state.pendingDeleteChatId != null) {
         DeleteConfirmationDialog(
-            onConfirm = { viewModel.onIntent(HomeIntent.DeletePendingChat) },
+            onConfirm = { 
+                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                viewModel.onIntent(HomeIntent.DeletePendingChat) 
+            },
             onDismiss = { viewModel.onIntent(HomeIntent.CancelDelete) }
         )
     }
@@ -46,6 +63,7 @@ fun HomeScreen(
         topBar = {
             TopAppBar(title = { Text("Echo") })
         },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
             FloatingActionButton(onClick = onNewChatClick) {
                 Icon(Icons.Default.Add, contentDescription = "New Chat")
@@ -177,10 +195,19 @@ fun ChatItem(
                 )
             }
             Spacer(modifier = Modifier.height(4.dp))
+            
+            val isDraft = !chat.draft.isNullOrBlank()
+            val lastMessageText = if (isDraft) {
+                "Draft: ${chat.draft}"
+            } else {
+                chat.lastMessage ?: "No messages yet"
+            }
+            
             Text(
-                text = chat.lastMessage ?: "No messages yet",
+                text = lastMessageText,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = if (isDraft) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                fontWeight = if (isDraft) FontWeight.Medium else FontWeight.Normal,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )

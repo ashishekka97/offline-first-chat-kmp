@@ -1,5 +1,9 @@
 package me.ashishekka.echo.shared.util
 
+import platform.Foundation.NSDateFormatter
+import platform.Foundation.NSLocale
+import platform.Foundation.currentLocale
+
 /**
  * iOS implementation of [StringProvider] using NSLocalizedString.
  */
@@ -24,4 +28,10 @@ class IosStringProvider : StringProvider {
         EchoString.MonthNov -> "Nov"
         EchoString.MonthDec -> "Dec"
     }
+
+    override val is24HourFormat: Boolean
+        get() {
+            val format = NSDateFormatter.dateFormatFromTemplate("j", 0uL, NSLocale.currentLocale)
+            return format?.contains("H") == true
+        }
 }

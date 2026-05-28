@@ -27,7 +27,7 @@ object DateTimeUtils {
         val nowDateTime = now.toLocalDateTime(timeZone)
         
         return if (messageDateTime.date == nowDateTime.date) {
-            formatTime(messageDateTime)
+            formatTime(messageDateTime, stringProvider.is24HourFormat)
         } else if (messageDateTime.date.toEpochDays() == nowDateTime.date.toEpochDays() - 1) {
             stringProvider.get(EchoString.Yesterday)
         } else if (messageDateTime.year == nowDateTime.year) {
@@ -37,11 +37,17 @@ object DateTimeUtils {
         }
     }
 
-    fun formatTime(dateTime: LocalDateTime): String {
-        val hour = if (dateTime.hour % 12 == 0) 12 else dateTime.hour % 12
-        val minute = dateTime.minute.toString().padStart(2, '0')
-        val amPm = if (dateTime.hour < 12) "AM" else "PM"
-        return "$hour:$minute $amPm"
+    fun formatTime(dateTime: LocalDateTime, is24Hour: Boolean): String {
+        return if (is24Hour) {
+            val hour = dateTime.hour.toString().padStart(2, '0')
+            val minute = dateTime.minute.toString().padStart(2, '0')
+            "$hour:$minute"
+        } else {
+            val hour = if (dateTime.hour % 12 == 0) 12 else dateTime.hour % 12
+            val minute = dateTime.minute.toString().padStart(2, '0')
+            val amPm = if (dateTime.hour < 12) "AM" else "PM"
+            "$hour:$minute $amPm"
+        }
     }
 
     private fun getMonthAbbreviation(month: Month, stringProvider: StringProvider): String = when (month) {

@@ -1,8 +1,14 @@
 package me.ashishekka.echo.screens
 
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -39,7 +45,9 @@ import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.core.content.FileProvider
 import android.net.Uri
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -52,9 +60,21 @@ fun ChatDetailScreen(
     viewModel: ChatDetailViewModel = koinViewModel(parameters = { parametersOf(ChatId(chatId)) })
 ) {
     val context = LocalContext.current
+    val haptic = LocalHapticFeedback.current
     val state by viewModel.state.collectAsState()
     val messages = state.messages.collectAsLazyPagingItems()
     val listState = rememberLazyListState()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(state.error) {
+        state.error?.let { error ->
+            snackbarHostState.showSnackbar(
+                message = "Error: ${error::class.simpleName}",
+                actionLabel = "Dismiss"
+            )
+            viewModel.onIntent(ChatDetailIntent.ClearError)
+        }
+    }
 
     // Detect if keyboard is visible
     val isKeyboardVisible = WindowInsets.ime.getBottom(androidx.compose.ui.platform.LocalDensity.current) > 0
@@ -149,11 +169,15 @@ fun ChatDetailScreen(
                 }
             )
         },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = {
             MessageInput(
                 text = state.currentDraft,
                 onTextChanged = { viewModel.onIntent(ChatDetailIntent.UpdateDraft(it)) },
-                onSendClick = { viewModel.onIntent(ChatDetailIntent.SendMessage(it)) },
+                onSendClick = { 
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    viewModel.onIntent(ChatDetailIntent.SendMessage(it)) 
+                },
                 onAttachClick = { showSourcePicker = true }
             )
         },
@@ -182,15 +206,45 @@ fun ChatDetailScreen(
 
             if (state.isAgentTyping) {
                 item {
-                    Text(
-                        text = "Agent is typing...",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(top = 8.dp)
+                    TypingIndicator(
+                        modifier = Modifier.padding(top = 8.dp, start = 8.dp)
                     )
                 }
             }
         }
+    }
+}
+
+@Composable
+fun TypingIndicator(modifier: Modifier = Modifier) {
+    val transition = rememberInfiniteTransition(label = "typing")
+    
+    @Composable
+    fun typingDot(delay: Int) = transition.animateFloat(
+        initialValue = 0.3f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(600, easing = LinearOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse,
+            initialStartOffset = StartOffset(delay)
+        ),
+        label = "dot"
+    ).value
+
+    Row(
+        modifier = modifier
+            .background(
+                color = if (isSystemInDarkTheme()) DesignTokens.Colors.Dark.AgentBubble.toColor() else DesignTokens.Colors.AgentBubble.toColor(),
+                shape = RoundedCornerShape(16.dp, 16.dp, 16.dp, 4.dp)
+            )
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        val dotColor = MaterialTheme.colorScheme.onSurfaceVariant
+        Box(Modifier.size(6.dp).background(dotColor.copy(alpha = typingDot(0)), CircleShape))
+        Box(Modifier.size(6.dp).background(dotColor.copy(alpha = typingDot(200)), CircleShape))
+        Box(Modifier.size(6.dp).background(dotColor.copy(alpha = typingDot(400)), CircleShape))
     }
 }
 
@@ -234,13 +288,15 @@ fun MessageBubble(
     message: Message,
     onImageClick: (String) -> Unit
 ) {
+    val isDark = isSystemInDarkTheme()
     val alignment = if (message.isFromMe) Alignment.End else Alignment.Start
     val bubbleColor = if (message.isFromMe) {
-        DesignTokens.Colors.UserBubble.toColor()
+        if (isDark) DesignTokens.Colors.Dark.UserBubble.toColor() else DesignTokens.Colors.UserBubble.toColor()
     } else {
-        DesignTokens.Colors.AgentBubble.toColor()
+        if (isDark) DesignTokens.Colors.Dark.AgentBubble.toColor() else DesignTokens.Colors.AgentBubble.toColor()
     }
-    val textColor = DesignTokens.Colors.TextPrimary.toColor()
+    val textColor = if (isDark) DesignTokens.Colors.Dark.TextPrimary.toColor() else DesignTokens.Colors.TextPrimary.toColor()
+    val secondaryTextColor = if (isDark) DesignTokens.Colors.Dark.TextSecondary.toColor() else DesignTokens.Colors.TextSecondary.toColor()
     val cornerRadius = DesignTokens.Shape.BubbleCornerRadius.dp
 
     Column(
@@ -285,7 +341,7 @@ fun MessageBubble(
                     Text(
                         text = message.displaySize,
                         style = MaterialTheme.typography.labelSmall,
-                        color = DesignTokens.Colors.TextSecondary.toColor(),
+                        color = secondaryTextColor,
                         modifier = Modifier.padding(top = 2.dp)
                     )
                 } else {
@@ -298,7 +354,7 @@ fun MessageBubble(
                 Text(
                     text = message.displayTimestamp,
                     style = MaterialTheme.typography.labelSmall,
-                    color = DesignTokens.Colors.TextSecondary.toColor(),
+                    color = secondaryTextColor,
                     modifier = Modifier.align(Alignment.End).padding(top = 2.dp),
                     fontSize = 10.sp
                 )
@@ -344,41 +400,73 @@ fun MessageInput(
     onAttachClick: () -> Unit
 ) {
     Surface(
-        tonalElevation = 2.dp,
-        modifier = Modifier.fillMaxWidth()
+        color = Color.Transparent,
+        modifier = Modifier
+            .fillMaxWidth()
+            .windowInsetsPadding(WindowInsets.ime)
+            .padding(16.dp)
     ) {
-        Row(
-            modifier = Modifier
-                .padding(8.dp)
-                .fillMaxWidth(),
-            verticalAlignment = Alignment.Bottom
+        Surface(
+            shape = RoundedCornerShape(28.dp),
+            tonalElevation = 3.dp,
+            shadowElevation = 6.dp,
+            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.95f),
+            modifier = Modifier.fillMaxWidth()
         ) {
-            IconButton(onClick = onAttachClick) {
-                Icon(Icons.Default.AttachFile, contentDescription = "Attach")
-            }
-            TextField(
-                value = text,
-                onValueChange = onTextChanged,
-                placeholder = { Text("Message") },
-                modifier = Modifier.weight(1f),
-                maxLines = 4,
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color.Transparent,
-                    unfocusedContainerColor = Color.Transparent,
-                    disabledContainerColor = Color.Transparent,
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent,
-                )
-            )
-            IconButton(
-                onClick = { onSendClick(text) },
-                enabled = text.isNotBlank()
+            Row(
+                modifier = Modifier
+                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                    .fillMaxWidth(),
+                verticalAlignment = Alignment.Bottom
             ) {
-                Icon(
-                    Icons.AutoMirrored.Filled.Send,
-                    contentDescription = "Send",
-                    tint = if (text.isNotBlank()) MaterialTheme.colorScheme.primary else Color.Gray
+                IconButton(
+                    onClick = onAttachClick,
+                    modifier = Modifier.padding(bottom = 4.dp)
+                ) {
+                    Icon(
+                        Icons.Default.AttachFile, 
+                        contentDescription = "Attach",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+                TextField(
+                    value = text,
+                    onValueChange = onTextChanged,
+                    placeholder = { Text("Message", color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)) },
+                    modifier = Modifier.weight(1f),
+                    maxLines = 5,
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedContainerColor = Color.Transparent,
+                        disabledContainerColor = Color.Transparent,
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent,
+                        cursorColor = MaterialTheme.colorScheme.primary
+                    ),
+                    textStyle = MaterialTheme.typography.bodyLarge.copy(fontSize = 16.sp)
                 )
+                IconButton(
+                    onClick = { if (text.isNotBlank()) onSendClick(text) },
+                    enabled = text.isNotBlank(),
+                    modifier = Modifier.padding(bottom = 4.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .background(
+                                color = if (text.isNotBlank()) MaterialTheme.colorScheme.primary else Color.Transparent,
+                                shape = CircleShape
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.Send,
+                            contentDescription = "Send",
+                            tint = if (text.isNotBlank()) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.outline,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
             }
         }
     }

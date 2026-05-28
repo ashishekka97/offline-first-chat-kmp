@@ -3,6 +3,7 @@ package me.ashishekka.echo.ui.theme
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
+import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
@@ -27,6 +28,19 @@ private val LightColorScheme = lightColorScheme(
     onBackground = DesignTokens.Colors.OnBackground.toColor(),
     onSurface = DesignTokens.Colors.OnSurface.toColor(),
     onError = DesignTokens.Colors.OnError.toColor()
+)
+
+private val DarkColorScheme = darkColorScheme(
+    primary = DesignTokens.Colors.Dark.Primary.toColor(),
+    secondary = DesignTokens.Colors.Dark.Secondary.toColor(),
+    background = DesignTokens.Colors.Dark.Background.toColor(),
+    surface = DesignTokens.Colors.Dark.Surface.toColor(),
+    error = DesignTokens.Colors.Dark.Error.toColor(),
+    onPrimary = DesignTokens.Colors.Dark.OnPrimary.toColor(),
+    onSecondary = DesignTokens.Colors.Dark.OnSecondary.toColor(),
+    onBackground = DesignTokens.Colors.Dark.OnBackground.toColor(),
+    onSurface = DesignTokens.Colors.Dark.OnSurface.toColor(),
+    onError = DesignTokens.Colors.Dark.OnError.toColor()
 )
 
 val Typography = Typography(
@@ -58,8 +72,10 @@ fun EchoTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {
+    val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
+
     MaterialTheme(
-        colorScheme = LightColorScheme,
+        colorScheme = colorScheme,
         typography = Typography,
         content = content
     )

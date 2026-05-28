@@ -28,4 +28,7 @@ class AndroidStringProvider(private val context: Context) : StringProvider {
         EchoString.MonthNov -> "Nov"
         EchoString.MonthDec -> "Dec"
     }
+
+    override val is24HourFormat: Boolean
+        get() = android.text.format.DateFormat.is24HourFormat(context)
 }

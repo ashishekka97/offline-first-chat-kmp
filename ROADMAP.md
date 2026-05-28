@@ -73,15 +73,15 @@ This roadmap outlines the implementation phases and technical tasks for the Echo
 
 ## Phase 7: UI Polish & User Experience
 **Goal:** Elevate the app's visual quality and interaction design.
-*   [ ] **Polish: Fix Startup Flicker**: Stabilize the transition from Splash to Home by refining the initial bootstrap state logic.
-*   [ ] **UI: Smooth Splash Transition**: Add cross-fade animations when transitioning from the Splash screen to the Home screen.
-*   [ ] **UI: Modern "Pill" Draft Input**: Redesign the chat input area to a modern floating pill style with better focus states.
-*   [ ] **UI: Drafts on Home Screen**: Display active message drafts in the chat list with a distinct "Draft" indicator.
-*   [ ] **UI: Full Dark Mode Support**: Implement a unified Dark Mode using semantic design tokens across Android and iOS.
-*   [ ] **UI: Animated Typing (Android)**: Implement a 3-dot pulse animation for the agent's typing state on Android.
-*   [ ] **UI: Haptic Feedback**: Integrate platform-native haptics for message sending, deleting, and errors.
-*   [ ] **Polish: Smart Timestamps 12h/24h**: Update `DateTimeUtils` to respect system-level 12h/24h formatting settings.
-*   [ ] **UI: Error Harness & Toasts**: Display the `error` state from ViewModels using Snackbars (Android) and Alerts (iOS).
+*   [x] **Polish: Fix Startup Flicker**: Stabilize the transition from Splash to Home by refining the initial bootstrap state logic.
+*   [x] **UI: Smooth Splash Transition**: Add cross-fade animations when transitioning from the Splash screen to the Home screen.
+*   [x] **UI: Modern "Pill" Draft Input**: Redesign the chat input area to a modern floating pill style with better focus states.
+*   [x] **UI: Drafts on Home Screen**: Display active message drafts in the chat list with a distinct "Draft" indicator.
+*   [x] **UI: Full Dark Mode Support**: Implement a unified Dark Mode using semantic design tokens across Android and iOS.
+*   [x] **UI: Animated Typing (Android)**: Implement a 3-dot pulse animation for the agent's typing state on Android.
+*   [x] **UI: Haptic Feedback**: Integrate platform-native haptics for message sending, deleting, and errors.
+*   [x] **Polish: Smart Timestamps 12h/24h**: Update `DateTimeUtils` to respect system-level 12h/24h formatting settings.
+*   [x] **UI: Error Harness & Toasts**: Display the `error` state from ViewModels using Snackbars (Android) and Alerts (iOS).
 
 ## Phase 8: Final Resilience & Documentation
 **Goal:** Ensure stability and finalize project resources.

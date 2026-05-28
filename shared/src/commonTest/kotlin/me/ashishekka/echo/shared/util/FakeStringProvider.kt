@@ -5,4 +5,5 @@ package me.ashishekka.echo.shared.util
  */
 class FakeStringProvider : StringProvider {
     override fun get(key: EchoString): String = key.name
+    override val is24HourFormat: Boolean = false
 }

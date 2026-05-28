@@ -19,7 +19,9 @@ class ObservableHomeViewModel: ObservableObject {
             do {
                 let sequence = asyncSequence(for: viewModel.state)
                 for try await state in sequence {
-                    self.state = state
+                    withAnimation(.easeInOut(duration: 0.5)) {
+                        self.state = state
+                    }
                     // Initialize collection once we have the flow
                     self.chatsPresenter.collectFrom(pagingDataFlow: state.chats)
                 }

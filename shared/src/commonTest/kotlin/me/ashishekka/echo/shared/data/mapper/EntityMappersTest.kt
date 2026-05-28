@@ -14,6 +14,7 @@ class EntityMappersTest {
 
     private val mockStringProvider = object : StringProvider {
         override fun get(string: EchoString): String = "mock_string"
+        override val is24HourFormat: Boolean = false
     }
 
     @Test

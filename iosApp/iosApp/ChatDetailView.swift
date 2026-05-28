@@ -54,58 +54,69 @@ struct ChatDetailView: View {
                 }
             }
             
-            // Polished Input Area
+            // Modern Pill Input Area
             VStack(spacing: 0) {
-                Divider()
-                HStack(alignment: .bottom, spacing: 12) {
-                    Button(action: { showSourcePicker = true }) {
-                        Image(systemName: "plus")
-                            .font(.title3)
-                            .foregroundColor(.accentColor)
-                            .padding(8)
-                            .background(Circle().fill(Color.accentColor.opacity(0.1)))
-                    }
-                    .confirmationDialog("Choose Source", isPresented: $showSourcePicker) {
-                        Button("Camera") { showCameraPicker = true }
-                        Button("Gallery") { showPhotoPicker = true }
-                        Button("Cancel", role: .cancel) {}
-                    }
-                    .sheet(isPresented: $showPhotoPicker) {
-                        PhotoPicker(isPresented: $showPhotoPicker) { url in
-                            viewModel.onIntent(intent: ChatDetailIntentSendMessage(text: "", localMediaPath: url.path))
+                HStack(alignment: .bottom, spacing: 10) {
+                    HStack(alignment: .bottom, spacing: 4) {
+                        Button(action: { showSourcePicker = true }) {
+                            Image(systemName: "plus")
+                                .font(.system(size: 20, weight: .semibold))
+                                .foregroundColor(.white)
+                                .padding(8)
+                                .background(Circle().fill(Color.accentColor))
                         }
-                    }
-                    .sheet(isPresented: $showCameraPicker) {
-                        CameraPicker(isPresented: $showCameraPicker) { url in
-                            viewModel.onIntent(intent: ChatDetailIntentSendMessage(text: "", localMediaPath: url.path))
+                        .padding(.leading, 4)
+                        .padding(.bottom, 4)
+                        .confirmationDialog("Choose Source", isPresented: $showSourcePicker) {
+                            Button("Camera") { showCameraPicker = true }
+                            Button("Gallery") { showPhotoPicker = true }
+                            Button("Cancel", role: .cancel) {}
                         }
+                        .sheet(isPresented: $showPhotoPicker) {
+                            PhotoPicker(isPresented: $showPhotoPicker) { url in
+                                viewModel.onIntent(intent: ChatDetailIntentSendMessage(text: "", localMediaPath: url.path))
+                            }
+                        }
+                        .sheet(isPresented: $showCameraPicker) {
+                            CameraPicker(isPresented: $showCameraPicker) { url in
+                                viewModel.onIntent(intent: ChatDetailIntentSendMessage(text: "", localMediaPath: url.path))
+                            }
+                        }
+                        
+                        TextField("Message", text: Binding(
+                            get: { viewModel.state?.currentDraft ?? "" },
+                            set: { viewModel.onIntent(intent: ChatDetailIntentUpdateDraft(text: $0)) }
+                        ), axis: .vertical)
+                        .font(.body)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 10)
+                        .lineLimit(1...5)
                     }
+                    .background(
+                        RoundedRectangle(cornerRadius: 25)
+                            .fill(Color(UIColor.secondarySystemBackground))
+                            .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
+                    )
                     
-                    TextField("Message", text: Binding(
-                        get: { viewModel.state?.currentDraft ?? "" },
-                        set: { viewModel.onIntent(intent: ChatDetailIntentUpdateDraft(text: $0)) }
-                    ), axis: .vertical)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
-                    .background(RoundedRectangle(cornerRadius: 20).fill(Color(UIColor.secondarySystemBackground)))
-                    .lineLimit(1...5)
-                    
-                    Button(action: {
-                        if let draft = viewModel.state?.currentDraft, !draft.isEmpty {
-                            viewModel.onIntent(intent: ChatDetailIntentSendMessage(text: draft, localMediaPath: nil))
+                    if !(viewModel.state?.currentDraft.isEmpty ?? true) {
+                        Button(action: {
+                            if let draft = viewModel.state?.currentDraft, !draft.isEmpty {
+                                let generator = UIImpactFeedbackGenerator(style: .medium)
+                                generator.impactOccurred()
+                                viewModel.onIntent(intent: ChatDetailIntentSendMessage(text: draft, localMediaPath: nil))
+                            }
+                        }) {
+                            Image(systemName: "arrow.up.circle.fill")
+                                .font(.system(size: 36))
+                                .foregroundColor(.accentColor)
                         }
-                    }) {
-                        Image(systemName: "paperplane.fill")
-                            .font(.title3)
-                            .foregroundColor(viewModel.state?.currentDraft.isEmpty ?? true ? .secondary : .white)
-                            .padding(8)
-                            .background(Circle().fill(viewModel.state?.currentDraft.isEmpty ?? true ? Color.gray.opacity(0.2) : Color.accentColor))
+                        .transition(.scale.combined(with: .opacity))
                     }
-                    .disabled(viewModel.state?.currentDraft.isEmpty ?? true)
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)
                 .background(Color(UIColor.systemBackground))
+                .animation(.spring(), value: viewModel.state?.currentDraft.isEmpty)
             }
         }
         .toolbar {
@@ -129,6 +140,16 @@ struct ChatDetailView: View {
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("Enter a new name for this chat.")
+        }
+        .alert("Error", isPresented: Binding(
+            get: { viewModel.state?.error != nil },
+            set: { if !$0 { viewModel.onIntent(intent: ChatDetailIntentClearError()) } }
+        )) {
+            Button("OK") { viewModel.onIntent(intent: ChatDetailIntentClearError()) }
+        } message: {
+            if let error = viewModel.state?.error {
+                Text(String(describing: error))
+            }
         }
         .fullScreenCover(item: $selectedImageFullscreen) { imageUrl in
             FullscreenImageView(imageUrl: imageUrl)

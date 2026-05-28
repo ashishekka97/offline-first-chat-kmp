@@ -32,6 +32,29 @@ object DesignTokens {
         const val TextPrimary = "#212121"
         const val TextSecondary = "#757575"
         const val TextHint = "#BDBDBD"
+
+        object Dark {
+            const val Primary = "#BB86FC"
+            const val PrimaryVariant = "#3700B3"
+            const val Secondary = "#03DAC6"
+            
+            const val Background = "#121212"
+            const val Surface = "#121212"
+            const val Error = "#CF6679"
+            
+            const val UserBubble = "#3700B3"
+            const val AgentBubble = "#2C2C2C"
+            
+            const val OnPrimary = "#000000"
+            const val OnSecondary = "#000000"
+            const val OnBackground = "#FFFFFF"
+            const val OnSurface = "#FFFFFF"
+            const val OnError = "#000000"
+            
+            const val TextPrimary = "#FFFFFF"
+            const val TextSecondary = "#B0B0B0"
+            const val TextHint = "#666666"
+        }
     }
     
     object Spacing {
