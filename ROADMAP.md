@@ -62,7 +62,7 @@ This roadmap outlines the implementation phases and technical tasks for the Echo
 
 ## Phase 6: iOS Platform (SwiftUI)
 **Goal:** Build the iOS user interface using SwiftUI.
-*   [ ] **iOS: KMP-Swift Interop Wrappers**: Implement native Swift wrappers for reactive observation of KMP StateFlows.
+*   [x] **iOS: KMP-Swift Interop Wrappers**: Implement native Swift wrappers for reactive observation of KMP StateFlows.
 *   [ ] **iOS: Splash & Startup Routing**: Handle the first-run restore UI vs. immediate application launch.
 *   [ ] **iOS: Home Screen UI & Interactions**: Build the chat list UI with native swipe actions and styling.
 *   [ ] **iOS: Chat Detail Message List**: Implement the message history view with bubble styling and auto-scroll.
