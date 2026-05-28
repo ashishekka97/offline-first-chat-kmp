@@ -57,6 +57,8 @@ This roadmap outlines the implementation phases and technical tasks for the Echo
 *   [x] **Android: Chat Detail Input & Keyboard**: Implement the message input bar with keyboard inset handling.
 *   [x] **Android: Chat Detail Media Rendering**: Integrate Coil for local URI and thumbnail rendering.
 *   [x] **Android: Chat Detail Media Picking**: Implement Gallery and Camera picker intents integrated with the Media Processor.
+*   [ ] **Android: Fullscreen Image Viewer**: Implement a zoomable fullscreen image screen with pinch-to-zoom support.
+*   [ ] **Android: Tappable Title Editing**: Implement title editing via the top app bar (Bonus).
 
 ## Phase 6: iOS Platform (SwiftUI)
 **Goal:** Build the iOS user interface using SwiftUI.
@@ -66,6 +68,8 @@ This roadmap outlines the implementation phases and technical tasks for the Echo
 *   [ ] **iOS: Chat Detail Message List**: Implement the message history view with bubble styling and auto-scroll.
 *   [ ] **iOS: Chat Detail Input & Keyboard**: Implement the native input field with keyboard avoiding logic.
 *   [ ] **iOS: Media Rendering & Picking**: Implement SwiftUI image loading and native PHPicker/Camera integration.
+*   [ ] **iOS: Fullscreen Image Viewer**: Implement a zoomable fullscreen image view with pinch-to-zoom support.
+*   [ ] **iOS: Tappable Title Editing**: Implement title editing via the navigation bar (Bonus).
 
 ## Phase 7: Final Polish & Resilience
 **Goal:** Ensure UI robustness and cross-platform validation.
