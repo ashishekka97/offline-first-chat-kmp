@@ -1,8 +1,8 @@
 package me.ashishekka.echo.shared.data
 
 import androidx.room.TypeConverter
-import me.ashishekka.echo.shared.data.entity.MessageSender
-import me.ashishekka.echo.shared.data.entity.MessageType
+import me.ashishekka.echo.shared.data.entity.MessageSenderEntity
+import me.ashishekka.echo.shared.data.entity.MessageTypeEntity
 import me.ashishekka.echo.shared.domain.model.ChatId
 import me.ashishekka.echo.shared.domain.model.MessageId
 import me.ashishekka.echo.shared.domain.model.ParticipantId
@@ -14,23 +14,23 @@ import me.ashishekka.echo.shared.domain.model.ParticipantId
  * and primitive types that SQLite can store.
  */
 class Converters {
-    /** Converts a [MessageType] enum to its lowercase string representation for storage. */
+    /** Converts a [MessageTypeEntity] enum to its lowercase string representation for storage. */
     @TypeConverter
-    fun fromMessageType(value: MessageType): String = value.name.lowercase()
+    fun fromMessageType(value: MessageTypeEntity): String = value.name.lowercase()
 
-    /** Converts a stored lowercase string back into its corresponding [MessageType] enum. */
+    /** Converts a stored lowercase string back into its corresponding [MessageTypeEntity] enum. */
     @TypeConverter
-    fun toMessageType(value: String): MessageType = 
-        MessageType.entries.find { it.name.lowercase() == value } ?: MessageType.TEXT
+    fun toMessageType(value: String): MessageTypeEntity = 
+        MessageTypeEntity.entries.find { it.name.lowercase() == value } ?: MessageTypeEntity.TEXT
 
-    /** Converts a [MessageSender] enum to its lowercase string representation for storage. */
+    /** Converts a [MessageSenderEntity] enum to its lowercase string representation for storage. */
     @TypeConverter
-    fun fromMessageSender(value: MessageSender): String = value.name.lowercase()
+    fun fromMessageSender(value: MessageSenderEntity): String = value.name.lowercase()
 
-    /** Converts a stored lowercase string back into its corresponding [MessageSender] enum. */
+    /** Converts a stored lowercase string back into its corresponding [MessageSenderEntity] enum. */
     @TypeConverter
-    fun toMessageSender(value: String): MessageSender = 
-        MessageSender.entries.find { it.name.lowercase() == value } ?: MessageSender.USER
+    fun toMessageSender(value: String): MessageSenderEntity = 
+        MessageSenderEntity.entries.find { it.name.lowercase() == value } ?: MessageSenderEntity.USER
 
     @TypeConverter
     fun fromChatId(id: ChatId): String = id.value

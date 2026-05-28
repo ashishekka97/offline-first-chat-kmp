@@ -17,30 +17,20 @@ class OfflineFirstParticipantRepository(
 ) : ParticipantRepository {
 
     override suspend fun getParticipantById(id: ParticipantId): Result<Participant, DatabaseError> {
-        return try {
-            participantDao.getParticipantById(id)?.toDomain()?.let { 
-                Result.Success(it)
-            } ?: Result.Failure(DatabaseError.NotFound)
-        } catch (e: Exception) {
-            Result.Failure(DatabaseError.Unknown(e))
-        }
+        return safeDatabaseCall { participantDao.getParticipantById(id) }.flatMap { entity ->
+            entity?.toDomain()?.let { Result.Success(it) } ?: Result.Failure(DatabaseError.NotFound)
+        } as Result<Participant, DatabaseError>
     }
 
     override suspend fun getAllParticipants(): Result<List<Participant>, DatabaseError> {
-        return try {
-            val participants = participantDao.getAllParticipants().map { it.toDomain() }
-            Result.Success(participants)
-        } catch (e: Exception) {
-            Result.Failure(DatabaseError.Unknown(e))
+        return safeDatabaseCall {
+            participantDao.getAllParticipants().map { it.toDomain() }
         }
     }
 
     override suspend fun saveParticipant(participant: Participant): Result<Unit, DatabaseError> {
-        return try {
+        return safeDatabaseCall {
             participantDao.insertParticipant(participant.toEntity())
-            Result.Success(Unit)
-        } catch (e: Exception) {
-            Result.Failure(DatabaseError.Unknown(e))
         }
     }
 }

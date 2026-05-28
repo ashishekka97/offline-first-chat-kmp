@@ -4,9 +4,9 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
-import me.ashishekka.echo.shared.data.entity.FileDetails
+import me.ashishekka.echo.shared.data.entity.FileDetailsEntity
 import me.ashishekka.echo.shared.data.entity.MessageEntity
-import me.ashishekka.echo.shared.data.entity.MessageType
+import me.ashishekka.echo.shared.data.entity.MessageTypeEntity
 import me.ashishekka.echo.shared.data.file.LocalAssetManager
 import me.ashishekka.echo.shared.data.media.MediaProcessor
 import me.ashishekka.echo.shared.di.DispatcherProvider
@@ -65,8 +65,8 @@ class MediaRestorationServiceTest {
             chatId = ChatId("c1"),
             senderId = ParticipantId("u1"),
             message = "",
-            type = MessageType.FILE,
-            file = FileDetails(path = bundledAssetName, fileSize = 3, thumbnail = null),
+            type = MessageTypeEntity.FILE,
+            file = FileDetailsEntity(path = bundledAssetName, fileSize = 3, thumbnail = null),
             timestamp = 0
         )
 

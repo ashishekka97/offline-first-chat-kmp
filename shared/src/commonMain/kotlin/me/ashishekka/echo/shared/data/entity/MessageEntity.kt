@@ -9,8 +9,8 @@ import me.ashishekka.echo.shared.domain.model.ChatId
 import me.ashishekka.echo.shared.domain.model.MessageId
 import me.ashishekka.echo.shared.domain.model.ParticipantId
 
-enum class MessageType { TEXT, FILE }
-enum class MessageSender { USER, AGENT }
+enum class MessageTypeEntity { TEXT, FILE }
+enum class MessageSenderEntity { USER, AGENT }
 
 /**
  * Represents a chat message in the database.
@@ -19,7 +19,7 @@ enum class MessageSender { USER, AGENT }
  * @property chatId The ID of the chat this message belongs to.
  * @property senderId The ID of the [ParticipantEntity] who sent the message.
  * @property message The text content or caption of the message.
- * @property type The type of message (e.g., [MessageType.TEXT] or [MessageType.FILE]).
+ * @property type The type of message (e.g., [MessageTypeEntity.TEXT] or [MessageTypeEntity.FILE]).
  * @property file Optional details if the message contains a file or image.
  * @property timestamp The time the message was sent.
  */
@@ -51,9 +51,9 @@ data class MessageEntity(
     val chatId: ChatId,
     val senderId: ParticipantId,
     val message: String,
-    val type: MessageType,
+    val type: MessageTypeEntity,
     @Embedded(prefix = "file_")
-    val file: FileDetails?,
+    val file: FileDetailsEntity?,
     val timestamp: Long
 )
 
@@ -64,11 +64,11 @@ data class MessageEntity(
  * @property fileSize The size of the file in bytes.
  * @property thumbnail Optional details of a generated thumbnail for this file.
  */
-data class FileDetails(
+data class FileDetailsEntity(
     val path: String,
     val fileSize: Long,
     @Embedded(prefix = "thumbnail_")
-    val thumbnail: ThumbnailDetails?
+    val thumbnail: ThumbnailDetailsEntity?
 )
 
 /**
@@ -76,6 +76,6 @@ data class FileDetails(
  *
  * @property path The local path to the thumbnail image.
  */
-data class ThumbnailDetails(
+data class ThumbnailDetailsEntity(
     val path: String
 )

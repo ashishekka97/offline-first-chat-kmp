@@ -3,14 +3,9 @@ package me.ashishekka.echo.shared.domain.repository
 import androidx.paging.PagingData
 import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.Clock
-import me.ashishekka.echo.shared.data.entity.FileDetails
-import me.ashishekka.echo.shared.data.entity.MessageType
 import me.ashishekka.echo.shared.domain.DatabaseError
 import me.ashishekka.echo.shared.domain.Result
-import me.ashishekka.echo.shared.domain.model.ChatId
-import me.ashishekka.echo.shared.domain.model.Message
-import me.ashishekka.echo.shared.domain.model.MessageId
-import me.ashishekka.echo.shared.domain.model.ParticipantId
+import me.ashishekka.echo.shared.domain.model.*
 
 /**
  * Repository interface for message operations.

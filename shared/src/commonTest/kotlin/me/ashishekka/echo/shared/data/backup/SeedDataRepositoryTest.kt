@@ -2,10 +2,7 @@ package me.ashishekka.echo.shared.data.backup
 
 import kotlinx.coroutines.test.runTest
 import me.ashishekka.echo.shared.data.dao.RestorationDao
-import me.ashishekka.echo.shared.data.entity.ChatEntity
-import me.ashishekka.echo.shared.data.entity.ChatParticipantCrossRef
-import me.ashishekka.echo.shared.data.entity.MessageEntity
-import me.ashishekka.echo.shared.data.entity.ParticipantEntity
+import me.ashishekka.echo.shared.data.entity.*
 import me.ashishekka.echo.shared.domain.model.ChatId
 import me.ashishekka.echo.shared.domain.model.MessageId
 import me.ashishekka.echo.shared.domain.model.ParticipantId
@@ -30,7 +27,7 @@ class SeedDataRepositoryTest {
         val participants = listOf(ParticipantEntity(ParticipantId("u1"), "Alice", null, false))
         val chats = listOf(ChatEntity(ChatId("c1"), "Topic", "Hi", 0, 0, 0))
         val crossRefs = listOf(ChatParticipantCrossRef(ChatId("c1"), ParticipantId("u1")))
-        val messages = listOf(MessageEntity(MessageId("m1"), ChatId("c1"), ParticipantId("u1"), "Hi", me.ashishekka.echo.shared.data.entity.MessageType.TEXT, null, 0))
+        val messages = listOf(MessageEntity(MessageId("m1"), ChatId("c1"), ParticipantId("u1"), "Hi", MessageTypeEntity.TEXT, null, 0))
 
         repository.saveSeedData(participants, chats, crossRefs, messages)
 

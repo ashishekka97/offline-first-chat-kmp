@@ -69,7 +69,7 @@ val useCaseModule = module {
 }
 
 val viewModelModule = module {
-    factory { HomeViewModel(get(), get(), get()) }
+    factory { HomeViewModel(get(), get(), get(), get(), get()) }
     factory { (chatId: ChatId) ->
         ChatDetailViewModel(
             chatId = chatId,

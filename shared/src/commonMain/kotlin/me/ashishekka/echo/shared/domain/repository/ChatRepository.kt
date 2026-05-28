@@ -4,10 +4,7 @@ import androidx.paging.PagingData
 import kotlinx.coroutines.flow.Flow
 import me.ashishekka.echo.shared.domain.DatabaseError
 import me.ashishekka.echo.shared.domain.Result
-import me.ashishekka.echo.shared.domain.model.Chat
-import me.ashishekka.echo.shared.domain.model.ChatId
-import me.ashishekka.echo.shared.domain.model.MessageId
-import me.ashishekka.echo.shared.domain.model.ParticipantId
+import me.ashishekka.echo.shared.domain.model.*
 
 /**
  * Repository interface for chat operations.
@@ -38,8 +35,8 @@ interface ChatRepository {
         messageId: MessageId,
         message: String,
         senderId: ParticipantId,
-        type: me.ashishekka.echo.shared.data.entity.MessageType = me.ashishekka.echo.shared.data.entity.MessageType.TEXT,
-        file: me.ashishekka.echo.shared.data.entity.FileDetails? = null,
+        type: MessageType = MessageType.TEXT,
+        file: FileDetails? = null,
         timestamp: Long = kotlinx.datetime.Clock.System.now().toEpochMilliseconds()
     ): Result<Unit, DatabaseError>
 
@@ -47,6 +44,11 @@ interface ChatRepository {
      * Updates the last message details for a chat.
      */
     suspend fun updateLastMessage(chatId: ChatId, message: String, timestamp: Long): Result<Unit, DatabaseError>
+
+    /**
+     * Updates the title for a chat.
+     */
+    suspend fun updateChatTitle(chatId: ChatId, newTitle: String): Result<Unit, DatabaseError>
 
     /**
      * Deletes a chat and all its messages.

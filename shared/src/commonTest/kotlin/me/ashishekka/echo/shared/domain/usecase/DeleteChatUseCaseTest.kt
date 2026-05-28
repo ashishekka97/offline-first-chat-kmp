@@ -2,9 +2,6 @@ package me.ashishekka.echo.shared.domain.usecase
 
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
-import me.ashishekka.echo.shared.data.entity.FileDetails
-import me.ashishekka.echo.shared.data.entity.MessageType
-import me.ashishekka.echo.shared.domain.AppError
 import me.ashishekka.echo.shared.domain.Result
 import me.ashishekka.echo.shared.domain.repository.ChatRepository
 import me.ashishekka.echo.shared.domain.repository.MessageRepository
@@ -108,5 +105,6 @@ class DeleteChatUseCaseTest {
     class FakeAgentService : AgentService {
         override val typingStates: StateFlow<Map<ChatId, Boolean>> = MutableStateFlow(emptyMap())
         override fun triggerReply(chatId: ChatId) {}
+        override fun cancel() {}
     }
 }

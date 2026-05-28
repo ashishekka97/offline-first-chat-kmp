@@ -7,17 +7,13 @@ import androidx.paging.map
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import me.ashishekka.echo.shared.data.dao.MessageDao
-import me.ashishekka.echo.shared.data.entity.FileDetails
 import me.ashishekka.echo.shared.data.entity.MessageEntity
-import me.ashishekka.echo.shared.data.entity.MessageType
 import me.ashishekka.echo.shared.data.mapper.toDomain
+import me.ashishekka.echo.shared.data.mapper.toEntity
 import me.ashishekka.echo.shared.domain.Constants
 import me.ashishekka.echo.shared.domain.DatabaseError
 import me.ashishekka.echo.shared.domain.Result
-import me.ashishekka.echo.shared.domain.model.ChatId
-import me.ashishekka.echo.shared.domain.model.Message
-import me.ashishekka.echo.shared.domain.model.MessageId
-import me.ashishekka.echo.shared.domain.model.ParticipantId
+import me.ashishekka.echo.shared.domain.model.*
 import me.ashishekka.echo.shared.domain.repository.MessageRepository
 
 /**
@@ -45,41 +41,32 @@ class OfflineFirstMessageRepository(
         file: FileDetails?,
         timestamp: Long
     ): Result<Unit, DatabaseError> {
-        return try {
+        return safeDatabaseCall {
             val messageEntity = MessageEntity(
                 id = id,
                 chatId = chatId,
                 senderId = senderId,
                 message = message,
-                type = type,
-                file = file,
+                type = type.toEntity(),
+                file = file?.toEntity(),
                 timestamp = timestamp
             )
             messageDao.insertMessageAndUpdateChat(messageEntity)
-            Result.Success(Unit)
-        } catch (e: Exception) {
-            Result.Failure(DatabaseError.Unknown(e))
         }
     }
 
     override suspend fun getFilePathsForChat(chatId: ChatId): Result<List<String>, DatabaseError> {
-        return try {
+        return safeDatabaseCall {
             val messages = messageDao.getMessagesByChatId(chatId)
-            val paths = messages.mapNotNull { it.file }
+            messages.mapNotNull { it.file }
                 .flatMap { listOfNotNull(it.path, it.thumbnail?.path) }
                 .filter { it.isNotBlank() }
-            Result.Success(paths)
-        } catch (e: Exception) {
-            Result.Failure(DatabaseError.Unknown(e))
         }
     }
 
     override suspend fun deleteMessagesForChat(chatId: ChatId): Result<Unit, DatabaseError> {
-        return try {
+        return safeDatabaseCall {
             messageDao.deleteMessagesForChat(chatId)
-            Result.Success(Unit)
-        } catch (e: Exception) {
-            Result.Failure(DatabaseError.Unknown(e))
         }
     }
 }

@@ -1,7 +1,25 @@
 package me.ashishekka.echo.shared.domain.model
 
-import me.ashishekka.echo.shared.data.entity.FileDetails
-import me.ashishekka.echo.shared.data.entity.MessageType
+/**
+ * The type of message.
+ */
+enum class MessageType { TEXT, FILE }
+
+/**
+ * Details of a file attached to a message.
+ */
+data class FileDetails(
+    val path: String,
+    val fileSize: Long,
+    val thumbnail: ThumbnailDetails?
+)
+
+/**
+ * Details of a thumbnail generated for a media file.
+ */
+data class ThumbnailDetails(
+    val path: String
+)
 
 /**
  * Domain model representing a chat message.

@@ -76,7 +76,7 @@ class DefaultMediaRestorationService(
                     file = fileDetails.copy(
                         path = localFilePath,
                         thumbnail = fileDetails.thumbnail?.copy(path = thumbPath)
-                            ?: if (thumbPath.isNotBlank()) me.ashishekka.echo.shared.data.entity.ThumbnailDetails(thumbPath) else null
+                            ?: if (thumbPath.isNotBlank()) me.ashishekka.echo.shared.data.entity.ThumbnailDetailsEntity(thumbPath) else null
                     )
                 )
             } catch (e: Exception) {

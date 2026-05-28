@@ -4,11 +4,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import me.ashishekka.echo.shared.data.dao.ChatDao
 import me.ashishekka.echo.shared.data.dao.ParticipantDao
-import me.ashishekka.echo.shared.data.entity.ChatEntity
-import me.ashishekka.echo.shared.data.entity.ParticipantEntity
-import me.ashishekka.echo.shared.data.entity.ChatParticipantCrossRef
-import me.ashishekka.echo.shared.data.entity.MessageEntity
-import me.ashishekka.echo.shared.data.entity.MessageType
+import me.ashishekka.echo.shared.data.entity.*
 import me.ashishekka.echo.shared.domain.model.ChatId
 import me.ashishekka.echo.shared.domain.model.MessageId
 import me.ashishekka.echo.shared.domain.model.ParticipantId
@@ -88,7 +84,7 @@ class ChatDaoTest {
         val chat = ChatEntity(chatId, "Test Chat", "Hi", 1000L, 1000L, 1000L)
         val p1Id = ParticipantId("user_1")
         val user = ParticipantEntity(p1Id, "Alice", null, false)
-        val message = MessageEntity(MessageId("msg_1"), chatId, p1Id, "Hello", MessageType.TEXT, null, 1001L)
+        val message = MessageEntity(MessageId("msg_1"), chatId, p1Id, "Hello", MessageTypeEntity.TEXT, null, 1001L)
         
         chatDao.insertChat(chat)
         db.participantDao().insertParticipant(user)

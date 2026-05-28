@@ -47,7 +47,7 @@ interface MessageDao {
     @Transaction
     suspend fun insertMessageAndUpdateChat(message: MessageEntity) {
         insertMessage(message)
-        val previewMessage = if (message.type == me.ashishekka.echo.shared.data.entity.MessageType.FILE && message.message.isBlank()) {
+        val previewMessage = if (message.type == me.ashishekka.echo.shared.data.entity.MessageTypeEntity.FILE && message.message.isBlank()) {
             "Photo"
         } else {
             message.message

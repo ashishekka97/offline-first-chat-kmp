@@ -9,8 +9,11 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+import me.ashishekka.echo.shared.data.backup.BackupRestorationEngine
+import me.ashishekka.echo.shared.data.backup.RestorationResult
 import me.ashishekka.echo.shared.domain.AppError
 import me.ashishekka.echo.shared.domain.model.Chat
 import me.ashishekka.echo.shared.domain.model.ChatId
@@ -27,6 +30,7 @@ data class HomeState(
     val chats: Flow<PagingData<Chat>> = MutableStateFlow(PagingData.empty()),
     val isDeleting: Boolean = false,
     val pendingDeleteChatId: ChatId? = null,
+    val isInitialBootstrap: Boolean = false,
     val error: AppError? = null
 )
 
@@ -55,6 +59,8 @@ sealed interface HomeSideEffect {
 class HomeViewModel(
     private val getPagedChatsUseCase: GetPagedChatsUseCase,
     private val deleteChatUseCase: DeleteChatUseCase,
+    private val restorationEngine: BackupRestorationEngine,
+    private val preferenceStorage: me.ashishekka.echo.shared.data.PreferenceStorage,
     private val idGenerator: IdGenerator
 ) : ViewModel() {
 
@@ -65,7 +71,33 @@ class HomeViewModel(
     val sideEffect: Flow<HomeSideEffect> = _sideEffect.receiveAsFlow()
 
     init {
+        performBootstrap()
         loadChats()
+    }
+
+    private fun performBootstrap() {
+        viewModelScope.launch {
+            try {
+                val isRestoreCompleted = preferenceStorage.isRestoreCompleted.first()
+                if (!isRestoreCompleted) {
+                    _state.value = _state.value.copy(isInitialBootstrap = true)
+                    when (val result = restorationEngine.restore()) {
+                        is RestorationResult.Success,
+                        is RestorationResult.AlreadyCompleted -> {
+                            _state.value = _state.value.copy(isInitialBootstrap = false)
+                        }
+                        is RestorationResult.Failure -> {
+                            _state.value = _state.value.copy(
+                                error = me.ashishekka.echo.shared.domain.DatabaseError.Unknown(Exception(result.message)),
+                                isInitialBootstrap = false
+                            )
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                _state.value = _state.value.copy(isInitialBootstrap = false)
+            }
+        }
     }
 
     private fun loadChats() {

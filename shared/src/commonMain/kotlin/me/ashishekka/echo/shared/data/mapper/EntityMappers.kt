@@ -1,12 +1,7 @@
 package me.ashishekka.echo.shared.data.mapper
 
-import me.ashishekka.echo.shared.data.entity.ChatWithParticipants
-import me.ashishekka.echo.shared.data.entity.MessageWithSender
-import me.ashishekka.echo.shared.data.entity.ParticipantEntity
-import me.ashishekka.echo.shared.domain.model.Chat
-import me.ashishekka.echo.shared.domain.model.Message
-import me.ashishekka.echo.shared.domain.model.Participant
-import me.ashishekka.echo.shared.domain.model.ParticipantId
+import me.ashishekka.echo.shared.data.entity.*
+import me.ashishekka.echo.shared.domain.model.*
 import me.ashishekka.echo.shared.domain.util.DateTimeUtils
 import me.ashishekka.echo.shared.domain.util.FileSizeUtils
 
@@ -68,11 +63,67 @@ fun MessageWithSender.toDomain(currentUserId: ParticipantId): Message {
         chatId = message.chatId,
         sender = sender.toDomain(),
         message = message.message,
-        type = message.type,
-        file = message.file,
+        type = message.type.toDomain(),
+        file = message.file?.toDomain(),
         timestamp = message.timestamp,
         isFromMe = message.senderId.value == currentUserId.value,
         displayTimestamp = DateTimeUtils.formatSmartTimestamp(message.timestamp),
         displaySize = message.file?.fileSize?.let { FileSizeUtils.formatFileSize(it) } ?: ""
+    )
+}
+
+/**
+ * Maps [MessageTypeEntity] to [MessageType] domain model.
+ */
+fun MessageTypeEntity.toDomain(): MessageType = when (this) {
+    MessageTypeEntity.TEXT -> MessageType.TEXT
+    MessageTypeEntity.FILE -> MessageType.FILE
+}
+
+/**
+ * Maps [MessageType] domain model to [MessageTypeEntity].
+ */
+fun MessageType.toEntity(): MessageTypeEntity = when (this) {
+    MessageType.TEXT -> MessageTypeEntity.TEXT
+    MessageType.FILE -> MessageTypeEntity.FILE
+}
+
+/**
+ * Maps [FileDetailsEntity] to [FileDetails] domain model.
+ */
+fun FileDetailsEntity.toDomain(): FileDetails {
+    return FileDetails(
+        path = path,
+        fileSize = fileSize,
+        thumbnail = thumbnail?.toDomain()
+    )
+}
+
+/**
+ * Maps [FileDetails] domain model to [FileDetailsEntity].
+ */
+fun FileDetails.toEntity(): FileDetailsEntity {
+    return FileDetailsEntity(
+        path = path,
+        fileSize = fileSize,
+        thumbnail = thumbnail?.toEntity()
+    )
+}
+
+/**
+ * Maps [ThumbnailDetailsEntity] to [ThumbnailDetails] domain model.
+ */
+fun ThumbnailDetailsEntity.toDomain(): ThumbnailDetails {
+    return ThumbnailDetails(
+        path = path
+    )
+}
+
+/**
+ * Maps [ThumbnailDetails] domain model to [ThumbnailDetailsEntity].
+ */
+fun ThumbnailDetails.toEntity(): ThumbnailDetailsEntity {
+    return ThumbnailDetailsEntity(
+        path = path
     )
 }

@@ -1,19 +1,14 @@
 package me.ashishekka.echo.shared.domain.service
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.datetime.Clock
-import me.ashishekka.echo.shared.data.entity.FileDetails
-import me.ashishekka.echo.shared.data.entity.MessageType
 import me.ashishekka.echo.shared.di.DispatcherProvider
 import me.ashishekka.echo.shared.domain.Constants
-import me.ashishekka.echo.shared.domain.model.ChatId
-import me.ashishekka.echo.shared.domain.model.MessageId
+import me.ashishekka.echo.shared.domain.model.*
 import me.ashishekka.echo.shared.domain.repository.MessageRepository
 import kotlin.random.Random
 
@@ -31,11 +26,17 @@ interface AgentService {
      * The service internally handles debouncing and message counting.
      */
     fun triggerReply(chatId: ChatId)
+
+    /**
+     * Cancels any active simulations and stops background processing.
+     */
+    fun cancel()
 }
 
 /**
  * Default implementation of [AgentService].
  */
+@OptIn(FlowPreview::class)
 class DefaultAgentService(
     private val messageRepository: MessageRepository,
     private val idGenerator: IdGenerator,
@@ -47,6 +48,11 @@ class DefaultAgentService(
     private val _typingStates = MutableStateFlow<Map<ChatId, Boolean>>(emptyMap())
     override val typingStates: StateFlow<Map<ChatId, Boolean>> = _typingStates.asStateFlow()
 
+    private val triggerFlow = MutableSharedFlow<ChatId>(
+        extraBufferCapacity = 64,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST
+    )
+
     // Mutex to guard state mutations for thread safety
     private val mutex = Mutex()
 
@@ -55,6 +61,18 @@ class DefaultAgentService(
     
     // Tracks active simulation jobs to handle debouncing
     private val simulationJobs = mutableMapOf<ChatId, Job>()
+
+    init {
+        // Requirement: Don't trigger if user rapidly sends multiple messages (debounce)
+        triggerFlow
+            .debounce(500) // Wait for 500ms of inactivity before starting simulation
+            .onEach { chatId ->
+                mutex.withLock {
+                    startSimulationLocked(chatId)
+                }
+            }
+            .launchIn(scope)
+    }
 
     override fun triggerReply(chatId: ChatId) {
         scope.launch {
@@ -67,18 +85,23 @@ class DefaultAgentService(
                 
                 if (currentCount >= triggerThreshold) {
                     messageCounters[chatId] = 0 // Reset counter
-                    startSimulationLocked(chatId)
+                    triggerFlow.tryEmit(chatId)
                 }
             }
         }
+    }
+
+    override fun cancel() {
+        scope.cancel()
     }
 
     /**
      * Starts the simulation. MUST be called within a [mutex] lock to ensure
      * [simulationJobs] is updated safely and existing jobs are cancelled.
      */
+    private val _startSimulationLocked = ::startSimulationLocked
     private fun startSimulationLocked(chatId: ChatId) {
-        // Debounce: Cancel any existing simulation for this chat
+        // Cancel any existing simulation for this chat
         simulationJobs[chatId]?.cancel()
         
         simulationJobs[chatId] = scope.launch {

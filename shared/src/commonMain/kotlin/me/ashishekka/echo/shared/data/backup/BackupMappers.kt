@@ -1,12 +1,6 @@
 package me.ashishekka.echo.shared.data.backup
 
-import me.ashishekka.echo.shared.data.entity.ChatEntity
-import me.ashishekka.echo.shared.data.entity.ChatParticipantCrossRef
-import me.ashishekka.echo.shared.data.entity.FileDetails
-import me.ashishekka.echo.shared.data.entity.MessageEntity
-import me.ashishekka.echo.shared.data.entity.MessageType
-import me.ashishekka.echo.shared.data.entity.ParticipantEntity
-import me.ashishekka.echo.shared.data.entity.ThumbnailDetails
+import me.ashishekka.echo.shared.data.entity.*
 import me.ashishekka.echo.shared.domain.model.ChatId
 
 /**
@@ -44,25 +38,25 @@ fun MessageDto.toEntity(chatId: ChatId, baseTime: Long): MessageEntity = Message
     chatId = chatId,
     senderId = this.sender,
     message = this.message,
-    type = if (this.type.lowercase() == "file") MessageType.FILE else MessageType.TEXT,
+    type = if (this.type.lowercase() == "file") MessageTypeEntity.FILE else MessageTypeEntity.TEXT,
     file = this.file?.toEntity(),
     timestamp = baseTime + this.timestampOffsetMs
 )
 
 /**
- * Maps a [FileDto] to [FileDetails].
+ * Maps a [FileDto] to [FileDetailsEntity].
  * Prefers [bundledAssetName] if available to support zero-network bootstrap.
  */
-fun FileDto.toEntity(): FileDetails = FileDetails(
+fun FileDto.toEntity(): FileDetailsEntity = FileDetailsEntity(
     path = this.bundledAssetName ?: this.path ?: "",
     fileSize = this.fileSize,
     thumbnail = this.thumbnail?.toEntity()
 )
 
 /**
- * Maps a [ThumbnailDto] to [ThumbnailDetails].
+ * Maps a [ThumbnailDto] to [ThumbnailDetailsEntity].
  */
-fun ThumbnailDto.toEntity(): ThumbnailDetails = ThumbnailDetails(
+fun ThumbnailDto.toEntity(): ThumbnailDetailsEntity = ThumbnailDetailsEntity(
     path = this.bundledAssetName ?: this.path ?: ""
 )
 

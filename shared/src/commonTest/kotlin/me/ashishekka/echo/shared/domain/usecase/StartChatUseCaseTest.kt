@@ -6,8 +6,6 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
-import me.ashishekka.echo.shared.data.entity.FileDetails
-import me.ashishekka.echo.shared.data.entity.MessageType
 import me.ashishekka.echo.shared.domain.Constants
 import me.ashishekka.echo.shared.domain.DatabaseError
 import me.ashishekka.echo.shared.domain.Result
@@ -103,11 +101,12 @@ class StartChatUseCaseTest {
         override fun triggerReply(chatId: ChatId) {
             triggerCount++
         }
+        override fun cancel() {}
     }
 
     class FakeMediaService : MediaService {
-        override suspend fun processImage(bytes: ByteArray, fileName: String): Result<FileDetails, MediaError> {
-            return Result.Success(FileDetails(fileName, bytes.size.toLong(), null))
+        override suspend fun processImage(bytes: ByteArray, originalPath: String): Result<FileDetails, MediaError> {
+            return Result.Success(FileDetails(originalPath, bytes.size.toLong(), null))
         }
     }
 

@@ -1,59 +1,53 @@
 package me.ashishekka.echo.shared.domain.service
 
-import me.ashishekka.echo.shared.data.entity.FileDetails
-import me.ashishekka.echo.shared.data.entity.ThumbnailDetails
 import me.ashishekka.echo.shared.data.file.LocalAssetManager
 import me.ashishekka.echo.shared.data.media.MediaProcessor
+import me.ashishekka.echo.shared.di.DispatcherProvider
 import me.ashishekka.echo.shared.domain.MediaError
 import me.ashishekka.echo.shared.domain.Result
-import me.ashishekka.echo.shared.domain.onFailure
-import me.ashishekka.echo.shared.domain.onSuccess
+import me.ashishekka.echo.shared.domain.model.FileDetails
+import me.ashishekka.echo.shared.domain.model.ThumbnailDetails
 
+/**
+ * Default implementation of [MediaService].
+ */
 class DefaultMediaService(
-    private val localAssetManager: LocalAssetManager,
     private val mediaProcessor: MediaProcessor,
-    private val idGenerator: IdGenerator
+    private val localAssetManager: LocalAssetManager,
+    private val dispatcherProvider: DispatcherProvider
 ) : MediaService {
 
-    override suspend fun processImage(
-        bytes: ByteArray,
-        fileName: String
-    ): Result<FileDetails, MediaError> {
-        val uniqueId = idGenerator.generateUuid()
-        val extension = fileName.substringAfterLast('.', "jpg")
-        val localFileName = "img_${uniqueId}.$extension"
-        val thumbFileName = "thumb_${uniqueId}.$extension"
+    override suspend fun processImage(bytes: ByteArray, originalPath: String): Result<FileDetails, MediaError> {
+        return try {
+            val fileName = originalPath.substringAfterLast("/")
+            
+            val thumbnailBytes = when (val thumbResult = mediaProcessor.generateThumbnail(bytes)) {
+                is Result.Success -> thumbResult.data
+                is Result.Failure -> return Result.Failure(thumbResult.error)
+            }
+            
+            val thumbName = "thumb_$fileName"
+            val thumbWriteResult = localAssetManager.writeBytes(thumbName, thumbnailBytes)
+            
+            if (thumbWriteResult is Result.Failure) {
+                return Result.Failure(MediaError.ProcessingFailed)
+            }
 
-        // 1. Downsize the main image
-        val downsizedResult = mediaProcessor.downsizeImage(bytes)
-        val finalBytes = when (downsizedResult) {
-            is Result.Success -> downsizedResult.data
-            is Result.Failure -> bytes // Fallback to original if downsizing fails
-        }
+            // In a real app, we might also downscale the main image and save it
+            val mainResult = localAssetManager.writeBytes(fileName, bytes)
+            if (mainResult is Result.Failure) {
+                return Result.Failure(MediaError.ProcessingFailed)
+            }
 
-        // 2. Save the main image
-        val saveResult = localAssetManager.writeBytes(localFileName, finalBytes)
-        if (saveResult is Result.Failure) {
-            return Result.Failure(MediaError.ProcessingFailed)
-        }
-
-        val localPath = localAssetManager.getAbsolutePath(localFileName)
-
-        // 3. Generate and save thumbnail (Optional per assignment, but we'll try)
-        val thumbResult = mediaProcessor.generateThumbnail(finalBytes)
-        val thumbnailDetails = if (thumbResult is Result.Success) {
-            val thumbSaveResult = localAssetManager.writeBytes(thumbFileName, thumbResult.data)
-            if (thumbSaveResult is Result.Success) {
-                ThumbnailDetails(localAssetManager.getAbsolutePath(thumbFileName))
-            } else null
-        } else null
-
-        return Result.Success(
-            FileDetails(
-                path = localPath,
-                fileSize = finalBytes.size.toLong(),
-                thumbnail = thumbnailDetails
+            Result.Success(
+                FileDetails(
+                    path = fileName,
+                    fileSize = bytes.size.toLong(),
+                    thumbnail = ThumbnailDetails(path = thumbName)
+                )
             )
-        )
+        } catch (e: Exception) {
+            Result.Failure(MediaError.Unknown(e))
+        }
     }
 }

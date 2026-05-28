@@ -2,25 +2,28 @@ package me.ashishekka.echo.shared.domain.service
 
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
-import me.ashishekka.echo.shared.data.entity.FileDetails
-import me.ashishekka.echo.shared.data.entity.MessageType
 import me.ashishekka.echo.shared.di.DispatcherProvider
 import me.ashishekka.echo.shared.domain.Constants
 import me.ashishekka.echo.shared.domain.DatabaseError
 import me.ashishekka.echo.shared.domain.Result
 import me.ashishekka.echo.shared.domain.repository.MessageRepository
 import me.ashishekka.echo.shared.domain.model.*
+import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import androidx.paging.PagingData
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 
@@ -31,6 +34,7 @@ class AgentServiceTest {
     private lateinit var idGenerator: FakeIdGenerator
     private lateinit var dispatcherProvider: DispatcherProvider
     private lateinit var testScope: TestScope
+    private lateinit var serviceScope: CoroutineScope
     private lateinit var clock: Clock
     private lateinit var agentService: AgentService
 
@@ -40,6 +44,8 @@ class AgentServiceTest {
         idGenerator = FakeIdGenerator()
         val testDispatcher = StandardTestDispatcher()
         testScope = TestScope(testDispatcher)
+        serviceScope = CoroutineScope(testDispatcher + SupervisorJob())
+        
         dispatcherProvider = object : DispatcherProvider {
             override val main: CoroutineDispatcher = testDispatcher
             override val io: CoroutineDispatcher = testDispatcher
@@ -53,9 +59,14 @@ class AgentServiceTest {
             messageRepository,
             idGenerator,
             dispatcherProvider,
-            testScope,
+            serviceScope,
             clock
         )
+    }
+
+    @AfterTest
+    fun tearDown() {
+        serviceScope.cancel()
     }
 
     @Test

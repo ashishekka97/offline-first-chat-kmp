@@ -11,8 +11,6 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
-import me.ashishekka.echo.shared.data.entity.FileDetails
-import me.ashishekka.echo.shared.data.entity.MessageType
 import me.ashishekka.echo.shared.data.file.LocalAssetManager
 import me.ashishekka.echo.shared.domain.AssetError
 import me.ashishekka.echo.shared.domain.DatabaseError
@@ -241,6 +239,7 @@ class FakeAgentService : AgentService {
     }
 
     override fun triggerReply(chatId: ChatId) {}
+    override fun cancel() {}
 }
 
 class FakeParticipantRepo : ParticipantRepository {
@@ -272,8 +271,8 @@ class FakePreferenceStorage : me.ashishekka.echo.shared.data.PreferenceStorage {
 }
 
 class FakeMediaService : MediaService {
-    override suspend fun processImage(bytes: ByteArray, fileName: String): Result<FileDetails, MediaError> {
-        return Result.Success(FileDetails(fileName, bytes.size.toLong(), null))
+    override suspend fun processImage(bytes: ByteArray, originalPath: String): Result<FileDetails, MediaError> {
+        return Result.Success(FileDetails(originalPath, bytes.size.toLong(), null))
     }
 }
 

@@ -51,7 +51,7 @@ class MessageDaoTest {
             chatId = chatId,
             senderId = participantId,
             message = "Hello World",
-            type = MessageType.TEXT,
+            type = MessageTypeEntity.TEXT,
             file = null,
             timestamp = 1001L
         )
@@ -78,11 +78,11 @@ class MessageDaoTest {
             chatId = chatId,
             senderId = participantId,
             message = "Image caption",
-            type = MessageType.FILE,
-            file = FileDetails(
+            type = MessageTypeEntity.FILE,
+            file = FileDetailsEntity(
                 path = "path/to/file.jpg",
                 fileSize = 1024L,
-                thumbnail = ThumbnailDetails("path/to/thumb.jpg")
+                thumbnail = ThumbnailDetailsEntity("path/to/thumb.jpg")
             ),
             timestamp = 1002L
         )
@@ -90,7 +90,7 @@ class MessageDaoTest {
         
         val messages = messageDao.getMessagesForChat(chatId).getData()
         assertEquals(1, messages.size)
-        assertEquals(MessageType.FILE, messages[0].message.type)
+        assertEquals(MessageTypeEntity.FILE, messages[0].message.type)
         assertEquals("path/to/file.jpg", messages[0].message.file?.path)
         assertEquals("path/to/thumb.jpg", messages[0].message.file?.thumbnail?.path)
     }

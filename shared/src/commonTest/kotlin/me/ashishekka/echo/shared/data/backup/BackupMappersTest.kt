@@ -1,6 +1,6 @@
 package me.ashishekka.echo.shared.data.backup
 
-import me.ashishekka.echo.shared.data.entity.MessageType
+import me.ashishekka.echo.shared.data.entity.MessageTypeEntity
 import me.ashishekka.echo.shared.domain.model.ChatId
 import me.ashishekka.echo.shared.domain.model.MessageId
 import me.ashishekka.echo.shared.domain.model.ParticipantId
@@ -58,7 +58,7 @@ class BackupMappersTest {
         )
         val entity = dto.toEntity(ChatId("c1"), baseTime)
         
-        assertEquals(MessageType.FILE, entity.type)
+        assertEquals(MessageTypeEntity.FILE, entity.type)
         assertNotNull(entity.file)
         assertEquals("local.jpg", entity.file.path)
         assertNotNull(entity.file.thumbnail)
