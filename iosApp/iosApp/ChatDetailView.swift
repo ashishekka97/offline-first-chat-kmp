@@ -8,6 +8,7 @@ struct ChatDetailView: View {
     @State private var showPhotoPicker = false
     @State private var showCameraPicker = false
     @State private var showSourcePicker = false
+    @State private var selectedImageFullscreen: String? = nil
     
     init(chatId: String) {
         _viewModel = StateObject(wrappedValue: ObservableChatDetailViewModel(chatId: chatId))
@@ -19,7 +20,9 @@ struct ChatDetailView: View {
                 ScrollView {
                     LazyVStack(spacing: 0) {
                         ForEach(viewModel.messages, id: \.timestamp) { message in
-                            MessageBubble(message: message)
+                            MessageBubble(message: message) { imageUrl in
+                                selectedImageFullscreen = imageUrl
+                            }
                         }
                         
                         if let state = viewModel.state, state.isAgentTyping {
@@ -104,6 +107,9 @@ struct ChatDetailView: View {
         }
         .navigationTitle(viewModel.state?.chat?.title ?? "Chat")
         .navigationBarTitleDisplayMode(.inline)
+        .fullScreenCover(item: $selectedImageFullscreen) { imageUrl in
+            FullscreenImageView(imageUrl: imageUrl)
+        }
     }
     
     private func scrollToBottom(proxy: ScrollViewProxy, delay: Double = 0.1) {
@@ -113,6 +119,10 @@ struct ChatDetailView: View {
             }
         }
     }
+}
+
+extension String: Identifiable {
+    public var id: String { self }
 }
 
 struct TypingIndicator: View {

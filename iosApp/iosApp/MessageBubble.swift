@@ -4,6 +4,7 @@ import Kingfisher
 
 struct MessageBubble: View {
     let message: Message
+    var onImageClick: ((String) -> Void)? = nil
     
     var body: some View {
         HStack {
@@ -12,9 +13,10 @@ struct MessageBubble: View {
             VStack(alignment: message.isFromMe ? .trailing : .leading, spacing: 4) {
                 VStack(alignment: .leading, spacing: 8) {
                     if message.type == MessageType.file && message.file != nil {
-                        let imagePath = message.file?.thumbnail?.fullPath ?? message.file?.fullPath ?? ""
+                        let thumbnailPath = message.file?.thumbnail?.fullPath ?? message.file?.fullPath ?? ""
+                        let fullPath = message.file?.fullPath ?? ""
                         
-                        KFImage(URL(fileURLWithPath: imagePath))
+                        KFImage(URL(fileURLWithPath: thumbnailPath))
                             .resizable()
                             .placeholder {
                                 ImagePlaceholder()
@@ -22,6 +24,9 @@ struct MessageBubble: View {
                             .scaledToFill()
                             .frame(width: 200, height: 200)
                             .clipShape(RoundedRectangle(cornerRadius: 12))
+                            .onTapGesture {
+                                onImageClick?(fullPath)
+                            }
                         
                         if !message.message.isEmpty {
                             Text(message.message)
