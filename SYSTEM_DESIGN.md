@@ -41,7 +41,7 @@ The project follows a strict separation of concerns, heavily favoring shared cod
 *   **DataStore:** Tracks application metadata (e.g., `isRestoreCompleted`).
 
 ### 3.2 Infrastructure
-*   **`LocalAssetManager`:** Manages internal app storage file operations (using Okio).
+*   **`LocalAssetManager`**: Manages internal app storage file operations (using Okio). It provides URI-safe path resolution, ensuring that platform-specific URIs (e.g., `content://`, `file://`) and remote URLs are returned as-is, while local relative paths are resolved to absolute platform paths.
 *   **`MediaProcessor`:** Handles image downsizing and thumbnail generation to ensure high-performance list rendering and disk efficiency.
 
 ### 3.3 Domain / Repository Layer
@@ -175,3 +175,25 @@ sequenceDiagram
     DB-->>VM: Flow emit(Updated Messages with AI Reply)
     VM-->>UI: StateFlow Update
 ```
+
+## 6. Zero-Network Bootstrap & Backup Structure
+
+To fulfill the "Offline-First" requirement from the very first launch, the application includes a robust **Zero-Network Bootstrap** mechanism. This allows the app to populate a rich set of initial data without any internet connection.
+
+### 6.1 Backup Bundle Components
+The bootstrap data is stored in the application's assets (e.g., `androidApp/src/main/assets` and the iOS App Bundle) as a compressed `seed_backup.zip`:
+
+*   **`data.json`**: Contains the full normalized schema for initial Chats, Participants, and Messages.
+*   **`media/` folder**: Contains physical high-resolution image assets referenced in the JSON.
+
+### 6.2 Restoration Process
+Upon the first launch, the `BackupRestoreService` performs the following atomic operations:
+
+1.  **JSON Parsing**: Reads and validates the `data.json` into Room Entities.
+2.  **Asset Extraction**: Unzips the physical image assets into the app's internal private storage.
+3.  **Media Processing**: Triggers the `MediaProcessor` to generate local thumbnails for every restored image, ensuring immediate, smooth list rendering.
+4.  **Transaction Finalization**: Once all entities and files are persisted, it updates the **Jetpack DataStore** flag (`isRestoreCompleted = true`).
+
+### 6.3 Recovery Logic
+If the restoration process is interrupted (e.g., app crash), the system uses the DataStore flag to resume or restart the restoration on the next launch, ensuring the database never enters an inconsistent state.
+

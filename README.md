@@ -14,6 +14,40 @@ Echo is an **offline-first Kotlin Multiplatform (KMP) chat application** designe
     - **Android**: 100% Jetpack Compose with Material3.
     - **iOS**: 100% SwiftUI with native KMP StateFlow observation.
 
+## 📱 Visual Showcase
+
+### Android (Jetpack Compose)
+| Home Screen | Chat Detail |
+| :---: | :---: |
+| <img src="demo/android-home.png" width="300"> | <img src="demo/android-chat.png" width="300"> |
+
+**[🎥 Watch Android Demo Video](demo/android-video.webm)**
+
+### iOS (SwiftUI)
+| Home Screen | Chat Detail | Attachments |
+| :---: | :---: | :---: |
+| <img src="demo/ios-chat-agent.png" width="200"> | <img src="demo/ios-chat-media.png" width="200"> | <img src="demo/ios-attachments.png" width="200"> |
+
+**[🎥 Watch iOS Demo Video](demo/ios-video.mov)**
+
+## 🏗 Architecture Decisions
+
+This project utilizes **Kotlin Multiplatform (KMP)** to share 100% of the business logic, data persistence, and presentation state across Android and iOS.
+
+- **Offline-First (SSOT)**: We use **Room Multiplatform** as the Single Source of Truth. The UI never interacts with the network directly; it observes the database, ensuring 100% availability in Airplane Mode.
+- **Unidirectional Data Flow (UDF)**: Shared ViewModels in `commonMain` expose a single `StateFlow` to the UI, reducing platform-specific bugs and ensuring state consistency.
+- **Zero-Network Bootstrap**: A custom `BackupRestoreService` handles the initial data population from a bundled `seed_backup.zip`. This ensures the app is fully functional with rich mock data (3 chats, 20+ messages) immediately after installation, even without an internet connection.
+- **Resource Management**: Image thumbnailing is performed locally using platform-native APIs (Coil on Android, UIKit on iOS) but orchestrated via a shared `MediaProcessor` interface.
+
+## 📝 Assumptions
+
+- **Mock AI**: The AI agent is simulated locally. It does not require an API key or internet connection.
+- **Initial Data**: The "Seed Data" (3 chats) is restored only once during the first app launch.
+- **Media Storage**: All picked or generated images are saved to the app's internal private storage to ensure they are available offline.
+- **UUID Generation**: All IDs (`ChatId`, `MessageId`) are generated as version 4 UUIDs to ensure global uniqueness and prevent collisions.
+- **UTC Timestamps**: All temporal data is stored as UTC milliseconds and formatted using the device's local system timezone for the UI.
+- **Simulated Latency**: AI agent delays (1-2s) are implemented using Coroutine `delay` to simulate network/thinking latency in a realistic manner.
+
 ## 🛠 Tech Stack
 
 | Component | Technology |
