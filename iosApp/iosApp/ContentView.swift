@@ -9,15 +9,25 @@ struct ContentView: View {
             if state.isInitialBootstrap {
                 SplashView()
             } else {
-                HomeView(
-                    viewModel: viewModel,
-                    onChatClick: { chatId in
-                        viewModel.onIntent(intent: HomeIntentClickChat(chatId: chatId))
-                    },
-                    onNewChatClick: {
-                        viewModel.onIntent(intent: HomeIntentNewChat())
+                NavigationStack {
+                    HomeView(
+                        viewModel: viewModel,
+                        onChatClick: { chatId in
+                            viewModel.onIntent(intent: HomeIntentClickChat(chatId: chatId))
+                        },
+                        onNewChatClick: {
+                            viewModel.onIntent(intent: HomeIntentNewChat())
+                        }
+                    )
+                    .navigationDestination(isPresented: Binding(
+                        get: { viewModel.navigateToChatId != nil },
+                        set: { if !$0 { viewModel.navigateToChatId = nil } }
+                    )) {
+                        if let chatId = viewModel.navigateToChatId {
+                            ChatDetailView(chatId: chatId)
+                        }
                     }
-                )
+                }
             }
         } else {
             // Loading state

@@ -9,6 +9,7 @@ class ObservableHomeViewModel: ObservableObject {
     
     @Published var state: HomeState?
     @Published var chats: [Chat] = []
+    @Published var navigateToChatId: String?
     
     init() {
         self.viewModel = KoinHelper().homeViewModel
@@ -36,6 +37,24 @@ class ObservableHomeViewModel: ObservableObject {
                 }
             } catch {
                 print("Error observing chats from presenter: \(error)")
+            }
+        }
+        
+        // Observe Side Effects
+        Task {
+            do {
+                let sequence = asyncSequence(for: viewModel.sideEffect)
+                for try await effect in sequence {
+                    if let navigateEffect = effect as? HomeSideEffectNavigateToChat {
+                        // Value class ID is id/Any in Swift, cast to String using description or similar
+                        // Based on Shared.h, we can probably use the underlying value.
+                        // For safety, I'll use the description or check how to extract it.
+                        // Actually, HomeSideEffectNavigateToChat has a chatId property.
+                        self.navigateToChatId = String(describing: navigateEffect.chatId)
+                    }
+                }
+            } catch {
+                print("Error observing HomeViewModel side effects: \(error)")
             }
         }
     }
