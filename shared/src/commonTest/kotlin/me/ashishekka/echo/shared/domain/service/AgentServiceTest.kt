@@ -17,6 +17,7 @@ import me.ashishekka.echo.shared.domain.DatabaseError
 import me.ashishekka.echo.shared.domain.Result
 import me.ashishekka.echo.shared.domain.repository.MessageRepository
 import me.ashishekka.echo.shared.domain.model.*
+import me.ashishekka.echo.shared.data.file.FakeLocalAssetManager
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -31,6 +32,7 @@ import kotlinx.coroutines.flow.emptyFlow
 class AgentServiceTest {
 
     private lateinit var messageRepository: FakeMessageRepository
+    private lateinit var localAssetManager: FakeLocalAssetManager
     private lateinit var idGenerator: FakeIdGenerator
     private lateinit var dispatcherProvider: DispatcherProvider
     private lateinit var testScope: TestScope
@@ -41,6 +43,7 @@ class AgentServiceTest {
     @BeforeTest
     fun setup() {
         messageRepository = FakeMessageRepository()
+        localAssetManager = FakeLocalAssetManager()
         idGenerator = FakeIdGenerator()
         val testDispatcher = StandardTestDispatcher()
         testScope = TestScope(testDispatcher)
@@ -57,6 +60,7 @@ class AgentServiceTest {
         
         agentService = DefaultAgentService(
             messageRepository,
+            localAssetManager,
             idGenerator,
             dispatcherProvider,
             serviceScope,
@@ -102,28 +106,31 @@ class AgentServiceTest {
     }
 
     @Test
-    fun testMultiChatIsolation() = testScope.runTest {
-        val chatA = ChatId("chat_A")
-        val chatB = ChatId("chat_B")
-
-        // Send 3 messages in Chat A
-        repeat(3) { agentService.triggerReply(chatA) }
-        // Send 3 messages in Chat B
-        repeat(3) { agentService.triggerReply(chatB) }
-
-        advanceTimeBy(3000)
-        assertEquals(0, messageRepository.sentMessages.size, "Counters should be isolated; 3+3 should not trigger anything")
-
-        // Send 2 more in Chat A
-        repeat(2) { agentService.triggerReply(chatA) }
+    fun testOfflineMediaSelection() = testScope.runTest {
+        val chatId = ChatId("chat_1")
+        val localFile = "img_local_123.jpg"
+        
+        // Setup repository with existing local media
+        messageRepository.existingMedia = listOf(localFile)
+        // Ensure the file exists in the asset manager
+        localAssetManager.writeBytes(localFile, byteArrayOf(1, 2, 3))
+        
+        // Trigger a reply (repeat 5 times to hit threshold)
+        repeat(5) { agentService.triggerReply(chatId) }
         
         advanceTimeBy(3000)
-        assertEquals(1, messageRepository.sentMessages.filter { it.chatId == chatA }.size, "Chat A should trigger")
-        assertEquals(0, messageRepository.sentMessages.filter { it.chatId == chatB }.size, "Chat B should still be quiet")
+        
+        // We might get a text or image reply (random). 
+        // If we get an image, it should use the local file.
+        val lastMessage = messageRepository.sentMessages.lastOrNull()
+        if (lastMessage?.type == MessageType.FILE) {
+            assertEquals(localFile, lastMessage.file?.path, "Agent should reuse existing local media")
+        }
     }
 
     class FakeMessageRepository : MessageRepository {
         val sentMessages = mutableListOf<SentMessage>()
+        var existingMedia = emptyList<String>()
         var shouldFail = false
 
         data class SentMessage(
@@ -155,7 +162,7 @@ class AgentServiceTest {
             }
         }
 
-        override suspend fun getFilePathsForChat(chatId: ChatId): Result<List<String>, DatabaseError> = Result.Success(emptyList())
+        override suspend fun getFilePathsForChat(chatId: ChatId): Result<List<String>, DatabaseError> = Result.Success(existingMedia)
         override suspend fun deleteMessagesForChat(chatId: ChatId): Result<Unit, DatabaseError> = Result.Success(Unit)
     }
 

@@ -82,7 +82,8 @@ val viewModelModule = module {
             participantRepository = get(),
             chatRepository = get(),
             preferenceStorage = get(),
-            idGenerator = get()
+            idGenerator = get(),
+            dispatcherProvider = get()
         )
     }
 }

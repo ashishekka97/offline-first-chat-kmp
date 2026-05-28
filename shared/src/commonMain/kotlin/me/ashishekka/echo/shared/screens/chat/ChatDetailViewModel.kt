@@ -8,6 +8,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import me.ashishekka.echo.shared.data.PreferenceStorage
+import me.ashishekka.echo.shared.di.DispatcherProvider
 import me.ashishekka.echo.shared.domain.AppError
 import me.ashishekka.echo.shared.domain.Constants
 import me.ashishekka.echo.shared.domain.model.Chat
@@ -70,7 +71,8 @@ class ChatDetailViewModel(
     private val participantRepository: ParticipantRepository,
     private val chatRepository: ChatRepository,
     private val preferenceStorage: PreferenceStorage,
-    private val idGenerator: IdGenerator
+    private val idGenerator: IdGenerator,
+    private val dispatcherProvider: DispatcherProvider
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(ChatDetailState())
@@ -133,6 +135,7 @@ class ChatDetailViewModel(
             .onEach { draft ->
                 preferenceStorage.saveDraft(chatId, draft)
             }
+            .flowOn(dispatcherProvider.io)
             .launchIn(viewModelScope)
     }
 
