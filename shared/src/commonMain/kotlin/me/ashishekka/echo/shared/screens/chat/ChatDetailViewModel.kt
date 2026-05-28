@@ -5,14 +5,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import me.ashishekka.echo.shared.data.PreferenceStorage
 import me.ashishekka.echo.shared.domain.AppError
@@ -83,13 +76,17 @@ class ChatDetailViewModel(
     private val _state = MutableStateFlow(ChatDetailState())
     val state: StateFlow<ChatDetailState> = _state.asStateFlow()
 
+    // Local in-memory state for lag-free typing
+    private val draftState = MutableStateFlow("")
+
     private val _sideEffect = Channel<ChatDetailSideEffect>(Channel.BUFFERED)
     val sideEffect: Flow<ChatDetailSideEffect> = _sideEffect.receiveAsFlow()
 
     init {
         observeChat()
         observeTypingState()
-        observeDraft()
+        loadInitialDraft()
+        syncDraftToState()
         fetchAgent()
         loadMessages()
     }
@@ -97,10 +94,10 @@ class ChatDetailViewModel(
     private fun observeChat() {
         getChatByIdUseCase(chatId)
             .onEach { chat ->
-                _state.value = _state.value.copy(
+                _state.update { it.copy(
                     chat = chat,
                     isNewChat = chat == null
-                )
+                ) }
             }
             .launchIn(viewModelScope)
     }
@@ -109,16 +106,32 @@ class ChatDetailViewModel(
         agentService.typingStates
             .map { it[chatId] ?: false }
             .onEach { isTyping ->
-                _state.value = _state.value.copy(isAgentTyping = isTyping)
+                _state.update { it.copy(isAgentTyping = isTyping) }
             }
             .launchIn(viewModelScope)
     }
 
-    private fun observeDraft() {
-        preferenceStorage.drafts
-            .map { it[chatId] ?: "" }
+    private fun loadInitialDraft() {
+        viewModelScope.launch {
+            val initialDraft = preferenceStorage.drafts.map { it[chatId] ?: "" }.first()
+            draftState.value = initialDraft
+        }
+    }
+
+    private fun syncDraftToState() {
+        // Sync local typing state to UI state immediately
+        draftState
             .onEach { draft ->
-                _state.value = _state.value.copy(currentDraft = draft)
+                _state.update { it.copy(currentDraft = draft) }
+            }
+            .launchIn(viewModelScope)
+
+        // Persist draft to DataStore with 1s debounce to avoid laggy typing
+        @OptIn(kotlinx.coroutines.FlowPreview::class)
+        draftState
+            .debounce(1000)
+            .onEach { draft ->
+                preferenceStorage.saveDraft(chatId, draft)
             }
             .launchIn(viewModelScope)
     }
@@ -127,15 +140,15 @@ class ChatDetailViewModel(
         viewModelScope.launch {
             participantRepository.getParticipantById(Constants.DEFAULT_AGENT_ID)
                 .onSuccess { agent ->
-                    _state.value = _state.value.copy(agent = agent)
+                    _state.update { it.copy(agent = agent) }
                 }
         }
     }
 
     private fun loadMessages() {
-        _state.value = _state.value.copy(
+        _state.update { it.copy(
             messages = getPagedMessagesUseCase(chatId).cachedIn(viewModelScope)
-        )
+        ) }
     }
 
     fun onIntent(intent: ChatDetailIntent) {
@@ -152,7 +165,8 @@ class ChatDetailViewModel(
         if (text.isBlank() && localMediaPath == null) return
 
         viewModelScope.launch {
-            // Clear draft immediately on send attempt
+            // Clear local and persistent draft immediately on send
+            draftState.value = ""
             preferenceStorage.clearDraft(chatId)
             
             val result = if (_state.value.isNewChat) {
@@ -179,7 +193,7 @@ class ChatDetailViewModel(
                     scrollToBottom()
                 }
                 .onFailure { error ->
-                    _state.value = _state.value.copy(error = error)
+                    _state.update { it.copy(error = error) }
                 }
         }
     }
@@ -188,15 +202,13 @@ class ChatDetailViewModel(
         viewModelScope.launch {
             chatRepository.updateChatTitle(chatId, newTitle)
                 .onFailure { error ->
-                    _state.value = _state.value.copy(error = error)
+                    _state.update { it.copy(error = error) }
                 }
         }
     }
 
     private fun updateDraft(text: String) {
-        viewModelScope.launch {
-            preferenceStorage.saveDraft(chatId, text)
-        }
+        draftState.value = text
     }
 
     private fun scrollToBottom() {
@@ -206,6 +218,6 @@ class ChatDetailViewModel(
     }
 
     private fun clearError() {
-        _state.value = _state.value.copy(error = null)
+        _state.update { it.copy(error = null) }
     }
 }
