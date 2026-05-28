@@ -6,20 +6,19 @@ import KMPNativeCoroutinesAsync
 class ObservableHomeViewModel: ObservableObject {
     private let viewModel: HomeViewModel
     
-    @Published var state: HomeState = HomeState(
-        chats: .init(elements: []),
-        isDeleting: false,
-        pendingDeleteChatId: nil,
-        isInitialBootstrap: false,
-        error: nil
-    )
+    @Published var state: HomeState?
     
     init() {
         self.viewModel = KoinHelper().homeViewModel
         
         Task {
-            for await state in asyncSequence(for: viewModel.state) {
-                self.state = state
+            do {
+                let sequence = asyncSequence(for: viewModel.state)
+                for try await state in sequence {
+                    self.state = state
+                }
+            } catch {
+                print("Error observing HomeViewModel state: \(error)")
             }
         }
     }
