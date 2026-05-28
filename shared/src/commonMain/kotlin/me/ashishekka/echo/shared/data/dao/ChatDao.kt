@@ -54,6 +54,12 @@ interface ChatDao {
     suspend fun updateLastMessage(chatId: ChatId, message: String, timestamp: Long)
 
     /**
+     * Updates the title for a chat.
+     */
+    @Query("UPDATE chats SET title = :newTitle, updatedAt = :timestamp WHERE id = :chatId")
+    suspend fun updateChatTitle(chatId: ChatId, newTitle: String, timestamp: Long = kotlinx.datetime.Clock.System.now().toEpochMilliseconds())
+
+    /**
      * Atomic transaction to create a chat with its participants.
      */
     @Transaction

@@ -26,6 +26,7 @@ import me.ashishekka.echo.shared.domain.usecase.GetPagedChatsUseCase
 data class HomeState(
     val chats: Flow<PagingData<Chat>> = MutableStateFlow(PagingData.empty()),
     val isDeleting: Boolean = false,
+    val pendingDeleteChatId: ChatId? = null,
     val error: AppError? = null
 )
 
@@ -33,7 +34,9 @@ data class HomeState(
  * Intents for the Home screen.
  */
 sealed interface HomeIntent {
-    data class DeleteChat(val chatId: ChatId) : HomeIntent
+    data class ConfirmDelete(val chatId: ChatId) : HomeIntent
+    data object CancelDelete : HomeIntent
+    data object DeletePendingChat : HomeIntent
     data class ClickChat(val chatId: ChatId) : HomeIntent
     data object NewChat : HomeIntent
     data object ClearError : HomeIntent
@@ -73,16 +76,19 @@ class HomeViewModel(
 
     fun onIntent(intent: HomeIntent) {
         when (intent) {
-            is HomeIntent.DeleteChat -> deleteChat(intent.chatId)
+            is HomeIntent.ConfirmDelete -> _state.value = _state.value.copy(pendingDeleteChatId = intent.chatId)
+            is HomeIntent.CancelDelete -> _state.value = _state.value.copy(pendingDeleteChatId = null)
+            is HomeIntent.DeletePendingChat -> deletePendingChat()
             is HomeIntent.ClickChat -> navigateToChat(intent.chatId)
             is HomeIntent.NewChat -> startNewChat()
             is HomeIntent.ClearError -> clearError()
         }
     }
 
-    private fun deleteChat(chatId: ChatId) {
+    private fun deletePendingChat() {
+        val chatId = _state.value.pendingDeleteChatId ?: return
         viewModelScope.launch {
-            _state.value = _state.value.copy(isDeleting = true)
+            _state.value = _state.value.copy(isDeleting = true, pendingDeleteChatId = null)
             deleteChatUseCase(chatId)
                 .onSuccess {
                     _state.value = _state.value.copy(isDeleting = false)

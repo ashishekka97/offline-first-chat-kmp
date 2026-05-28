@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+import me.ashishekka.echo.shared.data.PreferenceStorage
 import me.ashishekka.echo.shared.domain.AppError
 import me.ashishekka.echo.shared.domain.Constants
 import me.ashishekka.echo.shared.domain.model.Chat
@@ -23,6 +24,7 @@ import me.ashishekka.echo.shared.domain.model.MessageId
 import me.ashishekka.echo.shared.domain.model.Participant
 import me.ashishekka.echo.shared.domain.onFailure
 import me.ashishekka.echo.shared.domain.onSuccess
+import me.ashishekka.echo.shared.domain.repository.ChatRepository
 import me.ashishekka.echo.shared.domain.repository.ParticipantRepository
 import me.ashishekka.echo.shared.domain.service.AgentService
 import me.ashishekka.echo.shared.domain.service.IdGenerator
@@ -40,6 +42,7 @@ data class ChatDetailState(
     val messages: Flow<PagingData<Message>> = MutableStateFlow(PagingData.empty()),
     val isNewChat: Boolean = false,
     val isAgentTyping: Boolean = false,
+    val currentDraft: String = "",
     val error: AppError? = null
 )
 
@@ -48,6 +51,8 @@ data class ChatDetailState(
  */
 sealed interface ChatDetailIntent {
     data class SendMessage(val text: String, val localMediaPath: String? = null) : ChatDetailIntent
+    data class RenameChat(val newTitle: String) : ChatDetailIntent
+    data class UpdateDraft(val text: String) : ChatDetailIntent
     data object OnInitialMessagesLoaded : ChatDetailIntent
     data object ClearError : ChatDetailIntent
 }
@@ -70,6 +75,8 @@ class ChatDetailViewModel(
     private val startChatUseCase: StartChatUseCase,
     private val agentService: AgentService,
     private val participantRepository: ParticipantRepository,
+    private val chatRepository: ChatRepository,
+    private val preferenceStorage: PreferenceStorage,
     private val idGenerator: IdGenerator
 ) : ViewModel() {
 
@@ -82,6 +89,7 @@ class ChatDetailViewModel(
     init {
         observeChat()
         observeTypingState()
+        observeDraft()
         fetchAgent()
         loadMessages()
     }
@@ -106,6 +114,15 @@ class ChatDetailViewModel(
             .launchIn(viewModelScope)
     }
 
+    private fun observeDraft() {
+        preferenceStorage.drafts
+            .map { it[chatId] ?: "" }
+            .onEach { draft ->
+                _state.value = _state.value.copy(currentDraft = draft)
+            }
+            .launchIn(viewModelScope)
+    }
+
     private fun fetchAgent() {
         viewModelScope.launch {
             participantRepository.getParticipantById(Constants.DEFAULT_AGENT_ID)
@@ -124,6 +141,8 @@ class ChatDetailViewModel(
     fun onIntent(intent: ChatDetailIntent) {
         when (intent) {
             is ChatDetailIntent.SendMessage -> sendMessage(intent.text, intent.localMediaPath)
+            is ChatDetailIntent.RenameChat -> renameChat(intent.newTitle)
+            is ChatDetailIntent.UpdateDraft -> updateDraft(intent.text)
             is ChatDetailIntent.OnInitialMessagesLoaded -> scrollToBottom()
             is ChatDetailIntent.ClearError -> clearError()
         }
@@ -133,23 +152,25 @@ class ChatDetailViewModel(
         if (text.isBlank() && localMediaPath == null) return
 
         viewModelScope.launch {
+            // Clear draft immediately on send attempt
+            preferenceStorage.clearDraft(chatId)
+            
             val result = if (_state.value.isNewChat) {
                 startChatUseCase(
                     chatId = chatId,
-                    title = "New Chat", // Default title for MVP
                     participantIds = listOf(Constants.CURRENT_USER_ID, Constants.DEFAULT_AGENT_ID),
                     messageId = MessageId(idGenerator.generateUuid()),
                     message = text,
-                    senderId = Constants.CURRENT_USER_ID
-                    // TODO: Pass localMediaPath to StartChatUseCase once it supports files
+                    senderId = Constants.CURRENT_USER_ID,
+                    localMediaPath = localMediaPath
                 )
             } else {
                 sendMessageUseCase(
                     id = MessageId(idGenerator.generateUuid()),
                     chatId = chatId,
                     senderId = Constants.CURRENT_USER_ID,
-                    message = text
-                    // TODO: Pass localMediaPath to SendMessageUseCase once it supports files
+                    message = text,
+                    localMediaPath = localMediaPath
                 )
             }
 
@@ -160,6 +181,21 @@ class ChatDetailViewModel(
                 .onFailure { error ->
                     _state.value = _state.value.copy(error = error)
                 }
+        }
+    }
+
+    private fun renameChat(newTitle: String) {
+        viewModelScope.launch {
+            chatRepository.updateChatTitle(chatId, newTitle)
+                .onFailure { error ->
+                    _state.value = _state.value.copy(error = error)
+                }
+        }
+    }
+
+    private fun updateDraft(text: String) {
+        viewModelScope.launch {
+            preferenceStorage.saveDraft(chatId, text)
         }
     }
 

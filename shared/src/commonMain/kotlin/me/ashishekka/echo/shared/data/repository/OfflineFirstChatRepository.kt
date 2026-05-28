@@ -106,6 +106,15 @@ class OfflineFirstChatRepository(
         }
     }
 
+    override suspend fun updateChatTitle(chatId: ChatId, newTitle: String): Result<Unit, DatabaseError> {
+        return try {
+            chatDao.updateChatTitle(chatId, newTitle)
+            Result.Success(Unit)
+        } catch (e: Exception) {
+            Result.Failure(DatabaseError.Unknown(e))
+        }
+    }
+
     override suspend fun deleteChat(chatId: ChatId): Result<Unit, DatabaseError> {
         return try {
             // ChatDao uses CASCADE for messages, so deleting the chat deletes its messages too.
