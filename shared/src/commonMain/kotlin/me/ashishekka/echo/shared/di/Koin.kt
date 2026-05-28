@@ -64,7 +64,7 @@ val useCaseModule = module {
     factory { GetPagedChatsUseCase(get()) }
     factory { GetPagedMessagesUseCase(get()) }
     factory { GetChatByIdUseCase(get()) }
-    factory { StartChatUseCase(get(), get(), get(), get()) }
+    factory { StartChatUseCase(get(), get(), get(), get(), get()) }
     factory { SendMessageUseCase(get(), get(), get(), get()) }
     factory { DeleteChatUseCase(get(), get(), get(), get()) }
 }

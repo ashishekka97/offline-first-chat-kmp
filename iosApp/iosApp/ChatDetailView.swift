@@ -67,10 +67,10 @@ struct ChatDetailView: View {
                         }
                         .padding(.leading, 4)
                         .padding(.bottom, 4)
-                        .confirmationDialog("Choose Source", isPresented: $showSourcePicker) {
-                            Button("Camera") { showCameraPicker = true }
-                            Button("Gallery") { showPhotoPicker = true }
-                            Button("Cancel", role: .cancel) {}
+                        .confirmationDialog(LocalizedStringKey("chat_choose_source"), isPresented: $showSourcePicker) {
+                            Button(LocalizedStringKey("chat_camera")) { showCameraPicker = true }
+                            Button(LocalizedStringKey("chat_gallery")) { showPhotoPicker = true }
+                            Button(LocalizedStringKey("common_cancel"), role: .cancel) {}
                         }
                         .sheet(isPresented: $showPhotoPicker) {
                             PhotoPicker(isPresented: $showPhotoPicker) { url in
@@ -83,7 +83,7 @@ struct ChatDetailView: View {
                             }
                         }
                         
-                        TextField("Message", text: Binding(
+                        TextField(LocalizedStringKey("chat_message_placeholder"), text: Binding(
                             get: { viewModel.state?.currentDraft ?? "" },
                             set: { viewModel.onIntent(intent: ChatDetailIntentUpdateDraft(text: $0)) }
                         ), axis: .vertical)
@@ -121,7 +121,7 @@ struct ChatDetailView: View {
         }
         .toolbar {
             ToolbarItem(placement: .principal) {
-                Text(viewModel.state?.chat?.title ?? "New Chat")
+                Text(viewModel.state?.chat?.title ?? String(localized: "chat_new_title"))
                     .font(.headline)
                     .onTapGesture {
                         if let chat = viewModel.state?.chat {
@@ -132,20 +132,20 @@ struct ChatDetailView: View {
             }
         }
         .navigationBarTitleDisplayMode(.inline)
-        .alert("Rename Chat", isPresented: $showRenameDialog) {
-            TextField("Chat Title", text: $newTitle)
-            Button("Save") {
+        .alert(LocalizedStringKey("chat_rename_title"), isPresented: $showRenameDialog) {
+            TextField(LocalizedStringKey("chat_rename_label"), text: $newTitle)
+            Button(LocalizedStringKey("common_save")) {
                 viewModel.onIntent(intent: ChatDetailIntentRenameChat(newTitle: newTitle))
             }
-            Button("Cancel", role: .cancel) {}
+            Button(LocalizedStringKey("common_cancel"), role: .cancel) {}
         } message: {
-            Text("Enter a new name for this chat.")
+            Text(LocalizedStringKey("chat_rename_message"))
         }
-        .alert("Error", isPresented: Binding(
+        .alert(LocalizedStringKey("common_error"), isPresented: Binding(
             get: { viewModel.state?.error != nil },
             set: { if !$0 { viewModel.onIntent(intent: ChatDetailIntentClearError()) } }
         )) {
-            Button("OK") { viewModel.onIntent(intent: ChatDetailIntentClearError()) }
+            Button(LocalizedStringKey("common_ok")) { viewModel.onIntent(intent: ChatDetailIntentClearError()) }
         } message: {
             if let error = viewModel.state?.error {
                 Text(String(describing: error))

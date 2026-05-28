@@ -46,6 +46,9 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
+import me.ashishekka.echo.shared.util.EchoString
+import me.ashishekka.echo.shared.util.StringProvider
+
 @OptIn(ExperimentalCoroutinesApi::class)
 class ChatDetailViewModelTest {
 
@@ -57,6 +60,7 @@ class ChatDetailViewModelTest {
     private val mediaService = FakeMediaService()
     private val localAssetManager = FakeLocalAssetManager()
     private val preferenceStorage = FakePreferenceStorage()
+    private val stringProvider = FakeStringProvider()
     
     private val testDispatcher = StandardTestDispatcher()
 
@@ -149,7 +153,7 @@ class ChatDetailViewModelTest {
         getChatByIdUseCase = GetChatByIdUseCase(chatRepo),
         getPagedMessagesUseCase = GetPagedMessagesUseCase(messageRepo),
         sendMessageUseCase = SendMessageUseCase(messageRepo, agentService, mediaService, localAssetManager),
-        startChatUseCase = StartChatUseCase(chatRepo, agentService, mediaService, localAssetManager),
+        startChatUseCase = StartChatUseCase(chatRepo, agentService, mediaService, localAssetManager, stringProvider),
         agentService = agentService,
         participantRepository = participantRepo,
         chatRepository = chatRepo,
@@ -157,6 +161,11 @@ class ChatDetailViewModelTest {
         idGenerator = idGenerator,
         dispatcherProvider = dispatcherProvider
     )
+}
+
+class FakeStringProvider : StringProvider {
+    override fun get(key: EchoString): String = key.name
+    override val is24HourFormat: Boolean = true
 }
 
 class FakeChatRepo : ChatRepository {

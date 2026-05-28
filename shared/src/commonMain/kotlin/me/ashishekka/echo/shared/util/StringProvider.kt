@@ -10,15 +10,50 @@ interface StringProvider {
 }
 
 /**
- * Keys for all localized strings required by the shared module.
+ * Keys for all localized strings required by the app.
+ * Using an enum ensures compile-time safety across platforms.
  */
 enum class EchoString {
+    // Home Screen
+    HomeTitle,
+    HomeEmptyMessage,
+    HomeStartNew,
+    HomeDeleteChatTitle,
+    HomeDeleteChatMessage,
+    HomeDeleting,
+
+    // Chat Detail Screen
+    ChatNewTitle,
+    ChatRenameTitle,
+    ChatRenameLabel,
+    ChatRenameMessage,
+    ChatChooseSource,
+    ChatGallery,
+    ChatCamera,
+    ChatMessagePlaceholder,
+    ChatAttachDesc,
+    ChatSendDesc,
+    ChatBackDesc,
+    ChatNoMessages,
+
+    // Shared / Domain
     JustNow,
     MinutesAgo,
     Yesterday,
     Photo,
     ImageChat,
     NewChat,
+    
+    // Common
+    Delete,
+    Cancel,
+    Save,
+    Dismiss,
+    OK,
+    ErrorPrefix,
+    DraftPrefix,
+
+    // Months
     MonthJan, MonthFeb, MonthMar, MonthApr, MonthMay, MonthJun,
     MonthJul, MonthAug, MonthSep, MonthOct, MonthNov, MonthDec
 }

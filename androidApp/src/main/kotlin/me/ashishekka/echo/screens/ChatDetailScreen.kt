@@ -1,5 +1,7 @@
 package me.ashishekka.echo.screens
 
+import me.ashishekka.echo.shared.R as SharedR
+import androidx.compose.ui.res.stringResource
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -69,8 +71,8 @@ fun ChatDetailScreen(
     LaunchedEffect(state.error) {
         state.error?.let { error ->
             snackbarHostState.showSnackbar(
-                message = "Error: ${error::class.simpleName}",
-                actionLabel = "Dismiss"
+                message = context.getString(SharedR.string.common_error_prefix, error::class.simpleName ?: ""),
+                actionLabel = context.getString(SharedR.string.common_dismiss)
             )
             viewModel.onIntent(ChatDetailIntent.ClearError)
         }
@@ -158,13 +160,13 @@ fun ChatDetailScreen(
             TopAppBar(
                 title = { 
                     Text(
-                        text = state.chat?.title ?: "New Chat",
+                        text = if (state.isNewChat) stringResource(SharedR.string.chat_new_title) else (state.chat?.title ?: ""),
                         modifier = Modifier.clickable { if (!state.isNewChat) showRenameDialog = true }
                     ) 
                 },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(SharedR.string.chat_back_desc))
                     }
                 }
             )
@@ -257,12 +259,12 @@ fun RenameChatDialog(
     var title by remember { mutableStateOf(initialTitle) }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Rename Chat") },
+        title = { Text(stringResource(SharedR.string.chat_rename_title)) },
         text = {
             TextField(
                 value = title,
                 onValueChange = { title = it },
-                label = { Text("Chat Title") },
+                label = { Text(stringResource(SharedR.string.chat_rename_label)) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -272,12 +274,12 @@ fun RenameChatDialog(
                 onClick = { onConfirm(title) },
                 enabled = title.isNotBlank()
             ) {
-                Text("Save")
+                Text(stringResource(SharedR.string.common_save))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text(stringResource(SharedR.string.common_cancel))
             }
         }
     )
@@ -371,23 +373,23 @@ fun AttachmentSourceDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Choose Source") },
+        title = { Text(stringResource(SharedR.string.chat_choose_source)) },
         text = {
             Column {
                 ListItem(
-                    headlineContent = { Text("Gallery") },
+                    headlineContent = { Text(stringResource(SharedR.string.chat_gallery)) },
                     leadingContent = { Icon(Icons.Default.PhotoLibrary, contentDescription = null) },
                     modifier = Modifier.clickable(onClick = onGalleryClick)
                 )
                 ListItem(
-                    headlineContent = { Text("Camera") },
+                    headlineContent = { Text(stringResource(SharedR.string.chat_camera)) },
                     leadingContent = { Icon(Icons.Default.CameraAlt, contentDescription = null) },
                     modifier = Modifier.clickable(onClick = onCameraClick)
                 )
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel") }
+            TextButton(onClick = onDismiss) { Text(stringResource(SharedR.string.common_cancel)) }
         }
     )
 }
@@ -408,8 +410,8 @@ fun MessageInput(
     ) {
         Surface(
             shape = RoundedCornerShape(28.dp),
-            tonalElevation = 3.dp,
-            shadowElevation = 6.dp,
+            tonalElevation = 0.dp,
+            shadowElevation = 0.dp,
             color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.95f),
             modifier = Modifier.fillMaxWidth()
         ) {
@@ -425,14 +427,14 @@ fun MessageInput(
                 ) {
                     Icon(
                         Icons.Default.AttachFile, 
-                        contentDescription = "Attach",
+                        contentDescription = stringResource(SharedR.string.chat_attach_desc),
                         tint = MaterialTheme.colorScheme.primary
                     )
                 }
                 TextField(
                     value = text,
                     onValueChange = onTextChanged,
-                    placeholder = { Text("Message", color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)) },
+                    placeholder = { Text(stringResource(SharedR.string.chat_message_placeholder), color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)) },
                     modifier = Modifier.weight(1f),
                     maxLines = 5,
                     colors = TextFieldDefaults.colors(
@@ -461,7 +463,7 @@ fun MessageInput(
                     ) {
                         Icon(
                             Icons.AutoMirrored.Filled.Send,
-                            contentDescription = "Send",
+                            contentDescription = stringResource(SharedR.string.chat_send_desc),
                             tint = if (text.isNotBlank()) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.outline,
                             modifier = Modifier.size(20.dp)
                         )

@@ -10,6 +10,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
+import me.ashishekka.echo.shared.R as SharedR
+import androidx.compose.ui.res.stringResource
+
 @Composable
 fun SplashScreen(modifier: Modifier = Modifier) {
     Box(
@@ -17,7 +20,7 @@ fun SplashScreen(modifier: Modifier = Modifier) {
         contentAlignment = Alignment.Center
     ) {
         Text(
-            text = "Echo",
+            text = stringResource(SharedR.string.home_title),
             fontSize = 48.sp,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.primary

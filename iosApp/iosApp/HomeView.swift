@@ -17,13 +17,13 @@ struct ChatRow: View {
             }
             
             if let draft = chat.draft, !draft.isEmpty {
-                Text("Draft: \(draft)")
+                Text(String(localized: "common_draft_prefix") + " \(draft)")
                     .font(.subheadline)
                     .fontWeight(.medium)
                     .foregroundColor(.accentColor)
                     .lineLimit(1)
             } else {
-                Text(chat.lastMessage ?? "No messages yet")
+                Text(chat.lastMessage ?? String(localized: "chat_no_messages"))
                     .font(.subheadline)
                     .foregroundColor(.secondary)
                     .lineLimit(1)
@@ -43,7 +43,7 @@ struct HomeView: View {
             Group {
                 if let state = viewModel.state {
                     if state.isDeleting {
-                        ProgressView("Deleting...")
+                        ProgressView(LocalizedStringKey("home_deleting"))
                     } else if !viewModel.chats.isEmpty {
                         List {
                             ForEach(viewModel.chats, id: \.title) { chat in
@@ -56,7 +56,7 @@ struct HomeView: View {
                                         Button(role: .destructive) {
                                             viewModel.onIntent(intent: HomeIntentConfirmDelete(chatId: chat.id))
                                         } label: {
-                                            Label("Delete", systemImage: "trash")
+                                            Label(LocalizedStringKey("common_delete"), systemImage: "trash")
                                         }
                                     }
                             }
@@ -64,11 +64,11 @@ struct HomeView: View {
                         .listStyle(.plain)
                     } else {
                         VStack(spacing: 20) {
-                            Text("No chats yet")
+                            Text(LocalizedStringKey("home_empty_message"))
                                 .font(.title2)
                                 .foregroundColor(.secondary)
                             Button(action: onNewChatClick) {
-                                Text("Start a new one!")
+                                Text(LocalizedStringKey("home_start_new"))
                                     .fontWeight(.bold)
                             }
                             .buttonStyle(.borderedProminent)
@@ -78,7 +78,7 @@ struct HomeView: View {
                     ProgressView()
                 }
             }
-            .navigationTitle("Echo")
+            .navigationTitle(LocalizedStringKey("home_title"))
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Button(action: onNewChatClick) {
@@ -86,26 +86,26 @@ struct HomeView: View {
                     }
                 }
             }
-            .alert("Delete Chat", isPresented: Binding(
+            .alert(LocalizedStringKey("home_delete_chat_title"), isPresented: Binding(
                 get: { viewModel.state?.pendingDeleteChatId != nil },
                 set: { if !$0 { viewModel.onIntent(intent: HomeIntentCancelDelete()) } }
             )) {
-                Button("Cancel", role: .cancel) {
+                Button(LocalizedStringKey("common_cancel"), role: .cancel) {
                     viewModel.onIntent(intent: HomeIntentCancelDelete())
                 }
-                Button("Delete", role: .destructive) {
+                Button(LocalizedStringKey("common_delete"), role: .destructive) {
                     let generator = UIImpactFeedbackGenerator(style: .medium)
                     generator.impactOccurred()
                     viewModel.onIntent(intent: HomeIntentDeletePendingChat())
                 }
             } message: {
-                Text("Are you sure you want to delete this conversation? This action cannot be undone.")
+                Text(LocalizedStringKey("home_delete_chat_message"))
             }
-            .alert("Error", isPresented: Binding(
+            .alert(LocalizedStringKey("common_error"), isPresented: Binding(
                 get: { viewModel.state?.error != nil },
                 set: { if !$0 { viewModel.onIntent(intent: HomeIntentClearError()) } }
             )) {
-                Button("OK") { viewModel.onIntent(intent: HomeIntentClearError()) }
+                Button(LocalizedStringKey("common_ok")) { viewModel.onIntent(intent: HomeIntentClearError()) }
             } message: {
                 if let error = viewModel.state?.error {
                     Text(String(describing: error))

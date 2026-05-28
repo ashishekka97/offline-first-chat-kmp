@@ -6,7 +6,7 @@ struct SplashView: View {
             Color(UIColor.systemBackground)
                 .ignoresSafeArea()
             
-            Text("Echo")
+            Text(LocalizedStringKey("home_title"))
                 .font(.system(size: 48, weight: .bold, design: .rounded))
                 .foregroundColor(.accentColor)
         }

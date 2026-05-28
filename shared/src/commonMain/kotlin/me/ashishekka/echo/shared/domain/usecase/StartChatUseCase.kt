@@ -11,6 +11,9 @@ import me.ashishekka.echo.shared.domain.repository.ChatRepository
 import me.ashishekka.echo.shared.domain.service.AgentService
 import me.ashishekka.echo.shared.domain.service.MediaService
 
+import me.ashishekka.echo.shared.util.EchoString
+import me.ashishekka.echo.shared.util.StringProvider
+
 /**
  * Use case for starting a new chat with an initial message.
  * This ensures the chat, its participants, and the first message are created atomically
@@ -20,7 +23,8 @@ class StartChatUseCase(
     private val chatRepository: ChatRepository,
     private val agentService: AgentService,
     private val mediaService: MediaService,
-    private val localAssetManager: LocalAssetManager
+    private val localAssetManager: LocalAssetManager,
+    private val stringProvider: StringProvider
 ) {
     /**
      * Creates a new chat and its first message, then triggers the AI simulation.
@@ -53,9 +57,9 @@ class StartChatUseCase(
         val autoTitle = if (message.isNotBlank()) {
             message.take(20).let { if (it.length < message.length) "$it..." else it }
         } else if (finalType == MessageType.FILE) {
-            "Image Chat"
+            stringProvider.get(EchoString.ImageChat)
         } else {
-            "New Chat"
+            stringProvider.get(EchoString.NewChat)
         }
 
         return chatRepository.createChatWithMessage(

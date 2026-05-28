@@ -1,5 +1,8 @@
 package me.ashishekka.echo.screens
 
+import me.ashishekka.echo.shared.R as SharedR
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.foundation.background
@@ -34,6 +37,7 @@ fun HomeScreen(
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = koinViewModel()
 ) {
+    val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
     val state by viewModel.state.collectAsState()
     val chats = state.chats.collectAsLazyPagingItems()
@@ -42,8 +46,8 @@ fun HomeScreen(
     LaunchedEffect(state.error) {
         state.error?.let { error ->
             snackbarHostState.showSnackbar(
-                message = "Error: ${error::class.simpleName}",
-                actionLabel = "Dismiss"
+                message = context.getString(SharedR.string.common_error_prefix, error::class.simpleName ?: ""),
+                actionLabel = context.getString(SharedR.string.common_dismiss)
             )
             viewModel.onIntent(HomeIntent.ClearError)
         }
@@ -61,12 +65,12 @@ fun HomeScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("Echo") })
+            TopAppBar(title = { Text(stringResource(SharedR.string.home_title)) })
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
             FloatingActionButton(onClick = onNewChatClick) {
-                Icon(Icons.Default.Add, contentDescription = "New Chat")
+                Icon(Icons.Default.Add, contentDescription = stringResource(SharedR.string.chat_new_title))
             }
         },
         modifier = modifier
@@ -78,7 +82,7 @@ fun HomeScreen(
         } else if (chats.itemCount == 0) {
             EmptyScreenContent(
                 modifier = Modifier.padding(padding),
-                text = "No chats yet. Start a new one!"
+                text = stringResource(SharedR.string.home_empty_message)
             )
         } else {
             LazyColumn(
@@ -117,7 +121,7 @@ fun HomeScreen(
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.Delete,
-                                        contentDescription = "Delete",
+                                        contentDescription = stringResource(SharedR.string.common_delete),
                                         tint = MaterialTheme.colorScheme.onError
                                     )
                                 }
@@ -150,16 +154,16 @@ fun DeleteConfirmationDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Delete Chat") },
-        text = { Text("Are you sure you want to delete this conversation? This action cannot be undone.") },
+        title = { Text(stringResource(SharedR.string.home_delete_chat_title)) },
+        text = { Text(stringResource(SharedR.string.home_delete_chat_message)) },
         confirmButton = {
             TextButton(onClick = onConfirm) {
-                Text("Delete", color = MaterialTheme.colorScheme.error)
+                Text(stringResource(SharedR.string.common_delete), color = MaterialTheme.colorScheme.error)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text(stringResource(SharedR.string.common_cancel))
             }
         }
     )
@@ -198,9 +202,9 @@ fun ChatItem(
             
             val isDraft = !chat.draft.isNullOrBlank()
             val lastMessageText = if (isDraft) {
-                "Draft: ${chat.draft}"
+                stringResource(SharedR.string.common_draft_prefix, chat.draft!!)
             } else {
-                chat.lastMessage ?: "No messages yet"
+                chat.lastMessage ?: stringResource(SharedR.string.chat_no_messages)
             }
             
             Text(
