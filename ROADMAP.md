@@ -66,7 +66,7 @@ This roadmap outlines the implementation phases and technical tasks for the Echo
 *   [x] **iOS: Splash & Startup Routing**: Handle the first-run restore UI vs. immediate application launch.
 *   [x] **iOS: Home Screen UI & Interactions**: Build the chat list UI with native swipe actions and styling.
 *   [x] **iOS: Chat Detail Message List**: Implement the message history view with bubble styling and auto-scroll.
-*   [ ] **iOS: Chat Detail Input & Keyboard**: Implement the native input field with keyboard avoiding logic.
+*   [x] **iOS: Chat Detail Input & Keyboard**: Implement the native input field with keyboard avoiding logic.
 *   [ ] **iOS: Media Rendering & Picking**: Implement SwiftUI image loading and native PHPicker/Camera integration.
 *   [ ] **iOS: Fullscreen Image Viewer**: Implement a zoomable fullscreen image view with pinch-to-zoom support.
 *   [ ] **iOS: Tappable Title Editing**: Implement title editing via the navigation bar (Bonus).

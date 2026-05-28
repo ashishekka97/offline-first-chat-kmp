@@ -19,14 +19,7 @@ struct ChatDetailView: View {
                         }
                         
                         if let state = viewModel.state, state.isAgentTyping {
-                            HStack {
-                                Text("Agent is typing...")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                                    .padding(.horizontal, 20)
-                                    .padding(.vertical, 8)
-                                Spacer()
-                            }
+                            TypingIndicator()
                         }
                         
                         Color.clear
@@ -36,6 +29,14 @@ struct ChatDetailView: View {
                 }
                 .onChange(of: viewModel.scrollToBottomTrigger) { _ in
                     scrollToBottom(proxy: proxy)
+                }
+                .onChange(of: viewModel.messages.count) { _ in
+                    scrollToBottom(proxy: proxy)
+                }
+                .onChange(of: viewModel.state?.isAgentTyping) { isTyping in
+                    if isTyping == true {
+                        scrollToBottom(proxy: proxy)
+                    }
                 }
                 .onAppear {
                     viewModel.onIntent(intent: ChatDetailIntentOnInitialMessagesLoaded())
@@ -55,15 +56,14 @@ struct ChatDetailView: View {
                             .background(Circle().fill(Color.accentColor.opacity(0.1)))
                     }
                     
-                    TextEditor(text: Binding(
+                    TextField("Message", text: Binding(
                         get: { viewModel.state?.currentDraft ?? "" },
                         set: { viewModel.onIntent(intent: ChatDetailIntentUpdateDraft(text: $0)) }
-                    ))
-                    .frame(minHeight: 36, maxHeight: 120)
+                    ), axis: .vertical)
                     .padding(.horizontal, 12)
-                    .padding(.vertical, 4)
+                    .padding(.vertical, 8)
                     .background(RoundedRectangle(cornerRadius: 20).fill(Color(UIColor.secondarySystemBackground)))
-                    .fixedSize(horizontal: false, vertical: true)
+                    .lineLimit(1...5)
                     
                     Button(action: {
                         if let draft = viewModel.state?.currentDraft, !draft.isEmpty {
@@ -85,13 +85,44 @@ struct ChatDetailView: View {
         }
         .navigationTitle(viewModel.state?.chat?.title ?? "Chat")
         .navigationBarTitleDisplayMode(.inline)
-        .ignoresSafeArea(.keyboard, edges: .bottom) // Ensures content stays visible above keyboard
     }
     
     private func scrollToBottom(proxy: ScrollViewProxy, delay: Double = 0.1) {
         DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
             withAnimation(.easeOut(duration: 0.3)) {
                 proxy.scrollTo("BOTTOM", anchor: .bottom)
+            }
+        }
+    }
+}
+
+struct TypingIndicator: View {
+    @State private var animStep = 0
+    
+    var body: some View {
+        HStack {
+            HStack(spacing: 4) {
+                ForEach(0..<3) { index in
+                    Circle()
+                        .fill(Color.secondary)
+                        .frame(width: 6, height: 6)
+                        .opacity(animStep == index ? 1 : 0.3)
+                        .animation(.easeInOut(duration: 0.5), value: animStep)
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .background(Color(UIColor.secondarySystemBackground))
+            .cornerRadius(16, corners: [.topLeft, .topRight, .bottomRight])
+            .cornerRadius(4, corners: [.bottomLeft])
+            
+            Spacer()
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 4)
+        .onAppear {
+            Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { timer in
+                animStep = (animStep + 1) % 3
             }
         }
     }
