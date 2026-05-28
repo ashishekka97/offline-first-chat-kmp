@@ -7,6 +7,8 @@ import me.ashishekka.echo.shared.domain.model.Chat
 import me.ashishekka.echo.shared.domain.model.Message
 import me.ashishekka.echo.shared.domain.model.Participant
 import me.ashishekka.echo.shared.domain.model.ParticipantId
+import me.ashishekka.echo.shared.domain.util.DateTimeUtils
+import me.ashishekka.echo.shared.domain.util.FileSizeUtils
 
 /**
  * Maps [ParticipantEntity] to [Participant] domain model.
@@ -50,7 +52,8 @@ fun ChatWithParticipants.toDomain(currentUserId: ParticipantId): Chat {
         lastMessage = chat.lastMessage,
         lastMessageTimestamp = chat.lastMessageTimestamp,
         createdAt = chat.createdAt,
-        updatedAt = chat.updatedAt
+        updatedAt = chat.updatedAt,
+        displayTimestamp = DateTimeUtils.formatSmartTimestamp(chat.lastMessageTimestamp)
     )
 }
 
@@ -68,6 +71,8 @@ fun MessageWithSender.toDomain(currentUserId: ParticipantId): Message {
         type = message.type,
         file = message.file,
         timestamp = message.timestamp,
-        isFromMe = message.senderId.value == currentUserId.value
+        isFromMe = message.senderId.value == currentUserId.value,
+        displayTimestamp = DateTimeUtils.formatSmartTimestamp(message.timestamp),
+        displaySize = message.file?.fileSize?.let { FileSizeUtils.formatFileSize(it) } ?: ""
     )
 }

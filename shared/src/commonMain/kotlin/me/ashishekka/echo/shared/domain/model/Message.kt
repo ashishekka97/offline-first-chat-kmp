@@ -23,5 +23,7 @@ data class Message(
     val type: MessageType,
     val file: FileDetails?,
     val timestamp: Long,
-    val isFromMe: Boolean
+    val isFromMe: Boolean,
+    val displayTimestamp: String = "",
+    val displaySize: String = ""
 )

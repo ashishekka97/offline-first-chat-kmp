@@ -16,5 +16,6 @@ data class Chat(
     val lastMessage: String?,
     val lastMessageTimestamp: Long,
     val createdAt: Long,
-    val updatedAt: Long
+    val updatedAt: Long,
+    val displayTimestamp: String = ""
 )
