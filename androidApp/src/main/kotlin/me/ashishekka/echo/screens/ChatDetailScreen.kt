@@ -1,5 +1,8 @@
 package me.ashishekka.echo.screens
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -19,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
+import coil3.compose.AsyncImage
 import me.ashishekka.echo.shared.domain.model.ChatId
 import me.ashishekka.echo.shared.domain.model.Message
 import me.ashishekka.echo.shared.domain.model.MessageType
@@ -108,6 +112,76 @@ fun ChatDetailScreen(
 }
 
 @Composable
+fun MessageBubble(message: Message) {
+    val alignment = if (message.isFromMe) Alignment.End else Alignment.Start
+    val bubbleColor = if (message.isFromMe) {
+        DesignTokens.Colors.UserBubble.toColor()
+    } else {
+        DesignTokens.Colors.AgentBubble.toColor()
+    }
+    val textColor = DesignTokens.Colors.TextPrimary.toColor()
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        horizontalAlignment = alignment
+    ) {
+        Surface(
+            color = bubbleColor,
+            shape = RoundedCornerShape(
+                topStart = 16.dp,
+                topEnd = 16.dp,
+                bottomStart = if (message.isFromMe) 16.dp else 4.dp,
+                bottomEnd = if (message.isFromMe) 4.dp else 16.dp
+            ),
+            modifier = Modifier.widthIn(max = 280.dp)
+        ) {
+            Column(modifier = Modifier.padding(12.dp)) {
+                if (message.type == MessageType.FILE && message.file != null) {
+                    AsyncImage(
+                        model = message.file?.fullPath ?: message.file?.path,
+                        contentDescription = null,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .size(200.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color.LightGray)
+                    )
+                    if (message.message.isNotEmpty()) {
+                        Text(
+                            text = message.message,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = textColor,
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
+                    }
+                    Text(
+                        text = message.displaySize,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = DesignTokens.Colors.TextSecondary.toColor(),
+                        modifier = Modifier.padding(top = 2.dp)
+                    )
+                } else {
+                    Text(
+                        text = message.message,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = textColor
+                    )
+                }
+                Text(
+                    text = message.displayTimestamp,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = DesignTokens.Colors.TextSecondary.toColor(),
+                    modifier = Modifier.align(Alignment.End).padding(top = 2.dp),
+                    fontSize = 10.sp
+                )
+            }
+        }
+    }
+}
+
+@Composable
 fun MessageInput(
     text: String,
     onTextChanged: (String) -> Unit,
@@ -149,69 +223,6 @@ fun MessageInput(
                     Icons.AutoMirrored.Filled.Send,
                     contentDescription = "Send",
                     tint = if (text.isNotBlank()) MaterialTheme.colorScheme.primary else Color.Gray
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun MessageBubble(message: Message) {
-    val alignment = if (message.isFromMe) Alignment.End else Alignment.Start
-    val bubbleColor = if (message.isFromMe) {
-        DesignTokens.Colors.UserBubble.toColor()
-    } else {
-        DesignTokens.Colors.AgentBubble.toColor()
-    }
-    val textColor = DesignTokens.Colors.TextPrimary.toColor()
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        horizontalAlignment = alignment
-    ) {
-        Surface(
-            color = bubbleColor,
-            shape = RoundedCornerShape(
-                topStart = 16.dp,
-                topEnd = 16.dp,
-                bottomStart = if (message.isFromMe) 16.dp else 4.dp,
-                bottomEnd = if (message.isFromMe) 4.dp else 16.dp
-            ),
-            modifier = Modifier.widthIn(max = 280.dp)
-        ) {
-            Column(modifier = Modifier.padding(12.dp)) {
-                if (message.type == MessageType.FILE && message.file != null) {
-                    // Placeholder for image rendering
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .size(200.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(Color.LightGray)
-                    )
-                    if (message.message.isNotEmpty()) {
-                        Text(
-                            text = message.message,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = textColor,
-                            modifier = Modifier.padding(top = 4.dp)
-                        )
-                    }
-                } else {
-                    Text(
-                        text = message.message,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = textColor
-                    )
-                }
-                Text(
-                    text = message.displayTimestamp,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = DesignTokens.Colors.TextSecondary.toColor(),
-                    modifier = Modifier.align(Alignment.End).padding(top = 2.dp),
-                    fontSize = 10.sp
                 )
             }
         }

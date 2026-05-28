@@ -55,7 +55,7 @@ This roadmap outlines the implementation phases and technical tasks for the Echo
 *   [x] **Android: Home Screen UI & Interactions**: Build the chat list UI with swipe-to-delete confirmation.
 *   [x] **Android: Chat Detail Message List**: Implement bubble-style message history with auto-scroll behavior.
 *   [x] **Android: Chat Detail Input & Keyboard**: Implement the message input bar with keyboard inset handling.
-*   [ ] **Android: Chat Detail Media Rendering**: Integrate Coil for local URI and thumbnail rendering.
+*   [x] **Android: Chat Detail Media Rendering**: Integrate Coil for local URI and thumbnail rendering.
 *   [ ] **Android: Chat Detail Media Picking**: Implement Gallery and Camera picker intents integrated with the Media Processor.
 
 ## Phase 6: iOS Platform (SwiftUI)
