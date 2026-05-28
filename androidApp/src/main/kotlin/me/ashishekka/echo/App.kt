@@ -7,6 +7,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.*
 import androidx.navigation.toRoute
 import kotlinx.serialization.Serializable
+import me.ashishekka.echo.screens.ChatDetailScreen
 import me.ashishekka.echo.screens.HomeScreen
 import me.ashishekka.echo.shared.screens.home.HomeIntent
 import me.ashishekka.echo.shared.screens.home.HomeSideEffect
@@ -64,7 +65,10 @@ fun EchoNavGraph() {
         }
         composable<DetailDestination> { backStackEntry ->
             val destination = backStackEntry.toRoute<DetailDestination>()
-            Text("Chat Detail for: ${destination.objectId}")
+            ChatDetailScreen(
+                chatId = destination.objectId,
+                onBackClick = { navController.popBackStack() }
+            )
         }
     }
 }
