@@ -5,6 +5,10 @@ struct ChatDetailView: View {
     @StateObject var viewModel: ObservableChatDetailViewModel
     @Environment(\.dismiss) private var dismiss
     
+    @State private var showPhotoPicker = false
+    @State private var showCameraPicker = false
+    @State private var showSourcePicker = false
+    
     init(chatId: String) {
         _viewModel = StateObject(wrappedValue: ObservableChatDetailViewModel(chatId: chatId))
     }
@@ -48,12 +52,27 @@ struct ChatDetailView: View {
             VStack(spacing: 0) {
                 Divider()
                 HStack(alignment: .bottom, spacing: 12) {
-                    Button(action: {}) {
+                    Button(action: { showSourcePicker = true }) {
                         Image(systemName: "plus")
                             .font(.title3)
                             .foregroundColor(.accentColor)
                             .padding(8)
                             .background(Circle().fill(Color.accentColor.opacity(0.1)))
+                    }
+                    .confirmationDialog("Choose Source", isPresented: $showSourcePicker) {
+                        Button("Camera") { showCameraPicker = true }
+                        Button("Gallery") { showPhotoPicker = true }
+                        Button("Cancel", role: .cancel) {}
+                    }
+                    .sheet(isPresented: $showPhotoPicker) {
+                        PhotoPicker(isPresented: $showPhotoPicker) { url in
+                            viewModel.onIntent(intent: ChatDetailIntentSendMessage(text: "", localMediaPath: url.path))
+                        }
+                    }
+                    .sheet(isPresented: $showCameraPicker) {
+                        CameraPicker(isPresented: $showCameraPicker) { url in
+                            viewModel.onIntent(intent: ChatDetailIntentSendMessage(text: "", localMediaPath: url.path))
+                        }
                     }
                     
                     TextField("Message", text: Binding(

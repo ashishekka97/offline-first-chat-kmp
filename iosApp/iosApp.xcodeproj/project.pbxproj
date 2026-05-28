@@ -21,6 +21,7 @@
 		2EC06A492FC88DBF00C12631 /* ChatDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2EC06A452FC88DBF00C12631 /* ChatDetailView.swift */; };
 		2EC06A4A2FC88DBF00C12631 /* MessageBubble.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2EC06A462FC88DBF00C12631 /* MessageBubble.swift */; };
 		2EC06A4D2FC892ED00C12631 /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = 2EC06A4C2FC892ED00C12631 /* Kingfisher */; };
+		2EC06A4F2FC89BAD00C12631 /* MediaPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2EC06A4E2FC89BAD00C12631 /* MediaPicker.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -35,6 +36,7 @@
 		2EC06A452FC88DBF00C12631 /* ChatDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatDetailView.swift; sourceTree = "<group>"; };
 		2EC06A462FC88DBF00C12631 /* MessageBubble.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageBubble.swift; sourceTree = "<group>"; };
 		2EC06A472FC88DBF00C12631 /* ObservableChatDetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ObservableChatDetailViewModel.swift; sourceTree = "<group>"; };
+		2EC06A4E2FC89BAD00C12631 /* MediaPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaPicker.swift; sourceTree = "<group>"; };
 		7555FF7B242A565900829871 /* Echo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Echo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7555FF8C242A565B00829871 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		AB3632DC29227652001CCB65 /* Config.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
@@ -90,6 +92,7 @@
 		7555FF7D242A565900829871 /* iosApp */ = {
 			isa = PBXGroup;
 			children = (
+				2EC06A4E2FC89BAD00C12631 /* MediaPicker.swift */,
 				2EC06A452FC88DBF00C12631 /* ChatDetailView.swift */,
 				2EC06A462FC88DBF00C12631 /* MessageBubble.swift */,
 				2EC06A472FC88DBF00C12631 /* ObservableChatDetailViewModel.swift */,
@@ -218,6 +221,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				2152FB042600AC8F00CF470E /* iOSApp.swift in Sources */,
+				2EC06A4F2FC89BAD00C12631 /* MediaPicker.swift in Sources */,
 				2E97A76A2FC620B30096C60E /* ContentView.swift in Sources */,
 				2EC06A482FC88DBF00C12631 /* ObservableChatDetailViewModel.swift in Sources */,
 				2EC06A492FC88DBF00C12631 /* ChatDetailView.swift in Sources */,
