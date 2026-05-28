@@ -58,7 +58,7 @@ This roadmap outlines the implementation phases and technical tasks for the Echo
 *   [x] **Android: Chat Detail Media Rendering**: Integrate Coil for local URI and thumbnail rendering.
 *   [x] **Android: Chat Detail Media Picking**: Implement Gallery and Camera picker intents integrated with the Media Processor.
 *   [x] **Android: Fullscreen Image Viewer**: Implement a zoomable fullscreen image screen with pinch-to-zoom support.
-*   [ ] **Android: Tappable Title Editing**: Implement title editing via the top app bar (Bonus).
+*   [x] **Android: Tappable Title Editing**: Implement title editing via the top app bar (Bonus).
 
 ## Phase 6: iOS Platform (SwiftUI)
 **Goal:** Build the iOS user interface using SwiftUI.

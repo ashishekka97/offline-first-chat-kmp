@@ -58,6 +58,7 @@ fun ChatDetailScreen(
 
     var showSourcePicker by remember { mutableStateOf(false) }
     var capturedImageUri by remember { mutableStateOf<Uri?>(null) }
+    var showRenameDialog by remember { mutableStateOf(false) }
 
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
@@ -111,10 +112,26 @@ fun ChatDetailScreen(
         )
     }
 
+    if (showRenameDialog && state.chat != null) {
+        RenameChatDialog(
+            initialTitle = state.chat!!.title,
+            onDismiss = { showRenameDialog = false },
+            onConfirm = { newTitle ->
+                showRenameDialog = false
+                viewModel.onIntent(ChatDetailIntent.RenameChat(newTitle))
+            }
+        )
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(state.chat?.title ?: "New Chat") },
+                title = { 
+                    Text(
+                        text = state.chat?.title ?: "New Chat",
+                        modifier = Modifier.clickable { if (!state.isNewChat) showRenameDialog = true }
+                    ) 
+                },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -165,6 +182,41 @@ fun ChatDetailScreen(
             }
         }
     }
+}
+
+@Composable
+fun RenameChatDialog(
+    initialTitle: String,
+    onDismiss: () -> Unit,
+    onConfirm: (String) -> Unit
+) {
+    var title by remember { mutableStateOf(initialTitle) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Rename Chat") },
+        text = {
+            TextField(
+                value = title,
+                onValueChange = { title = it },
+                label = { Text("Chat Title") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
+            )
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { onConfirm(title) },
+                enabled = title.isNotBlank()
+            ) {
+                Text("Save")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
 }
 
 @Composable
