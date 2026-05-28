@@ -69,7 +69,7 @@ This roadmap outlines the implementation phases and technical tasks for the Echo
 *   [x] **iOS: Chat Detail Input & Keyboard**: Implement the native input field with keyboard avoiding logic.
 *   [x] **iOS: Media Rendering & Picking**: Implement SwiftUI image loading and native PHPicker/Camera integration.
 *   [x] **iOS: Fullscreen Image Viewer**: Implement a zoomable fullscreen image view with pinch-to-zoom support.
-*   [ ] **iOS: Tappable Title Editing**: Implement title editing via the navigation bar (Bonus).
+*   [x] **iOS: Tappable Title Editing**: Implement title editing via the navigation bar (Bonus).
 
 ## Phase 7: Final Polish & Resilience
 **Goal:** Ensure UI robustness and cross-platform validation.

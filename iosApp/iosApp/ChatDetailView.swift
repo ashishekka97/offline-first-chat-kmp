@@ -10,6 +10,9 @@ struct ChatDetailView: View {
     @State private var showSourcePicker = false
     @State private var selectedImageFullscreen: String? = nil
     
+    @State private var showRenameDialog = false
+    @State private var newTitle = ""
+    
     init(chatId: String) {
         _viewModel = StateObject(wrappedValue: ObservableChatDetailViewModel(chatId: chatId))
     }
@@ -105,8 +108,28 @@ struct ChatDetailView: View {
                 .background(Color(UIColor.systemBackground))
             }
         }
-        .navigationTitle(viewModel.state?.chat?.title ?? "Chat")
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                Text(viewModel.state?.chat?.title ?? "New Chat")
+                    .font(.headline)
+                    .onTapGesture {
+                        if let chat = viewModel.state?.chat {
+                            newTitle = chat.title
+                            showRenameDialog = true
+                        }
+                    }
+            }
+        }
         .navigationBarTitleDisplayMode(.inline)
+        .alert("Rename Chat", isPresented: $showRenameDialog) {
+            TextField("Chat Title", text: $newTitle)
+            Button("Save") {
+                viewModel.onIntent(intent: ChatDetailIntentRenameChat(newTitle: newTitle))
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Enter a new name for this chat.")
+        }
         .fullScreenCover(item: $selectedImageFullscreen) { imageUrl in
             FullscreenImageView(imageUrl: imageUrl)
         }
