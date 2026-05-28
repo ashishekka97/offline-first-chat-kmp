@@ -56,8 +56,11 @@ fun ChatDetailScreen(
     val messages = state.messages.collectAsLazyPagingItems()
     val listState = rememberLazyListState()
 
-    // Auto-scroll to bottom when messages change or agent starts typing
-    LaunchedEffect(messages.itemCount, state.isAgentTyping) {
+    // Detect if keyboard is visible
+    val isKeyboardVisible = WindowInsets.ime.getBottom(androidx.compose.ui.platform.LocalDensity.current) > 0
+
+    // Auto-scroll logic for new messages, agent typing, and keyboard appearance
+    LaunchedEffect(messages.itemCount, state.isAgentTyping, isKeyboardVisible) {
         if (messages.itemCount > 0) {
             listState.animateScrollToItem(messages.itemCount - 1)
         }
