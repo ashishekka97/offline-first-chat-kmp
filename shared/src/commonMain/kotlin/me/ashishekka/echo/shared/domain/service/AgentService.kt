@@ -6,8 +6,11 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.datetime.Clock
+import me.ashishekka.echo.shared.data.file.LocalAssetManager
 import me.ashishekka.echo.shared.di.DispatcherProvider
+import me.ashishekka.echo.shared.domain.AppError
 import me.ashishekka.echo.shared.domain.Constants
+import me.ashishekka.echo.shared.domain.Result
 import me.ashishekka.echo.shared.domain.model.*
 import me.ashishekka.echo.shared.domain.repository.MessageRepository
 import me.ashishekka.echo.shared.util.Log
@@ -40,6 +43,7 @@ interface AgentService {
 @OptIn(FlowPreview::class)
 class DefaultAgentService(
     private val messageRepository: MessageRepository,
+    private val localAssetManager: LocalAssetManager,
     private val idGenerator: IdGenerator,
     private val dispatcherProvider: DispatcherProvider,
     private val scope: CoroutineScope = CoroutineScope(dispatcherProvider.default + SupervisorJob()),
@@ -48,6 +52,9 @@ class DefaultAgentService(
 
     private val _typingStates = MutableStateFlow<Map<ChatId, Boolean>>(emptyMap())
     override val typingStates: StateFlow<Map<ChatId, Boolean>> = _typingStates.asStateFlow()
+
+    // Tracks if the user is currently typing in a chat
+    private val userTypingStates = MutableStateFlow<Map<ChatId, Boolean>>(emptyMap())
 
     private val triggerFlow = MutableSharedFlow<ChatId>(
         extraBufferCapacity = 64,
@@ -132,7 +139,7 @@ class DefaultAgentService(
                 }
                 
                 // Hardening: Handle repository failures gracefully in simulation
-                if (result is me.ashishekka.echo.shared.domain.Result.Failure) {
+                if (result is Result.Failure) {
                     // Log error or handle as needed for simulation resilience
                     Log.e("AgentService", "Agent simulation failed for chat $chatId: ${result.error}")
                 }
@@ -143,7 +150,7 @@ class DefaultAgentService(
         }
     }
 
-    private suspend fun sendTextReply(id: MessageId, chatId: ChatId, timestamp: Long): me.ashishekka.echo.shared.domain.Result<Unit, me.ashishekka.echo.shared.domain.AppError> {
+    private suspend fun sendTextReply(id: MessageId, chatId: ChatId, timestamp: Long): Result<Unit, AppError> {
         val reply = TEXT_REPLIES.random()
         return messageRepository.sendMessage(
             id = id,
@@ -155,8 +162,26 @@ class DefaultAgentService(
         )
     }
 
-    private suspend fun sendImageReply(id: MessageId, chatId: ChatId, timestamp: Long): me.ashishekka.echo.shared.domain.Result<Unit, me.ashishekka.echo.shared.domain.AppError> {
-        val (caption, assetName) = IMAGE_REPLIES.random()
+    private suspend fun sendImageReply(id: MessageId, chatId: ChatId, timestamp: Long): Result<Unit, AppError> {
+        // Requirement: Offline-First. We try to reuse existing local media from the chat history.
+        val mediaResult = messageRepository.getFilePathsForChat(chatId)
+        val existingMedia = if (mediaResult is Result.Success) {
+            mediaResult.data.filter { path ->
+                path.startsWith("http") || localAssetManager.exists(path)
+            }
+        } else {
+            emptyList()
+        }
+
+        val assetPath = if (existingMedia.isNotEmpty()) {
+            existingMedia.random()
+        } else {
+            // Fallback for empty chats or corrupted history: A reliable placeholder URL
+            "https://picsum.photos/seed/echo_${Random.nextInt(1000)}/400/300"
+        }
+
+        val caption = if (assetPath.startsWith("http")) "Here is some inspiration!" else "Check this out again!"
+        
         return messageRepository.sendMessage(
             id = id,
             chatId = chatId,
@@ -164,8 +189,8 @@ class DefaultAgentService(
             message = caption,
             type = MessageType.FILE,
             file = FileDetails(
-                path = assetName,
-                fileSize = 0, // Not critical for simulation
+                path = assetPath,
+                fileSize = 0,
                 thumbnail = null
             ),
             timestamp = timestamp
@@ -187,10 +212,9 @@ class DefaultAgentService(
         )
 
         private val IMAGE_REPLIES = listOf(
-            "Check this out!" to "seed_flight_screenshot.jpg",
-            "I found these options for you." to "seed_flight_options.jpg",
-            "Take a look at this data." to "seed_flight_screenshot.jpg",
-            "Here is a random inspiration for you." to "https://picsum.photos/seed/echo_${Random.nextInt(1000)}/400/300"
+            "Check this out!" to "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=400",
+            "I found these options for you." to "https://images.unsplash.com/photo-1464037866556-6812c9d1c72e?w=400",
+            "Take a look at this data." to "https://images.unsplash.com/photo-1554629947-334ff61d85dc?w=400"
         )
     }
 }
