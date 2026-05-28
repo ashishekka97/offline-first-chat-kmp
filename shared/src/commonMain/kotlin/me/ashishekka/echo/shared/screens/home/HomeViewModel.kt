@@ -85,6 +85,7 @@ class HomeViewModel(
                         is RestorationResult.Success,
                         is RestorationResult.AlreadyCompleted -> {
                             _state.value = _state.value.copy(isInitialBootstrap = false)
+                            loadChats() // Re-trigger load after data is restored
                         }
                         is RestorationResult.Failure -> {
                             _state.value = _state.value.copy(

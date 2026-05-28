@@ -38,7 +38,9 @@ fun Participant.toEntity(): ParticipantEntity {
  * @param stringProvider The provider for localized smart timestamps.
  */
 fun ChatWithParticipants.toDomain(currentUserId: ParticipantId, stringProvider: StringProvider): Chat {
-    val displayTitle = if (participants.size == 2) {
+    val displayTitle = if (chat.title.isNotBlank()) {
+        chat.title
+    } else if (participants.size == 2) {
         participants.find { it.id.value != currentUserId.value }?.name ?: chat.title
     } else {
         chat.title

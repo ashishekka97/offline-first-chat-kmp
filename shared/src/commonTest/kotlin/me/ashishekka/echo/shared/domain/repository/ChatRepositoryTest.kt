@@ -56,17 +56,34 @@ class ChatRepositoryTest {
     @Test
     fun testOneOnOneChatTitleResolution() = runTest {
         val chatId = ChatId("chat_1")
-        // Create a chat with the local user and an agent
-        val chat = ChatEntity(chatId, "Group Title", null, 1000L, 1000L, 1000L)
+        // Create a chat with the local user and an agent, with an EXPLICIT title
+        val chatTitle = "Mumbai Flight Booking"
         val user = ParticipantEntity(Constants.CURRENT_USER_ID, "Me", null, false)
         val agent = ParticipantEntity(Constants.DEFAULT_AGENT_ID, "Echo Agent", null, true)
         
         participantDao.insertParticipant(user)
         participantDao.insertParticipant(agent)
-        val createResult = repository.createChat(chatId, "Group Title", listOf(user.id, agent.id))
+        val createResult = repository.createChat(chatId, chatTitle, listOf(user.id, agent.id))
         assertTrue(createResult is Result.Success)
         
-        // The title should be resolved to the agent's name because it's 1-on-1
+        // The title should remain the explicit title even though it's 1-on-1
+        val result = repository.getChatById(chatId).first()
+        assertEquals(chatTitle, result?.title)
+    }
+
+    @Test
+    fun testOneOnOneChatTitleResolutionFallback() = runTest {
+        val chatId = ChatId("chat_1")
+        // Create a chat with NO title
+        val user = ParticipantEntity(Constants.CURRENT_USER_ID, "Me", null, false)
+        val agent = ParticipantEntity(Constants.DEFAULT_AGENT_ID, "Echo Agent", null, true)
+        
+        participantDao.insertParticipant(user)
+        participantDao.insertParticipant(agent)
+        val createResult = repository.createChat(chatId, "", listOf(user.id, agent.id))
+        assertTrue(createResult is Result.Success)
+        
+        // The title should be resolved to the agent's name as a fallback
         val result = repository.getChatById(chatId).first()
         assertEquals("Echo Agent", result?.title)
     }

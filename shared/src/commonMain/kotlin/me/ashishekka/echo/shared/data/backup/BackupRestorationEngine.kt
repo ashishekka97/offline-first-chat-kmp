@@ -68,7 +68,7 @@ class DefaultBackupRestorationEngine(
             }
             
             // 5. Parse Seed Data
-            val seedDataDto = when (val parseResult = backupParser.parseSeedData(zipFs)) {
+            val seedDataDto = when (val parseResult = backupParser.parseSeedData(zipFs, "seed_data.json")) {
                 is Result.Failure -> return@withContext RestorationResult.Failure("Failed to parse or validate seed data: ${parseResult.error}")
                 is Result.Success -> parseResult.data
             }

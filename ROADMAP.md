@@ -51,7 +51,7 @@ This roadmap outlines the implementation phases and technical tasks for the Echo
 
 ## Phase 5: Android Platform (Compose)
 **Goal:** Build the Android user interface using Jetpack Compose.
-*   [ ] **Android: Splash & Startup Routing**: Handle the first-run restore UI vs. immediate application launch.
+*   [x] **Android: Splash & Startup Routing**: Handle the first-run restore UI vs. immediate application launch.
 *   [ ] **Android: Home Screen UI & Interactions**: Build the chat list UI with swipe-to-delete confirmation.
 *   [ ] **Android: Chat Detail Message List**: Implement bubble-style message history with auto-scroll behavior.
 *   [ ] **Android: Chat Detail Input & Keyboard**: Implement the message input bar with keyboard inset handling.

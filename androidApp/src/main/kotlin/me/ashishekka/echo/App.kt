@@ -1,42 +1,46 @@
 package me.ashishekka.echo
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.navigation.compose.*
+import androidx.navigation.toRoute
 import kotlinx.serialization.Serializable
+import me.ashishekka.echo.ui.theme.EchoTheme
 
 @Serializable
 object ListDestination
 
 @Serializable
-data class DetailDestination(val objectId: Int)
+data class DetailDestination(val objectId: String)
 
 @Composable
 fun App() {
-    MaterialTheme {
+    EchoTheme {
         Surface(
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background
         ) {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxHeight(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text("Echo Ready")
-                }
-            }
+            EchoNavGraph()
+        }
+    }
+}
+
+@Composable
+fun EchoNavGraph() {
+    val navController = rememberNavController()
+
+    NavHost(
+        navController = navController,
+        startDestination = ListDestination
+    ) {
+        composable<ListDestination> {
+            Text("Home Chat List (TODO)")
+        }
+        composable<DetailDestination> { backStackEntry ->
+            val destination = backStackEntry.toRoute<DetailDestination>()
+            Text("Chat Detail for: ${destination.objectId}")
         }
     }
 }
