@@ -9,10 +9,15 @@ struct ContentView: View {
             if state.isInitialBootstrap {
                 SplashView()
             } else {
-                NavigationStack {
-                    Text("Home Ready")
-                        .navigationTitle("Echo")
-                }
+                HomeView(
+                    viewModel: viewModel,
+                    onChatClick: { chatId in
+                        viewModel.onIntent(intent: HomeIntentClickChat(chatId: chatId))
+                    },
+                    onNewChatClick: {
+                        viewModel.onIntent(intent: HomeIntentNewChat())
+                    }
+                )
             }
         } else {
             // Loading state
