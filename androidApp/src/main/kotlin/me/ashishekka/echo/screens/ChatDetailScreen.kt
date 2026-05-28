@@ -7,6 +7,8 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.AttachFile
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,6 +22,7 @@ import androidx.paging.compose.itemKey
 import me.ashishekka.echo.shared.domain.model.ChatId
 import me.ashishekka.echo.shared.domain.model.Message
 import me.ashishekka.echo.shared.domain.model.MessageType
+import me.ashishekka.echo.shared.screens.chat.ChatDetailIntent
 import me.ashishekka.echo.shared.screens.chat.ChatDetailSideEffect
 import me.ashishekka.echo.shared.screens.chat.ChatDetailViewModel
 import me.ashishekka.echo.shared.util.DesignTokens
@@ -62,6 +65,14 @@ fun ChatDetailScreen(
                 }
             )
         },
+        bottomBar = {
+            MessageInput(
+                text = state.currentDraft,
+                onTextChanged = { viewModel.onIntent(ChatDetailIntent.UpdateDraft(it)) },
+                onSendClick = { viewModel.onIntent(ChatDetailIntent.SendMessage(it)) },
+                onAttachClick = { /* TODO: Phase 5.6 */ }
+            )
+        },
         modifier = modifier
     ) { padding ->
         LazyColumn(
@@ -91,6 +102,54 @@ fun ChatDetailScreen(
                         modifier = Modifier.padding(top = 8.dp)
                     )
                 }
+            }
+        }
+    }
+}
+
+@Composable
+fun MessageInput(
+    text: String,
+    onTextChanged: (String) -> Unit,
+    onSendClick: (String) -> Unit,
+    onAttachClick: () -> Unit
+) {
+    Surface(
+        tonalElevation = 2.dp,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier
+                .padding(8.dp)
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.Bottom
+        ) {
+            IconButton(onClick = onAttachClick) {
+                Icon(Icons.Default.AttachFile, contentDescription = "Attach")
+            }
+            TextField(
+                value = text,
+                onValueChange = onTextChanged,
+                placeholder = { Text("Message") },
+                modifier = Modifier.weight(1f),
+                maxLines = 4,
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent,
+                    disabledContainerColor = Color.Transparent,
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent,
+                )
+            )
+            IconButton(
+                onClick = { onSendClick(text) },
+                enabled = text.isNotBlank()
+            ) {
+                Icon(
+                    Icons.AutoMirrored.Filled.Send,
+                    contentDescription = "Send",
+                    tint = if (text.isNotBlank()) MaterialTheme.colorScheme.primary else Color.Gray
+                )
             }
         }
     }
