@@ -16,6 +16,10 @@ import me.ashishekka.echo.shared.data.file.IosAssetReader
 import me.ashishekka.echo.shared.data.file.LocalAssetManager
 import me.ashishekka.echo.shared.data.media.IosMediaProcessor
 import me.ashishekka.echo.shared.data.media.MediaProcessor
+import me.ashishekka.echo.shared.util.IosLogger
+import me.ashishekka.echo.shared.util.IosStringProvider
+import me.ashishekka.echo.shared.util.Logger
+import me.ashishekka.echo.shared.util.StringProvider
 import okio.FileSystem
 import org.koin.core.module.Module
 import org.koin.dsl.module
@@ -57,6 +61,10 @@ actual fun getPlatformDataModule(): Module = module {
     }
 
     single<AssetReader> { IosAssetReader() }
+
+    single<Logger> { IosLogger() }
+    
+    single<StringProvider> { IosStringProvider() }
 
     single<LocalAssetManager> {
         val documentDirectory = NSFileManager.defaultManager.URLForDirectory(

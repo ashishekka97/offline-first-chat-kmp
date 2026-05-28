@@ -10,6 +10,7 @@ import me.ashishekka.echo.shared.di.DispatcherProvider
 import me.ashishekka.echo.shared.domain.Constants
 import me.ashishekka.echo.shared.domain.model.*
 import me.ashishekka.echo.shared.domain.repository.MessageRepository
+import me.ashishekka.echo.shared.util.Log
 import kotlin.random.Random
 
 /**
@@ -132,7 +133,7 @@ class DefaultAgentService(
                 // Hardening: Handle repository failures gracefully in simulation
                 if (result is me.ashishekka.echo.shared.domain.Result.Failure) {
                     // Log error or handle as needed for simulation resilience
-                    println("Agent simulation failed for chat $chatId: ${result.error}")
+                    Log.e("AgentService", "Agent simulation failed for chat $chatId: ${result.error}")
                 }
             } finally {
                 // Ensure typing state is always cleared even on cancellation/error

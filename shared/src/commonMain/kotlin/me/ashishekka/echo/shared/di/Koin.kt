@@ -16,10 +16,11 @@ import me.ashishekka.echo.shared.domain.service.*
 import me.ashishekka.echo.shared.domain.usecase.*
 import me.ashishekka.echo.shared.screens.chat.ChatDetailViewModel
 import me.ashishekka.echo.shared.screens.home.HomeViewModel
+import me.ashishekka.echo.shared.util.Log
+import me.ashishekka.echo.shared.util.Logger
 import org.koin.core.context.startKoin
 import org.koin.core.logger.Level
 import org.koin.core.module.Module
-import org.koin.core.module.dsl.factoryOf
 import org.koin.dsl.KoinAppDeclaration
 import org.koin.dsl.module
 
@@ -54,8 +55,8 @@ val infrastructureModule = module {
 
 val domainModule = module {
     single<AgentService> { DefaultAgentService(get(), get(), get()) }
-    single<ChatRepository> { OfflineFirstChatRepository(get(), get()) }
-    single<MessageRepository> { OfflineFirstMessageRepository(get()) }
+    single<ChatRepository> { OfflineFirstChatRepository(get(), get(), get()) }
+    single<MessageRepository> { OfflineFirstMessageRepository(get(), get()) }
     single<ParticipantRepository> { OfflineFirstParticipantRepository(get()) }
 }
 
@@ -87,7 +88,7 @@ val viewModelModule = module {
 }
 
 fun initKoin(appDeclaration: KoinAppDeclaration = {}) {
-    startKoin {
+    val koinApp = startKoin {
         printLogger(Level.INFO)
         appDeclaration()
         modules(
@@ -100,4 +101,7 @@ fun initKoin(appDeclaration: KoinAppDeclaration = {}) {
             viewModelModule,
         )
     }
+    
+    // Initialize the global Log accessor
+    Log.init(koinApp.koin.get<Logger>())
 }
