@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
+import com.rickclephas.kmp.nativecoroutines.NativeCoroutines
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -65,9 +66,11 @@ class HomeViewModel(
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(HomeState())
+    @NativeCoroutines
     val state: StateFlow<HomeState> = _state.asStateFlow()
 
     private val _sideEffect = Channel<HomeSideEffect>(Channel.BUFFERED)
+    @NativeCoroutines
     val sideEffect: Flow<HomeSideEffect> = _sideEffect.receiveAsFlow()
 
     init {

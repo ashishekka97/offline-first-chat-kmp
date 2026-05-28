@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
+import com.rickclephas.kmp.nativecoroutines.NativeCoroutines
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -76,12 +77,14 @@ class ChatDetailViewModel(
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(ChatDetailState())
+    @NativeCoroutines
     val state: StateFlow<ChatDetailState> = _state.asStateFlow()
 
     // Local in-memory state for lag-free typing
     private val draftState = MutableStateFlow("")
 
     private val _sideEffect = Channel<ChatDetailSideEffect>(Channel.BUFFERED)
+    @NativeCoroutines
     val sideEffect: Flow<ChatDetailSideEffect> = _sideEffect.receiveAsFlow()
 
     init {
