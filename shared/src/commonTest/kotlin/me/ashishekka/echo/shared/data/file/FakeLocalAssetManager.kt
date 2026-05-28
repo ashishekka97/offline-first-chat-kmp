@@ -42,7 +42,10 @@ class FakeLocalAssetManager : LocalAssetManager {
     
     override fun bundledAssetSource(fileName: String): Result<Source, AssetError> = Result.Failure(AssetError.NotFound)
     
-    override suspend fun copyBundledAssetToLocal(fileName: String): Result<Unit, AssetError> = Result.Failure(AssetError.NotFound)
+    override suspend fun copyBundledAssetToLocal(fileName: String): Result<Unit, AssetError> {
+        storedFiles[fileName] = byteArrayOf(0) // Simulate copy
+        return Result.Success(Unit)
+    }
     
     override fun getZipFileSystem(fileName: String): Result<FileSystem, AssetError> = Result.Failure(AssetError.NotFound)
     

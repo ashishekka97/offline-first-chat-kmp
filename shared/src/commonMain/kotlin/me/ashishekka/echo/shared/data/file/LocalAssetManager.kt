@@ -140,11 +140,7 @@ class DefaultLocalAssetManager(
     }
 
     override fun getAbsolutePath(fileName: String): String {
-        return if (fileName.startsWith("http://") || fileName.startsWith("https://") || fileName.startsWith("content://") || fileName.startsWith("file://")) {
-            fileName
-        } else {
-            basePath.resolve(fileName).toString()
-        }
+        return basePath.resolve(fileName).toString()
     }
 
     override fun exists(fileName: String): Boolean {

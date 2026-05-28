@@ -106,31 +106,65 @@ class AgentServiceTest {
     }
 
     @Test
-    fun testOfflineMediaSelection() = testScope.runTest {
-        val chatId = ChatId("chat_1")
-        val localFile = "img_local_123.jpg"
+    fun testGlobalMediaSelection() = testScope.runTest {
+        val chatId = ChatId("chat_empty")
+        val globalFile = "img_global_789.jpg"
         
-        // Setup repository with existing local media
-        messageRepository.existingMedia = listOf(localFile)
-        // Ensure the file exists in the asset manager
-        localAssetManager.writeBytes(localFile, byteArrayOf(1, 2, 3))
+        // Setup repository with NO media for this chat, but media exists globally
+        messageRepository.existingMedia = emptyList()
+        messageRepository.globalMedia = listOf(globalFile)
         
-        // Trigger a reply (repeat 5 times to hit threshold)
-        repeat(5) { agentService.triggerReply(chatId) }
+        // Ensure the global file exists
+        localAssetManager.writeBytes(globalFile, byteArrayOf(1))
         
-        advanceTimeBy(3000)
+        // Trigger a reply repeatedly until we get an image
+        var imageReply: FakeMessageRepository.SentMessage? = null
+        repeat(50) {
+            agentService.triggerReply(chatId)
+            advanceTimeBy(3000)
+            val last = messageRepository.sentMessages.lastOrNull()
+            if (last?.type == MessageType.FILE) {
+                imageReply = last
+                return@repeat
+            }
+        }
         
-        // We might get a text or image reply (random). 
-        // If we get an image, it should use the local file.
-        val lastMessage = messageRepository.sentMessages.lastOrNull()
-        if (lastMessage?.type == MessageType.FILE) {
-            assertEquals(localFile, lastMessage.file?.path, "Agent should reuse existing local media")
+        if (imageReply != null) {
+            assertEquals(globalFile, imageReply.file?.path, "Agent should fallback to global media if chat media is missing")
+        }
+    }
+
+    @Test
+    fun testBundledFallback() = testScope.runTest {
+        val chatId = ChatId("chat_new")
+        
+        // Setup repository with NO media anywhere
+        messageRepository.existingMedia = emptyList()
+        messageRepository.globalMedia = emptyList()
+        
+        // Trigger a reply repeatedly until we get an image
+        var imageReply: FakeMessageRepository.SentMessage? = null
+        repeat(50) {
+            agentService.triggerReply(chatId)
+            advanceTimeBy(3000)
+            val last = messageRepository.sentMessages.lastOrNull()
+            if (last?.type == MessageType.FILE) {
+                imageReply = last
+                return@repeat
+            }
+        }
+        
+        if (imageReply != null) {
+            val path = imageReply.file?.path ?: ""
+            assertTrue(path.startsWith("agent_fallback_") && path.endsWith(".jpg"), "Agent should fallback to one of the bundled assets")
+            assertTrue(localAssetManager.exists(path), "Agent should have copied the selected bundled asset to local storage")
         }
     }
 
     class FakeMessageRepository : MessageRepository {
         val sentMessages = mutableListOf<SentMessage>()
         var existingMedia = emptyList<String>()
+        var globalMedia = emptyList<String>()
         var shouldFail = false
 
         data class SentMessage(
@@ -163,6 +197,9 @@ class AgentServiceTest {
         }
 
         override suspend fun getFilePathsForChat(chatId: ChatId): Result<List<String>, DatabaseError> = Result.Success(existingMedia)
+        
+        override suspend fun getAllLocalMediaPaths(): Result<List<String>, DatabaseError> = Result.Success(globalMedia)
+
         override suspend fun deleteMessagesForChat(chatId: ChatId): Result<Unit, DatabaseError> = Result.Success(Unit)
     }
 

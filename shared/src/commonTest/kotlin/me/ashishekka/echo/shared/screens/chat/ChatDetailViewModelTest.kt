@@ -220,6 +220,8 @@ class FakeMessageRepo : MessageRepository {
 
     override suspend fun getFilePathsForChat(chatId: ChatId): Result<List<String>, DatabaseError> = Result.Success(emptyList())
 
+    override suspend fun getAllLocalMediaPaths(): Result<List<String>, DatabaseError> = Result.Success(emptyList())
+
     override suspend fun deleteMessagesForChat(chatId: ChatId): Result<Unit, DatabaseError> = Result.Success(Unit)
 }
 

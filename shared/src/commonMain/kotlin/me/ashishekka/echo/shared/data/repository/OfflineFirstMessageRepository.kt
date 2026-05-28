@@ -68,6 +68,15 @@ class OfflineFirstMessageRepository(
         }
     }
 
+    override suspend fun getAllLocalMediaPaths(): Result<List<String>, DatabaseError> {
+        return safeDatabaseCall {
+            val messages = messageDao.getAllMediaMessages()
+            messages.mapNotNull { it.file }
+                .flatMap { listOfNotNull(it.path, it.thumbnail?.path) }
+                .filter { it.isNotBlank() }
+        }
+    }
+
     override suspend fun deleteMessagesForChat(chatId: ChatId): Result<Unit, DatabaseError> {
         return safeDatabaseCall {
             messageDao.deleteMessagesForChat(chatId)

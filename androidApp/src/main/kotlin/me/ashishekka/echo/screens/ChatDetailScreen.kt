@@ -320,7 +320,7 @@ fun MessageBubble(
             Column(modifier = Modifier.padding(12.dp)) {
                 if (message.type == MessageType.FILE && message.file != null) {
                     AsyncImage(
-                        model = message.file?.fullPath ?: message.file?.path,
+                        model = message.file?.fullPath?.takeIf { it.isNotEmpty() } ?: message.file?.path,
                         contentDescription = null,
                         modifier = Modifier
                             .fillMaxWidth()
@@ -328,7 +328,7 @@ fun MessageBubble(
                             .clip(RoundedCornerShape(8.dp))
                             .background(Color.LightGray)
                             .clickable {
-                                val url = message.file?.fullPath ?: message.file?.path
+                                val url = message.file?.fullPath?.takeIf { it.isNotEmpty() } ?: message.file?.path
                                 if (url != null) onImageClick(url)
                             }
                     )

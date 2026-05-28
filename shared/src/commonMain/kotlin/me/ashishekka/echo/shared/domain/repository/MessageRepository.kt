@@ -35,6 +35,11 @@ interface MessageRepository {
     suspend fun getFilePathsForChat(chatId: ChatId): Result<List<String>, DatabaseError>
 
     /**
+     * Returns a list of all local file paths for messages containing media across all chats.
+     */
+    suspend fun getAllLocalMediaPaths(): Result<List<String>, DatabaseError>
+
+    /**
      * Deletes all messages for a specific [chatId].
      */
     suspend fun deleteMessagesForChat(chatId: ChatId): Result<Unit, DatabaseError>

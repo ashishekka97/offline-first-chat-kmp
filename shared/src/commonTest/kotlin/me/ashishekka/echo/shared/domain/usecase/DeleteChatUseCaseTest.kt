@@ -79,6 +79,7 @@ class DeleteChatUseCaseTest {
         override fun getPagedMessagesForChat(chatId: ChatId): Flow<PagingData<Message>> = emptyFlow()
         override suspend fun sendMessage(id: MessageId, chatId: ChatId, senderId: ParticipantId, message: String, type: MessageType, file: FileDetails?, timestamp: Long): Result<Unit, DatabaseError> = Result.Success(Unit)
         override suspend fun getFilePathsForChat(chatId: ChatId): Result<List<String>, DatabaseError> = Result.Success(filePaths)
+        override suspend fun getAllLocalMediaPaths(): Result<List<String>, DatabaseError> = Result.Success(emptyList())
         override suspend fun deleteMessagesForChat(chatId: ChatId): Result<Unit, DatabaseError> = Result.Success(Unit)
     }
 

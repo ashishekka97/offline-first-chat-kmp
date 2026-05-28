@@ -64,4 +64,10 @@ interface MessageDao {
      */
     @Query("DELETE FROM messages WHERE chatId = :chatId")
     suspend fun deleteMessagesForChat(chatId: ChatId)
+
+    /**
+     * Returns all messages that contain a file attachment.
+     */
+    @Query("SELECT * FROM messages WHERE file_path IS NOT NULL AND file_path != ''")
+    suspend fun getAllMediaMessages(): List<MessageEntity>
 }

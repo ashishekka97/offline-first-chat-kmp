@@ -163,25 +163,60 @@ class DefaultAgentService(
     }
 
     private suspend fun sendImageReply(id: MessageId, chatId: ChatId, timestamp: Long): Result<Unit, AppError> {
-        // Requirement: Offline-First. We try to reuse existing local media from the chat history.
+        // Requirement: Offline-First. We only reuse existing local media.
+        // To maintain the 70/30 ratio, we first try to find media in the current chat,
+        // then fall back to ANY available media across the entire app (e.g., from seed data or other chats).
         val mediaResult = messageRepository.getFilePathsForChat(chatId)
-        val existingMedia = if (mediaResult is Result.Success) {
+        var existingMedia = if (mediaResult is Result.Success) {
             mediaResult.data.filter { path ->
-                path.startsWith("http") || localAssetManager.exists(path)
+                localAssetManager.exists(path)
             }
         } else {
             emptyList()
         }
 
-        val assetPath = if (existingMedia.isNotEmpty()) {
-            existingMedia.random()
-        } else {
-            // Fallback for empty chats or corrupted history: A reliable placeholder URL
-            "https://picsum.photos/seed/echo_${Random.nextInt(1000)}/400/300"
+        // If current chat is empty, look globally to fulfill the 30% image requirement
+        if (existingMedia.isEmpty()) {
+            val globalMediaResult = messageRepository.getAllLocalMediaPaths()
+            if (globalMediaResult is Result.Success) {
+                existingMedia = globalMediaResult.data.filter { path ->
+                    localAssetManager.exists(path)
+                }
+            }
         }
 
-        val caption = if (assetPath.startsWith("http")) "Here is some inspiration!" else "Check this out again!"
-        
+        if (existingMedia.isEmpty()) {
+            // Ultimate fallback: if there is NO media anywhere, we use one of the bundled assets.
+            // We randomly select one of 5 bundled fallback images for variety.
+            val fallbackIndex = Random.nextInt(1, 6)
+            val fallbackFileName = "agent_fallback_$fallbackIndex.jpg"
+            
+            if (!localAssetManager.exists(fallbackFileName)) {
+                val copyResult = localAssetManager.copyBundledAssetToLocal(fallbackFileName)
+                if (copyResult is Result.Failure) {
+                    // If copying fails (e.g., asset missing), fall back to text
+                    return sendTextReply(id, chatId, timestamp)
+                }
+            }
+            
+            return messageRepository.sendMessage(
+                id = id,
+                chatId = chatId,
+                senderId = Constants.DEFAULT_AGENT_ID,
+                message = "I found this for you!",
+                type = MessageType.FILE,
+                file = FileDetails(
+                    path = fallbackFileName,
+                    fileSize = 0,
+                    thumbnail = null
+                ),
+                timestamp = timestamp
+            )
+        }
+
+        val assetPath = existingMedia.random()
+        val caption = "Check this out again!"
+
         return messageRepository.sendMessage(
             id = id,
             chatId = chatId,
@@ -209,12 +244,6 @@ class DefaultAgentService(
             "I'm here to listen. Go on.",
             "Processing... Done! I think I understand now.",
             "Echoing back: acknowledged."
-        )
-
-        private val IMAGE_REPLIES = listOf(
-            "Check this out!" to "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=400",
-            "I found these options for you." to "https://images.unsplash.com/photo-1464037866556-6812c9d1c72e?w=400",
-            "Take a look at this data." to "https://images.unsplash.com/photo-1554629947-334ff61d85dc?w=400"
         )
     }
 }
