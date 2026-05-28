@@ -123,6 +123,7 @@ class ChatDetailViewModel(
         draftState
             .onEach { draft ->
                 _state.update { it.copy(currentDraft = draft) }
+                agentService.setUserTyping(chatId, draft.isNotBlank())
             }
             .launchIn(viewModelScope)
 
