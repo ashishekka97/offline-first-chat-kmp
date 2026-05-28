@@ -46,6 +46,14 @@ fun ChatDetailScreen(
     val messages = state.messages.collectAsLazyPagingItems()
     val listState = rememberLazyListState()
 
+    val mediaPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        if (uri != null) {
+            viewModel.onIntent(ChatDetailIntent.SendMessage("", uri.toString()))
+        }
+    }
+
     LaunchedEffect(Unit) {
         viewModel.sideEffect.collect { effect ->
             when (effect) {
@@ -74,7 +82,11 @@ fun ChatDetailScreen(
                 text = state.currentDraft,
                 onTextChanged = { viewModel.onIntent(ChatDetailIntent.UpdateDraft(it)) },
                 onSendClick = { viewModel.onIntent(ChatDetailIntent.SendMessage(it)) },
-                onAttachClick = { /* TODO: Phase 5.6 */ }
+                onAttachClick = {
+                    mediaPickerLauncher.launch(
+                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                    )
+                }
             )
         },
         modifier = modifier
